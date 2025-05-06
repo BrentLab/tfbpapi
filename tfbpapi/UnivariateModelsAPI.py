@@ -8,7 +8,7 @@ import aiohttp
 import pandas as pd
 import requests  # type: ignore
 
-from yeastdnnexplorer.interface.AbstractRecordsOnlyAPI import AbstractRecordsOnlyAPI
+from tfbpapi.AbstractRecordsOnlyAPI import AbstractRecordsOnlyAPI
 
 
 class UnivariateModelsAPI(AbstractRecordsOnlyAPI):
