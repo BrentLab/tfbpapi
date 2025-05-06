@@ -14,6 +14,7 @@ from .PromoterSetSigAPI import PromoterSetSigAPI
 from .rank_transforms import shifted_negative_log_ranks, stable_rank, transform
 from .RankResponseAPI import RankResponseAPI
 from .RegulatorAPI import RegulatorAPI
+from .UnivariateModelsAPI import UnivariateModelsAPI
 
 __all__ = [
     "BindingAPI",
@@ -34,4 +35,5 @@ __all__ = [
     "RegulatorAPI",
     "stable_rank",
     "shifted_negative_log_ranks",
+    "UnivariateModelsAPI",
 ]
