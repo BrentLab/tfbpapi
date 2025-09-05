@@ -16,6 +16,8 @@ scikit-learn = "^1.6.1"
 requests-toolbelt = "^1.0.0"
 responses = "^0.25.7"
 aioresponses = "^0.7.8"
+huggingface_hub = "^0.24.0"
+pyarrow = "^18.0.0"
 
 
 [tool.poetry.group.dev.dependencies]
