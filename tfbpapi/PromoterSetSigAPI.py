@@ -23,7 +23,8 @@ class PromoterSetSigAPI(AbstractRecordsAndFilesAPI):
             "valid_param_keys",
             [
                 "id",
-                "binding",
+                "single_binding",
+                "composite_binding",
                 "promoter",
                 "promoter_name",
                 "background",

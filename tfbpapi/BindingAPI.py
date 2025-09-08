@@ -29,6 +29,7 @@ class BindingAPI(AbstractRecordsAndFilesAPI):
                 "batch",
                 "replicate",
                 "source",
+                "source_name",
                 "source_orig_id",
                 "strain",
                 "condition",
