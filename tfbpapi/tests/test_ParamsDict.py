@@ -1,5 +1,5 @@
 import pytest
-import requests  # type: ignore
+import requests
 import responses
 
 from tfbpapi.ParamsDict import ParamsDict

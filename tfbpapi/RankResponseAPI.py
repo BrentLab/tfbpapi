@@ -8,7 +8,7 @@ from typing import Any
 
 import aiohttp
 import pandas as pd
-from requests import Response, delete, post  # type: ignore
+from requests import Response, delete, post
 from requests_toolbelt import MultipartEncoder
 
 from tfbpapi.AbstractRecordsAndFilesAPI import (

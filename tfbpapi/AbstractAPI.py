@@ -5,7 +5,7 @@ from collections.abc import Coroutine
 from typing import Any
 
 import pandas as pd
-import requests  # type: ignore
+import requests
 
 from tfbpapi.Cache import Cache
 from tfbpapi.ParamsDict import ParamsDict
