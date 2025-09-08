@@ -6,27 +6,27 @@ from pathlib import Path
 from typing import Any, Literal
 
 import requests
-from huggingface_hub import hf_hub_download, repo_info, snapshot_download
+from huggingface_hub import hf_hub_download, snapshot_download
 from huggingface_hub.constants import HF_HUB_CACHE
 from requests import HTTPError
+
+# Constants
+MB_TO_BYTES = 1024 * 1024
 
 
 class RepoTooLargeError(ValueError):
     """Raised when repository exceeds auto-download threshold."""
 
-    pass
-
 
 class AbstractHfAPI(ABC):
     """Abstract base class for creating Hugging Face API clients."""
 
-    # TODO: can revision be set to "latest" by default?
     def __init__(
         self,
         repo_id: str,
         repo_type: Literal["model", "dataset", "space"] = "dataset",
         token: str | None = None,
-        cache_dir: str | Path = HF_HUB_CACHE,
+        cache_dir: str | Path | None = None,
     ):
         """
         Initialize the HF-backed API client.
@@ -39,20 +39,17 @@ class AbstractHfAPI(ABC):
         :param cache_dir: HF cache_dir for hf_hub_download and snapshot_download (see
             huggingface_hub docs). May be passed via the HF_CACHE_DIR environmental
             variable. If not set, the default HF cache directory is used.
+        :raises FileNotFoundError: If the specified cache_dir does not exist.
 
         """
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        # Let user input override env var, but use the env var if available
-        resolved_token = token or os.getenv("HF_TOKEN", None)
-        resolved_cache_dir = cache_dir or os.getenv("HF_CACHE_DIR", HF_HUB_CACHE)
-        if isinstance(resolved_cache_dir, str):
-            resolved_cache_dir = Path(resolved_cache_dir)
-
-        self.token = resolved_token
+        self.token = token or os.getenv("HF_TOKEN", None)
         self.repo_id = repo_id
         self.repo_type = repo_type
-        self.cache_dir = resolved_cache_dir
+        self.cache_dir = Path(
+            cache_dir if cache_dir else os.getenv("HF_CACHE_DIR", HF_HUB_CACHE)
+        )
 
     @property
     def token(self) -> str | None:
@@ -70,14 +67,19 @@ class AbstractHfAPI(ABC):
 
     @repo_id.setter
     def repo_id(self, value: str) -> None:
+        """
+        Set the repo_id.
+
+        This setter also calls _get_dataset_size to fetch size info and validate that
+        the repo exists and is accessible. No error is raised if the repo is not
+        accessible, but an error is logged.
+
+        """
         self._repo_id = value
         try:
-            self._get_dataset_size(value)
+            self._get_dataset_size(self._repo_id)
         except (HTTPError, ValueError) as e:
-            self.logger.warning(f"Could not validate repo_id {value}: {e}")
-            self.logger.info(
-                "Repo validation skipped - will be checked on first download"
-            )
+            self.logger.error(f"Could not reach {value}: {e}")
 
     @property
     def cache_dir(self) -> Path:
@@ -85,16 +87,27 @@ class AbstractHfAPI(ABC):
 
     @cache_dir.setter
     def cache_dir(self, value: str | Path) -> None:
-        """Set the cache directory for huggingface_hub downloads."""
+        """
+        Set the cache directory for huggingface_hub downloads.
+
+        :raises FileNotFoundError: If the specified directory does not exist.
+
+        """
         path = Path(value)
         if not path.exists():
-            raise FileNotFoundError(f"Cache directory does not exist: {path}")
+            raise FileNotFoundError(f"Cache directory {path} does not exist")
         self._cache_dir = path
 
     @property
     def size(self) -> dict[str, Any] | None:
-        """Size information from the HF Dataset Server API (if available)."""
-        return self._size if hasattr(self, "_size") else None
+        """
+        Size information from the HF Dataset Server API.
+
+        This reaches the /size endpoint. See
+        https://github.com/huggingface/dataset-viewer/blob/8f0ae65f0ff64791111d37a725af437c3c752daf/docs/source/size.md
+
+        """
+        return getattr(self, "_size", None)
 
     @size.setter
     def size(self, value: dict[str, Any]) -> None:
@@ -103,14 +116,40 @@ class AbstractHfAPI(ABC):
     @property
     def snapshot_path(self) -> Path | None:
         """Path to the last downloaded snapshot (if any)."""
-        return self._snapshot_path if hasattr(self, "_snapshot_path") else None
+        return getattr(self, "_snapshot_path", None)
 
     @snapshot_path.setter
     def snapshot_path(self, value: str | Path | None) -> None:
-        if value is None:
-            self._snapshot_path = None
-        else:
-            self._snapshot_path = Path(value)
+        self._snapshot_path = None if value is None else Path(value)
+
+    def _get_dataset_size_mb(self) -> float:
+        """Get dataset size in MB, returning inf if not available."""
+        if not self.size:
+            return float("inf")
+        return (
+            self.size.get("size", {})
+            .get("dataset", {})
+            .get("num_bytes_original_files", float("inf"))
+            / MB_TO_BYTES
+        )
+
+    def _ensure_str_paths(self, kwargs: dict[str, Any]) -> None:
+        """Ensure Path-like arguments are converted to strings."""
+        for key in ["local_dir", "cache_dir"]:
+            if key in kwargs and kwargs[key] is not None:
+                kwargs[key] = str(kwargs[key])
+
+    def _build_auth_headers(self) -> dict[str, str]:
+        """Build authentication headers if token is available."""
+        return {"Authorization": f"Bearer {self.token}"} if self.token else {}
+
+    def _normalize_patterns(self, kwargs: dict[str, Any]) -> None:
+        """Convert string patterns to lists."""
+        for pattern_key in ["allow_patterns", "ignore_patterns"]:
+            if pattern_key in kwargs and kwargs[pattern_key] is not None:
+                patterns = kwargs[pattern_key]
+                if isinstance(patterns, str):
+                    kwargs[pattern_key] = [patterns]
 
     def _get_dataset_size(self, repo_id: str | None = None) -> None:
         """
@@ -125,11 +164,7 @@ class AbstractHfAPI(ABC):
         repo_id = repo_id or self.repo_id
         url = f"https://datasets-server.huggingface.co/size?dataset={repo_id}"
 
-        headers = {}
-        if self.token:
-            headers["Authorization"] = f"Bearer {self.token}"
-
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=self._build_auth_headers())
         response.raise_for_status()
 
         data = response.json()
@@ -154,72 +189,6 @@ class AbstractHfAPI(ABC):
             )
 
         self.size = data
-
-    def _check_repo_size_and_decide_strategy(
-        self,
-        auto_download_threshold_mb: float,
-        force_full_download: bool,
-        allow_patterns: list[str] | str | None,
-        ignore_patterns: list[str] | str | None,
-        **kwargs,
-    ) -> tuple[list[str] | str | None, list[str] | str | None]:
-        """
-        Check repo size and decide download strategy.
-
-        Returns:
-            Tuple of (allow_patterns, ignore_patterns) to use for download
-
-        """
-        if force_full_download or auto_download_threshold_mb <= 0:
-            return None, None
-
-        try:
-            # Get repo info to estimate size
-            revision = kwargs.get("revision")
-            if revision is not None:
-                info = repo_info(
-                    repo_id=self.repo_id,
-                    repo_type=self.repo_type,
-                    token=self.token,
-                    revision=str(revision),
-                )
-            else:
-                info = repo_info(
-                    repo_id=self.repo_id,
-                    repo_type=self.repo_type,
-                    token=self.token,
-                )
-
-            # Estimate total size from siblings (files in repo)
-            total_size_bytes = sum(
-                getattr(sibling, "size", 0) or 0
-                for sibling in getattr(info, "siblings", [])
-            )
-            total_size_mb = total_size_bytes / (1024 * 1024)
-
-            self.logger.info(f"Estimated repo size: {total_size_mb:.2f} MB")
-
-            # If small enough, download everything
-            if total_size_mb <= auto_download_threshold_mb:
-                self.logger.info(
-                    f"Repo size ({total_size_mb:.2f} MB) under threshold "
-                    f"({auto_download_threshold_mb} MB), downloading full repo"
-                )
-                return None, None
-            else:
-                raise RepoTooLargeError(
-                    f"Repo size ({total_size_mb:.2f} MB) exceeds threshold "
-                    f"({auto_download_threshold_mb} MB). Use a selective download "
-                    "method via `files`, `allow_patterns` or `ignore_patterns`, "
-                    "or increase `auto_download_threshold_mb` and try again."
-                )
-
-        except Exception as e:
-            self.logger.warning(
-                f"Could not determine repo size: {e}. Proceeding with "
-                f"pattern-based download."
-            )
-            return allow_patterns, ignore_patterns
 
     def _download_single_file(
         self,
@@ -248,7 +217,7 @@ class AbstractHfAPI(ABC):
             "repo_type": self.repo_type,
             "filename": filename,
             "token": self.token,
-            **kwargs,  # User kwargs override defaults
+            **kwargs,
         }
 
         # Set cache_dir only if local_dir not specified
@@ -256,10 +225,7 @@ class AbstractHfAPI(ABC):
             hf_kwargs["cache_dir"] = str(self.cache_dir)
 
         # Ensure string conversion for Path-like arguments
-        if "local_dir" in hf_kwargs and hf_kwargs["local_dir"] is not None:
-            hf_kwargs["local_dir"] = str(hf_kwargs["local_dir"])
-        if "cache_dir" in hf_kwargs and hf_kwargs["cache_dir"] is not None:
-            hf_kwargs["cache_dir"] = str(hf_kwargs["cache_dir"])
+        self._ensure_str_paths(hf_kwargs)
 
         file_path = hf_hub_download(**hf_kwargs)
         self._snapshot_path = Path(file_path).parent
@@ -303,7 +269,6 @@ class AbstractHfAPI(ABC):
         }
 
         # Set cache_dir only if local_dir not specified and cache_dir wasn't passed in
-        # by user
         if (
             "local_dir" not in snapshot_kwargs
             and "cache_dir" not in snapshot_kwargs
@@ -311,15 +276,8 @@ class AbstractHfAPI(ABC):
         ):
             snapshot_kwargs["cache_dir"] = str(self.cache_dir)
 
-        # if allow_patterns or ignore_patterns are strings, convert to list
-        for pattern_key in ["allow_patterns", "ignore_patterns"]:
-            if (
-                pattern_key in snapshot_kwargs
-                and snapshot_kwargs[pattern_key] is not None
-            ):
-                patterns = snapshot_kwargs[pattern_key]
-                if isinstance(patterns, str):
-                    snapshot_kwargs[pattern_key] = [patterns]
+        # Convert string patterns to lists
+        self._normalize_patterns(snapshot_kwargs)
 
         snapshot_path = snapshot_download(**snapshot_kwargs)
         self.snapshot_path = Path(snapshot_path)
@@ -327,7 +285,6 @@ class AbstractHfAPI(ABC):
 
     def download(
         self,
-        *,
         files: list[str] | str | None = None,
         force_full_download: bool = False,
         auto_download_threshold_mb: float = 100.0,
@@ -351,42 +308,48 @@ class AbstractHfAPI(ABC):
         :return: Path to downloaded content (file or directory).
 
         """
-        # Handle single file download
+        dataset_size_mb = self._get_dataset_size_mb()
+        if dataset_size_mb <= auto_download_threshold_mb or force_full_download:
+            self.logger.info(
+                f"Dataset size ({dataset_size_mb:.2f} MB) is below the auto-download "
+                f"threshold of {auto_download_threshold_mb} MB. Downloading entire "
+                "repo."
+            )
+            files = None
+            kwargs.pop("allow_patterns", None)
+            kwargs.pop("ignore_patterns", None)
+        elif (
+            not files
+            and not kwargs.get("allow_patterns")
+            and not kwargs.get("ignore_patterns")
+        ):
+            excess_size_mb = dataset_size_mb - auto_download_threshold_mb
+            raise RepoTooLargeError(
+                f"Dataset size ({dataset_size_mb:.2f} MB) exceeds the "
+                f"auto-download threshold of {auto_download_threshold_mb} MB by "
+                f"{excess_size_mb:.2f} MB. To download the dataset, either "
+                "specify specific files or patterns to download, "
+                "set force_full_download=True or increase the "
+                "`auto_download_threshold_mb`."
+            )
+        # Handle specific file downloads
         if files is not None:
-            if isinstance(files, str):
-                files = [files]
-
-            if len(files) == 1:
+            if isinstance(files, str) or (isinstance(files, list) and len(files) == 1):
+                # Single file
+                filename = files if isinstance(files, str) else files[0]
+                self.logger.info(f"Preparing to download single file: {filename}")
                 return self._download_single_file(
-                    filename=files[0],
-                    dry_run=dry_run,
-                    **kwargs,
+                    filename=filename, dry_run=dry_run, **kwargs
                 )
-            else:
-                # Multiple specific files - use filtered snapshot_download
-                self.logger.info(f"Downloading specific files: {files}")
+            elif isinstance(files, list) and len(files) > 1:
+                # Multiple files - use snapshot_download with allow_patterns
                 if kwargs.get("allow_patterns") is not None:
                     self.logger.warning(
-                        "`allow_patterns` will be overridden by `files` argument"
+                        "Both 'files' and 'allow_patterns' were provided. "
+                        "'files' will take precedence."
                     )
                 kwargs["allow_patterns"] = files
 
-        # Check repo size and adjust download strategy if needed
-        allow_patterns, ignore_patterns = self._check_repo_size_and_decide_strategy(
-            auto_download_threshold_mb=auto_download_threshold_mb,
-            force_full_download=force_full_download,
-            allow_patterns=kwargs.get("allow_patterns"),
-            ignore_patterns=kwargs.get("ignore_patterns"),
-            **kwargs,
-        )
-
-        # Update kwargs with determined patterns
-        if allow_patterns is not None:
-            kwargs["allow_patterns"] = allow_patterns
-        if ignore_patterns is not None:
-            kwargs["ignore_patterns"] = ignore_patterns
-
-        # Execute snapshot download
         return self._download_snapshot(dry_run=dry_run, **kwargs)
 
     @abstractmethod
