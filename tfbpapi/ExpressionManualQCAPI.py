@@ -2,7 +2,7 @@ import os
 from typing import Any
 
 import pandas as pd
-import requests  # type: ignore
+import requests
 
 from tfbpapi.AbstractRecordsOnlyAPI import AbstractRecordsOnlyAPI
 

@@ -1,8 +1,14 @@
-#mac files
+# claude
+CLAUDE.md
+.claude/
+claude_output/
+claude_logs/
+
+# mac files
 **/.DS_Store
 
 # Dataset directory
-data/
+./data/
 
 # logs
 **/logs/
