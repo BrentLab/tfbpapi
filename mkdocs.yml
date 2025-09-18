@@ -1,5 +1,5 @@
 site_name: tfbpapi
-site_description: "A collection of objects and functions to work with calling cards sequencing tools"
+site_description: "Python API for querying and analyzing genomic datasets from HuggingFace Hub"
 site_author: "ben mueller <email@email.com>, chase mateusiak <chasem@wustl.edu>, michael brent <brent@wustl.edu>"
 site_url: "https://brentlab.github.io/tfbpapi"
 repo_url: "https://github.com/brentlab/tfbpapi"
@@ -62,7 +62,7 @@ plugins:
       handlers:
         python:
           paths: [.]
-          import:
+          inventories:
             - https://docs.python.org/3/objects.inv
             - https://numpy.org/doc/stable/objects.inv
             - https://pandas.pydata.org/docs/objects.inv
@@ -149,29 +149,17 @@ extra_css:
 nav:
   - Home: index.md
   - Tutorials:
-    - Database tfbpapi: tutorials/database_tfbpapi.ipynb
-  - API:
-    - Database tfbpapi:
-      - Records Only Classes:
-        - BindingManualQCAPI.md
-        - DataSourceAPI.md
-        - DtoAPI.md
-        - ExpressionManualQCAPI.md
-        - FileFormatAPI.md
-        - GenomicFeatureAPI.md
-        - RegulatorAPI.md
-      - Records and Files Classes:
-        - BindingAPI: BindingAPI.md
-        - BindingConcatenatedAPI: BindingConcatenatedAPI.md
-        - CallingCardsBackgroundAPI: CallingCardsBackgroundAPI.md
-        - ExpressionAPI: ExpressionAPI.md
-        - PromoterSetAPI: PromoterSetAPI.md
-        - PromoterSetSigAPI: PromoterSetSigAPI.md
-      - Developer Classes:
-        - AbstractAPI.md
-        - AbstractRecordsAndFilesAPI.md
-        - AbstractRecordsOnlyAPI.md
-        - AbstractHfAPI.md
-        - HfCacheManager.md
-        - Cache.md
-        - ParamsDict.md
+    - "DataCard: Exploring Datasets": tutorials/datacard_tutorial.ipynb
+  - API Reference:
+    - Core Components:
+      - HfQueryAPI: HfQueryAPI.md
+      - HfRankResponse: HfRankResponse.md
+      - IncrementalAnalysisDB: IncrementalAnalysisDB.md
+    - Cache Management:
+      - HfCacheManager: HfCacheManager.md
+    - Dataset Information:
+      - DataInfo Package: datainfo.md
+    - Error Handling:
+      - Custom Exceptions: errors.md
+  - HuggingFace Configuration:
+    - HuggingFace Dataset Card Format: huggingface_datacard.md
