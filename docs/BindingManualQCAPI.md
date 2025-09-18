@@ -1,1 +1,0 @@
-::: tfbpapi.BindingManualQCAPI.BindingManualQCAPI

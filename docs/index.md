@@ -20,51 +20,52 @@
 
 ## Architecture
 
-This is a Python package for interacting with django.tfbindingandmodeling.com APIs. The codebase follows an object-oriented architecture with abstract base classes providing common functionality.
+This is a Python package for interfacing with a collection of datasets hosted on Hugging Face. The modern architecture provides efficient querying, caching, and metadata management for genomic and transcriptomic datasets.
 
-### Core Architecture Classes
+### Core Components
 
-- **AbstractAPI** (`tfbpapi/AbstractAPI.py`): Base class for all API clients with token authentication, caching (via `Cache` class), parameter validation (via `ParamsDict` class), and abstract CRUD methods.
+- **HfQueryAPI** (`tfbpapi/HfQueryAPI.py`): Main interface for querying HF datasets with intelligent downloading and SQL querying capabilities. Supports automatic dataset size detection, selective downloading, and DuckDB-based querying.
 
-- **AbstractRecordsAndFilesAPI** (`tfbpapi/AbstractRecordsAndFilesAPI.py`): Extends `AbstractAPI` for endpoints that serve both record metadata and associated data files. Handles tarball extraction, CSV parsing, and file caching.
+- **HfCacheManager** (`tfbpapi/HfCacheManager.py`): Manages HF cache with cleanup and size management features. Provides automatic cache cleanup based on age and size thresholds.
 
-- **AbstractRecordsOnlyAPI** (`tfbpapi/AbstractRecordsOnlyAPI.py`): Extends `AbstractAPI` for endpoints that only serve record metadata without file storage.
+- **HfRankResponse** (`tfbpapi/HfRankResponse.py`): Response handling for HF-based ranking operations. Computes and analyzes "rank response" - the cumulative number of responsive targets binned by binding rank scores.
 
-- **AbstractHfAPI** (`tfbpapi/AbstractHfAPI.py`): Abstract base for Hugging Face Hub integration, providing repository management functionality.
+- **IncrementalAnalysisDB** (`tfbpapi/IncrementalAnalysisDB.py`): Database management for incremental analysis workflows with shared result storage.
 
-### Concrete API Classes
+### Dataset Information Management
 
-All concrete API classes inherit from either `AbstractRecordsAndFilesAPI` or `AbstractRecordsOnlyAPI`:
+- **datainfo package** (`tfbpapi/datainfo/`): Comprehensive dataset exploration and metadata management for HuggingFace datasets. Provides the `DataCard` class for exploring dataset structure, configurations, and relationships without loading actual data. Includes Pydantic models for validation and fetchers for HuggingFace Hub integration.
 
-- `BindingAPI`, `ExpressionAPI`, `PromoterSetAPI` - Record and file APIs
-- `DataSourceAPI`, `RegulatorAPI`, `GenomicFeatureAPI` - Records only APIs
+### Data Types
 
-### Utility Classes
+The datasets in this collection store the following types of genomic data:
 
-- **Cache** (`tfbpapi/Cache.py`): TTL-based caching for API responses
-- **ParamsDict** (`tfbpapi/ParamsDict.py`): Parameter validation against allowed keys
-- **HfCacheManager** (`tfbpapi/HfCacheManager.py`): Hugging Face cache cleanup utilities
+- **genomic_features**: Labels and information about genomic features (e.g., parsed GTF/GFF files)
+- **annotated_features**: Data quantified to features, typically genes
+- **genome_map**: Data mapped to genome coordinates
+- **metadata**: Additional sample information (cell types, experimental conditions, etc.)
 
-### Data Processing Utilities
+Data is stored in Apache Parquet format, either as single files or parquet datasets (directories of parquet files).
 
-- **metric_arrays** (`tfbpapi/metric_arrays.py`): Array-based metric calculations
-- **rank_transforms** (`tfbpapi/rank_transforms.py`): Statistical rank transformation functions
+### Error Handling
+
+- **errors.py** (`tfbpapi/errors.py`): Custom exception classes for dataset management including `DatasetError`, `RepoTooLargeError`, `DataCardParsingError`, `HfDataFetchError`, and more.
 
 ## Configuration
 
 - Uses Poetry for dependency management
-- Python 3.11 required
+- Python 3.11+ required
 - Black formatter with 88-character line length
 - Pre-commit hooks include Black, isort, flake8, mypy, and various file checks
-- pytest with snapshot testing support
-- Environment variables: `BASE_URL`, `TOKEN`, `HF_TOKEN`, `HF_CACHE_DIR`
+- pytest with comprehensive testing support
+- Environment variables: `HF_TOKEN`, `HF_CACHE_DIR`
 
 ## Testing Patterns
 
-- Tests use pytest with async support (`pytest-asyncio`)
-- Snapshot testing with `pytest-snapshot` for API response validation
-- Test fixtures in `tfbpapi/tests/conftest.py`
-- Mock HTTP responses using `aioresponses` and `responses` libraries
+- Tests use pytest with modern testing practices
+- Integration tests for HuggingFace dataset functionality
+- Test fixtures for dataset operations
+- Comprehensive error handling testing
 
 ### mkdocs
 
