@@ -18,14 +18,14 @@ class DatasetType(str, Enum):
 class ClassLabelType(BaseModel):
     """Categorical data type with class labels."""
 
-    names: List[str] = Field(..., description="List of possible class names")
+    names: list[str] = Field(..., description="List of possible class names")
 
 
 class FeatureInfo(BaseModel):
     """Information about a dataset feature/column."""
 
     name: str = Field(..., description="Column name in the data")
-    dtype: Union[str, Dict[str, ClassLabelType]] = Field(
+    dtype: str | dict[str, ClassLabelType] = Field(
         ...,
         description="Data type (string, int64, float64, etc.) or categorical class labels",
     )
@@ -72,10 +72,10 @@ class PartitioningInfo(BaseModel):
     """Partitioning configuration for datasets."""
 
     enabled: bool = Field(default=False, description="Whether partitioning is enabled")
-    partition_by: Optional[List[str]] = Field(
+    partition_by: list[str] | None = Field(
         default=None, description="Partition column names"
     )
-    path_template: Optional[str] = Field(
+    path_template: str | None = Field(
         default=None, description="Path template for partitioned files"
     )
 
@@ -90,8 +90,8 @@ class DataFileInfo(BaseModel):
 class DatasetInfo(BaseModel):
     """Dataset structure information."""
 
-    features: List[FeatureInfo] = Field(..., description="Feature definitions")
-    partitioning: Optional[PartitioningInfo] = Field(
+    features: list[FeatureInfo] = Field(..., description="Feature definitions")
+    partitioning: PartitioningInfo | None = Field(
         default=None, description="Partitioning configuration"
     )
 
@@ -105,13 +105,13 @@ class DatasetConfig(BaseModel):
     default: bool = Field(
         default=False, description="Whether this is the default config"
     )
-    applies_to: Optional[List[str]] = Field(
+    applies_to: list[str] | None = Field(
         default=None, description="Configs this metadata applies to"
     )
-    metadata_fields: Optional[List[str]] = Field(
+    metadata_fields: list[str] | None = Field(
         default=None, description="Fields for embedded metadata extraction"
     )
-    data_files: List[DataFileInfo] = Field(..., description="Data file information")
+    data_files: list[DataFileInfo] = Field(..., description="Data file information")
     dataset_info: DatasetInfo = Field(..., description="Dataset structure information")
 
     @field_validator("applies_to")
@@ -138,13 +138,13 @@ class DatasetConfig(BaseModel):
 class BasicMetadata(BaseModel):
     """Basic dataset metadata."""
 
-    license: Optional[str] = Field(default=None, description="Dataset license")
-    language: Optional[List[str]] = Field(default=None, description="Dataset languages")
-    tags: Optional[List[str]] = Field(default=None, description="Descriptive tags")
-    pretty_name: Optional[str] = Field(
+    license: str | None = Field(default=None, description="Dataset license")
+    language: list[str] | None = Field(default=None, description="Dataset languages")
+    tags: list[str] | None = Field(default=None, description="Descriptive tags")
+    pretty_name: str | None = Field(
         default=None, description="Human-readable dataset name"
     )
-    size_categories: Optional[List[str]] = Field(
+    size_categories: list[str] | None = Field(
         default=None, description="Dataset size categories"
     )
 
@@ -152,14 +152,14 @@ class BasicMetadata(BaseModel):
 class DatasetCard(BaseModel):
     """Complete dataset card model."""
 
-    configs: List[DatasetConfig] = Field(..., description="Dataset configurations")
-    license: Optional[str] = Field(default=None, description="Dataset license")
-    language: Optional[List[str]] = Field(default=None, description="Dataset languages")
-    tags: Optional[List[str]] = Field(default=None, description="Descriptive tags")
-    pretty_name: Optional[str] = Field(
+    configs: list[DatasetConfig] = Field(..., description="Dataset configurations")
+    license: str | None = Field(default=None, description="Dataset license")
+    language: list[str] | None = Field(default=None, description="Dataset languages")
+    tags: list[str] | None = Field(default=None, description="Descriptive tags")
+    pretty_name: str | None = Field(
         default=None, description="Human-readable dataset name"
     )
-    size_categories: Optional[List[str]] = Field(
+    size_categories: list[str] | None = Field(
         default=None, description="Dataset size categories"
     )
 
@@ -189,25 +189,25 @@ class DatasetCard(BaseModel):
             raise ValueError("At most one configuration can be marked as default")
         return v
 
-    def get_config_by_name(self, name: str) -> Optional[DatasetConfig]:
+    def get_config_by_name(self, name: str) -> DatasetConfig | None:
         """Get a configuration by name."""
         for config in self.configs:
             if config.config_name == name:
                 return config
         return None
 
-    def get_configs_by_type(self, dataset_type: DatasetType) -> List[DatasetConfig]:
+    def get_configs_by_type(self, dataset_type: DatasetType) -> list[DatasetConfig]:
         """Get all configurations of a specific type."""
         return [
             config for config in self.configs if config.dataset_type == dataset_type
         ]
 
-    def get_default_config(self) -> Optional[DatasetConfig]:
+    def get_default_config(self) -> DatasetConfig | None:
         """Get the default configuration if one exists."""
         defaults = [config for config in self.configs if config.default]
         return defaults[0] if defaults else None
 
-    def get_data_configs(self) -> List[DatasetConfig]:
+    def get_data_configs(self) -> list[DatasetConfig]:
         """Get all non-metadata configurations."""
         return [
             config
@@ -215,7 +215,7 @@ class DatasetCard(BaseModel):
             if config.dataset_type != DatasetType.METADATA
         ]
 
-    def get_metadata_configs(self) -> List[DatasetConfig]:
+    def get_metadata_configs(self) -> list[DatasetConfig]:
         """Get all metadata configurations."""
         return [
             config
@@ -231,7 +231,7 @@ class ExtractedMetadata(BaseModel):
     field_name: str = Field(
         ..., description="Field name the metadata was extracted from"
     )
-    values: Set[str] = Field(..., description="Unique values found")
+    values: set[str] = Field(..., description="Unique values found")
     extraction_method: str = Field(..., description="How the metadata was extracted")
 
     model_config = ConfigDict(

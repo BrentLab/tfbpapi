@@ -21,17 +21,21 @@ from .models import (
 
 
 class DataCard:
-    """Easy-to-use interface for exploring HuggingFace dataset metadata.
+    """
+    Easy-to-use interface for exploring HuggingFace dataset metadata.
 
-    Provides methods to discover and explore dataset contents, configurations,
-    and metadata without loading the actual genomic data.
+    Provides methods to discover and explore dataset contents, configurations, and
+    metadata without loading the actual genomic data.
+
     """
 
-    def __init__(self, repo_id: str, token: Optional[str] = None):
-        """Initialize DataCard for a repository.
+    def __init__(self, repo_id: str, token: str | None = None):
+        """
+        Initialize DataCard for a repository.
 
         :param repo_id: HuggingFace repository identifier (e.g., "user/dataset")
         :param token: Optional HuggingFace token for authentication
+
         """
         self.repo_id = repo_id
         self.token = token
@@ -43,8 +47,8 @@ class DataCard:
         self._size_fetcher = HfSizeInfoFetcher(token=token)
 
         # Cache for parsed card
-        self._dataset_card: Optional[DatasetCard] = None
-        self._metadata_cache: Dict[str, List[ExtractedMetadata]] = {}
+        self._dataset_card: DatasetCard | None = None
+        self._metadata_cache: dict[str, list[ExtractedMetadata]] = {}
 
     @property
     def dataset_card(self) -> DatasetCard:
@@ -75,68 +79,77 @@ class DataCard:
             # Create a more user-friendly error message
             error_details = []
             for error in e.errors():
-                field_path = " -> ".join(str(x) for x in error['loc'])
-                error_type = error['type']
-                error_msg = error['msg']
-                input_value = error.get('input', 'N/A')
+                field_path = " -> ".join(str(x) for x in error["loc"])
+                error_type = error["type"]
+                error_msg = error["msg"]
+                input_value = error.get("input", "N/A")
 
-                if 'dtype' in field_path and error_type == 'string_type':
+                if "dtype" in field_path and error_type == "string_type":
                     error_details.append(
                         f"Field '{field_path}': Expected a simple data type string (like 'string', 'int64', 'float64') "
                         f"but got a complex structure. This might be a categorical field with class labels. "
                         f"Actual value: {input_value}"
                     )
                 else:
-                    error_details.append(f"Field '{field_path}': {error_msg} (got: {input_value})")
+                    error_details.append(
+                        f"Field '{field_path}': {error_msg} (got: {input_value})"
+                    )
 
-            detailed_msg = f"Dataset card validation failed for {self.repo_id}:\n" + "\n".join(f"  - {detail}" for detail in error_details)
+            detailed_msg = (
+                f"Dataset card validation failed for {self.repo_id}:\n"
+                + "\n".join(f"  - {detail}" for detail in error_details)
+            )
             self.logger.error(detailed_msg)
             raise DataCardValidationError(detailed_msg) from e
         except HfDataFetchError as e:
             raise DataCardError(f"Failed to fetch dataset card: {e}") from e
 
     @property
-    def configs(self) -> List[DatasetConfig]:
+    def configs(self) -> list[DatasetConfig]:
         """Get all dataset configurations."""
         return self.dataset_card.configs
 
-    def get_config(self, config_name: str) -> Optional[DatasetConfig]:
+    def get_config(self, config_name: str) -> DatasetConfig | None:
         """Get a specific configuration by name."""
         return self.dataset_card.get_config_by_name(config_name)
 
     def get_configs_by_type(
-        self, dataset_type: Union[DatasetType, str]
-    ) -> List[DatasetConfig]:
+        self, dataset_type: DatasetType | str
+    ) -> list[DatasetConfig]:
         """Get configurations by dataset type."""
         if isinstance(dataset_type, str):
             dataset_type = DatasetType(dataset_type)
         return self.dataset_card.get_configs_by_type(dataset_type)
 
-    def get_regulators(self, config_name: Optional[str] = None) -> Set[str]:
-        """Get all regulators mentioned in the dataset.
+    def get_regulators(self, config_name: str | None = None) -> set[str]:
+        """
+        Get all regulators mentioned in the dataset.
 
         :param config_name: Optional specific config to search, otherwise searches all
         :return: Set of regulator identifiers found
+
         """
         raise NotImplementedError("Method not yet implemented")
 
-    def get_experimental_conditions(
-        self, config_name: Optional[str] = None
-    ) -> Set[str]:
-        """Get all experimental conditions mentioned in the dataset.
+    def get_experimental_conditions(self, config_name: str | None = None) -> set[str]:
+        """
+        Get all experimental conditions mentioned in the dataset.
 
         :param config_name: Optional specific config to search, otherwise searches all
         :return: Set of experimental conditions found
+
         """
         raise NotImplementedError("Method not yet implemented")
 
-    def get_field_values(self, config_name: str, field_name: str) -> Set[str]:
-        """Get all unique values for a specific field in a configuration.
+    def get_field_values(self, config_name: str, field_name: str) -> set[str]:
+        """
+        Get all unique values for a specific field in a configuration.
 
         :param config_name: Configuration name
         :param field_name: Field name to extract values from
         :return: Set of unique values
         :raises DataCardError: If config or field not found
+
         """
         config = self.get_config(config_name)
         if not config:
@@ -151,7 +164,7 @@ class DataCard:
 
         return self._extract_field_values(config, field_name)
 
-    def _extract_field_values(self, config: DatasetConfig, field_name: str) -> Set[str]:
+    def _extract_field_values(self, config: DatasetConfig, field_name: str) -> set[str]:
         """Extract unique values for a field from various sources."""
         values = set()
 
@@ -189,7 +202,7 @@ class DataCard:
 
     def _extract_partition_values(
         self, config: DatasetConfig, field_name: str
-    ) -> Set[str]:
+    ) -> set[str]:
         """Extract values from partition structure."""
         if (
             not config.dataset_info.partitioning
@@ -211,7 +224,7 @@ class DataCard:
             self.logger.warning(f"Failed to extract partition values for {field_name}")
             return set()
 
-    def get_metadata_relationships(self) -> List[MetadataRelationship]:
+    def get_metadata_relationships(self) -> list[MetadataRelationship]:
         """Get relationships between data configs and their metadata."""
         relationships = []
         data_configs = self.dataset_card.get_data_configs()
@@ -233,7 +246,6 @@ class DataCard:
                     )
                     continue
 
-
             # Check for embedded metadata
             if data_config.metadata_fields:
                 relationships.append(
@@ -246,8 +258,7 @@ class DataCard:
 
         return relationships
 
-
-    def get_repository_info(self) -> Dict[str, Any]:
+    def get_repository_info(self) -> dict[str, Any]:
         """Get general repository information."""
         card = self.dataset_card
 
@@ -273,13 +284,13 @@ class DataCard:
             "has_default_config": self.dataset_card.get_default_config() is not None,
         }
 
-    def explore_config(self, config_name: str) -> Dict[str, Any]:
+    def explore_config(self, config_name: str) -> dict[str, Any]:
         """Get detailed information about a specific configuration."""
         config = self.get_config(config_name)
         if not config:
             raise DataCardError(f"Configuration '{config_name}' not found")
 
-        info: Dict[str, Any] = {
+        info: dict[str, Any] = {
             "config_name": config.config_name,
             "description": config.description,
             "dataset_type": config.dataset_type.value,
