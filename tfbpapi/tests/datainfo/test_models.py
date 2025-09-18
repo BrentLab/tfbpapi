@@ -4,15 +4,15 @@ import pytest
 from pydantic import ValidationError
 
 from tfbpapi.datainfo.models import (
-    DatasetType,
-    FeatureInfo,
-    PartitioningInfo,
     DataFileInfo,
-    DatasetInfo,
-    DatasetConfig,
     DatasetCard,
+    DatasetConfig,
+    DatasetInfo,
+    DatasetType,
     ExtractedMetadata,
+    FeatureInfo,
     MetadataRelationship,
+    PartitioningInfo,
 )
 
 
@@ -74,12 +74,8 @@ class TestFeatureInfo:
         """Test FeatureInfo with categorical dtype."""
         categorical_feature_data = {
             "name": "mechanism",
-            "dtype": {
-                "class_label": {
-                    "names": ["GEV", "ZEV"]
-                }
-            },
-            "description": "Induction system"
+            "dtype": {"class_label": {"names": ["GEV", "ZEV"]}},
+            "description": "Induction system",
         }
 
         feature = FeatureInfo(**categorical_feature_data)
@@ -92,9 +88,7 @@ class TestFeatureInfo:
     def test_feature_info_simple_string_dtype(self):
         """Test FeatureInfo with simple string dtype."""
         feature = FeatureInfo(
-            name="test_field",
-            dtype="string",
-            description="Test field"
+            name="test_field", dtype="string", description="Test field"
         )
         assert feature.dtype == "string"
         assert feature.get_dtype_summary() == "string"
@@ -105,7 +99,7 @@ class TestFeatureInfo:
             FeatureInfo(
                 name="test_field",
                 dtype={"class_label": "invalid"},  # Should be dict with names
-                description="Test field"
+                description="Test field",
             )
 
     def test_feature_info_unknown_dtype_structure(self):
@@ -114,7 +108,7 @@ class TestFeatureInfo:
             FeatureInfo(
                 name="test_field",
                 dtype={"unknown_key": "value"},
-                description="Test field"
+                description="Test field",
             )
 
 
@@ -133,7 +127,10 @@ class TestPartitioningInfo:
         partitioning = PartitioningInfo(**sample_partitioning_info)
         assert partitioning.enabled is True
         assert partitioning.partition_by == ["regulator", "condition"]
-        assert partitioning.path_template is not None and "regulator={regulator}" in partitioning.path_template
+        assert (
+            partitioning.path_template is not None
+            and "regulator={regulator}" in partitioning.path_template
+        )
 
     def test_partial_partitioning_info(self):
         """Test partitioning with only some fields set."""
@@ -174,14 +171,19 @@ class TestDatasetInfo:
         assert len(dataset_info.features) == 1
         assert dataset_info.partitioning is None
 
-    def test_dataset_info_with_partitioning(self, sample_feature_info, sample_partitioning_info):
+    def test_dataset_info_with_partitioning(
+        self, sample_feature_info, sample_partitioning_info
+    ):
         """Test DatasetInfo with partitioning."""
         features = [FeatureInfo(**sample_feature_info)]
         partitioning = PartitioningInfo(**sample_partitioning_info)
 
         dataset_info = DatasetInfo(features=features, partitioning=partitioning)
         assert len(dataset_info.features) == 1
-        assert dataset_info.partitioning is not None and dataset_info.partitioning.enabled is True
+        assert (
+            dataset_info.partitioning is not None
+            and dataset_info.partitioning.enabled is True
+        )
 
     def test_dataset_info_empty_features_error(self):
         """Test that empty features list is allowed."""
@@ -204,7 +206,7 @@ class TestDatasetConfig:
             description="Test configuration",
             dataset_type=DatasetType.GENOMIC_FEATURES,
             data_files=data_files,
-            dataset_info=dataset_info
+            dataset_info=dataset_info,
         )
 
         assert config.config_name == "test_config"
@@ -213,7 +215,9 @@ class TestDatasetConfig:
         assert config.applies_to is None
         assert config.metadata_fields is None
 
-    def test_dataset_config_with_applies_to_metadata(self, sample_feature_info, sample_data_file_info):
+    def test_dataset_config_with_applies_to_metadata(
+        self, sample_feature_info, sample_data_file_info
+    ):
         """Test DatasetConfig with applies_to for metadata types."""
         features = [FeatureInfo(**sample_feature_info)]
         data_files = [DataFileInfo(**sample_data_file_info)]
@@ -225,44 +229,55 @@ class TestDatasetConfig:
             dataset_type=DatasetType.METADATA,
             applies_to=["data_config1", "data_config2"],
             data_files=data_files,
-            dataset_info=dataset_info
+            dataset_info=dataset_info,
         )
 
         assert config.applies_to == ["data_config1", "data_config2"]
 
-    def test_dataset_config_applies_to_validation_error(self, sample_feature_info, sample_data_file_info):
+    def test_dataset_config_applies_to_validation_error(
+        self, sample_feature_info, sample_data_file_info
+    ):
         """Test that applies_to is only valid for metadata types."""
         features = [FeatureInfo(**sample_feature_info)]
         data_files = [DataFileInfo(**sample_data_file_info)]
         dataset_info = DatasetInfo(features=features)
 
-        with pytest.raises(ValidationError, match="applies_to field is only valid for metadata dataset types"):
+        with pytest.raises(
+            ValidationError,
+            match="applies_to field is only valid for metadata dataset types",
+        ):
             DatasetConfig(
                 config_name="invalid_config",
                 description="Invalid configuration",
                 dataset_type=DatasetType.GENOMIC_FEATURES,  # Not a metadata type
                 applies_to=["some_config"],  # This should cause validation error
                 data_files=data_files,
-                dataset_info=dataset_info
+                dataset_info=dataset_info,
             )
 
-    def test_dataset_config_empty_metadata_fields_error(self, sample_feature_info, sample_data_file_info):
+    def test_dataset_config_empty_metadata_fields_error(
+        self, sample_feature_info, sample_data_file_info
+    ):
         """Test that empty metadata_fields list raises error."""
         features = [FeatureInfo(**sample_feature_info)]
         data_files = [DataFileInfo(**sample_data_file_info)]
         dataset_info = DatasetInfo(features=features)
 
-        with pytest.raises(ValidationError, match="metadata_fields cannot be empty list"):
+        with pytest.raises(
+            ValidationError, match="metadata_fields cannot be empty list"
+        ):
             DatasetConfig(
                 config_name="test_config",
                 description="Test configuration",
                 dataset_type=DatasetType.ANNOTATED_FEATURES,
                 metadata_fields=[],  # Empty list should cause error
                 data_files=data_files,
-                dataset_info=dataset_info
+                dataset_info=dataset_info,
             )
 
-    def test_dataset_config_with_metadata_fields(self, sample_feature_info, sample_data_file_info):
+    def test_dataset_config_with_metadata_fields(
+        self, sample_feature_info, sample_data_file_info
+    ):
         """Test DatasetConfig with valid metadata_fields."""
         features = [FeatureInfo(**sample_feature_info)]
         data_files = [DataFileInfo(**sample_data_file_info)]
@@ -274,7 +289,7 @@ class TestDatasetConfig:
             dataset_type=DatasetType.ANNOTATED_FEATURES,
             metadata_fields=["field1", "field2"],
             data_files=data_files,
-            dataset_info=dataset_info
+            dataset_info=dataset_info,
         )
 
         assert config.metadata_fields == ["field1", "field2"]
@@ -301,10 +316,14 @@ class TestDatasetCard:
 
     def test_empty_configs_error(self):
         """Test that empty configs list raises error."""
-        with pytest.raises(ValidationError, match="At least one dataset configuration is required"):
+        with pytest.raises(
+            ValidationError, match="At least one dataset configuration is required"
+        ):
             DatasetCard(configs=[])
 
-    def test_duplicate_config_names_error(self, sample_feature_info, sample_data_file_info):
+    def test_duplicate_config_names_error(
+        self, sample_feature_info, sample_data_file_info
+    ):
         """Test that duplicate config names raise error."""
         features = [FeatureInfo(**sample_feature_info)]
         data_files = [DataFileInfo(**sample_data_file_info)]
@@ -315,7 +334,7 @@ class TestDatasetCard:
             description="First config",
             dataset_type=DatasetType.GENOMIC_FEATURES,
             data_files=data_files,
-            dataset_info=dataset_info
+            dataset_info=dataset_info,
         )
 
         config2 = DatasetConfig(
@@ -323,13 +342,15 @@ class TestDatasetCard:
             description="Second config",
             dataset_type=DatasetType.ANNOTATED_FEATURES,
             data_files=data_files,
-            dataset_info=dataset_info
+            dataset_info=dataset_info,
         )
 
         with pytest.raises(ValidationError, match="Configuration names must be unique"):
             DatasetCard(configs=[config1, config2])
 
-    def test_multiple_default_configs_error(self, sample_feature_info, sample_data_file_info):
+    def test_multiple_default_configs_error(
+        self, sample_feature_info, sample_data_file_info
+    ):
         """Test that multiple default configs raise error."""
         features = [FeatureInfo(**sample_feature_info)]
         data_files = [DataFileInfo(**sample_data_file_info)]
@@ -341,7 +362,7 @@ class TestDatasetCard:
             dataset_type=DatasetType.GENOMIC_FEATURES,
             default=True,
             data_files=data_files,
-            dataset_info=dataset_info
+            dataset_info=dataset_info,
         )
 
         config2 = DatasetConfig(
@@ -350,10 +371,12 @@ class TestDatasetCard:
             dataset_type=DatasetType.ANNOTATED_FEATURES,
             default=True,  # Another default
             data_files=data_files,
-            dataset_info=dataset_info
+            dataset_info=dataset_info,
         )
 
-        with pytest.raises(ValidationError, match="At most one configuration can be marked as default"):
+        with pytest.raises(
+            ValidationError, match="At most one configuration can be marked as default"
+        ):
             DatasetCard(configs=[config1, config2])
 
     def test_get_config_by_name(self, sample_dataset_card_data):
@@ -418,7 +441,7 @@ class TestExtractedMetadata:
             config_name="test_config",
             field_name="regulator_symbol",
             values={"TF1", "TF2", "TF3"},
-            extraction_method="partition_values"
+            extraction_method="partition_values",
         )
 
         assert metadata.config_name == "test_config"
@@ -432,7 +455,7 @@ class TestExtractedMetadata:
             config_name="test_config",
             field_name="condition",
             values={"control", "treatment"},
-            extraction_method="embedded"
+            extraction_method="embedded",
         )
 
         # Test basic serialization (sets remain as sets in model_dump)
@@ -454,7 +477,7 @@ class TestMetadataRelationship:
         relationship = MetadataRelationship(
             data_config="binding_data",
             metadata_config="experiment_metadata",
-            relationship_type="explicit"
+            relationship_type="explicit",
         )
 
         assert relationship.data_config == "binding_data"
@@ -465,17 +488,14 @@ class TestMetadataRelationship:
         """Test different relationship types."""
         # Test explicit relationship
         explicit = MetadataRelationship(
-            data_config="data1",
-            metadata_config="meta1",
-            relationship_type="explicit"
+            data_config="data1", metadata_config="meta1", relationship_type="explicit"
         )
         assert explicit.relationship_type == "explicit"
-
 
         # Test embedded relationship
         embedded = MetadataRelationship(
             data_config="data3",
             metadata_config="data3_embedded",
-            relationship_type="embedded"
+            relationship_type="embedded",
         )
         assert embedded.relationship_type == "embedded"

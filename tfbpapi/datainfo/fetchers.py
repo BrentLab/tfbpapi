@@ -15,21 +15,25 @@ from ..errors import HfDataFetchError
 class HfDataCardFetcher:
     """Handles fetching dataset cards from HuggingFace Hub."""
 
-    def __init__(self, token: Optional[str] = None):
-        """Initialize the fetcher.
+    def __init__(self, token: str | None = None):
+        """
+        Initialize the fetcher.
 
         :param token: HuggingFace token for authentication
+
         """
         self.logger = logging.getLogger(self.__class__.__name__)
         self.token = token or os.getenv("HF_TOKEN")
 
-    def fetch(self, repo_id: str, repo_type: str = "dataset") -> Dict[str, Any]:
-        """Fetch and return dataset card data.
+    def fetch(self, repo_id: str, repo_type: str = "dataset") -> dict[str, Any]:
+        """
+        Fetch and return dataset card data.
 
         :param repo_id: Repository identifier (e.g., "user/dataset")
         :param repo_type: Type of repository ("dataset", "model", "space")
         :return: Dataset card data as dictionary
         :raises HfDataFetchError: If fetching fails
+
         """
         try:
             self.logger.debug(f"Fetching dataset card for {repo_id}")
@@ -50,28 +54,32 @@ class HfDataCardFetcher:
 class HfSizeInfoFetcher:
     """Handles fetching size information from HuggingFace Dataset Server API."""
 
-    def __init__(self, token: Optional[str] = None):
-        """Initialize the fetcher.
+    def __init__(self, token: str | None = None):
+        """
+        Initialize the fetcher.
 
         :param token: HuggingFace token for authentication
+
         """
         self.logger = logging.getLogger(self.__class__.__name__)
         self.token = token or os.getenv("HF_TOKEN")
         self.base_url = "https://datasets-server.huggingface.co"
 
-    def _build_headers(self) -> Dict[str, str]:
+    def _build_headers(self) -> dict[str, str]:
         """Build request headers with authentication if available."""
         headers = {"User-Agent": "TFBP-API/1.0"}
         if self.token:
             headers["Authorization"] = f"Bearer {self.token}"
         return headers
 
-    def fetch(self, repo_id: str) -> Dict[str, Any]:
-        """Fetch dataset size information.
+    def fetch(self, repo_id: str) -> dict[str, Any]:
+        """
+        Fetch dataset size information.
 
         :param repo_id: Repository identifier (e.g., "user/dataset")
         :return: Size information as dictionary
         :raises HfDataFetchError: If fetching fails
+
         """
         url = f"{self.base_url}/size"
         params = {"dataset": repo_id}
@@ -113,22 +121,26 @@ class HfSizeInfoFetcher:
 class HfRepoStructureFetcher:
     """Handles fetching repository structure from HuggingFace Hub."""
 
-    def __init__(self, token: Optional[str] = None):
-        """Initialize the fetcher.
+    def __init__(self, token: str | None = None):
+        """
+        Initialize the fetcher.
 
         :param token: HuggingFace token for authentication
+
         """
         self.logger = logging.getLogger(self.__class__.__name__)
         self.token = token or os.getenv("HF_TOKEN")
-        self._cached_structure: Dict[str, Dict[str, Any]] = {}
+        self._cached_structure: dict[str, dict[str, Any]] = {}
 
-    def fetch(self, repo_id: str, force_refresh: bool = False) -> Dict[str, Any]:
-        """Fetch repository structure information.
+    def fetch(self, repo_id: str, force_refresh: bool = False) -> dict[str, Any]:
+        """
+        Fetch repository structure information.
 
         :param repo_id: Repository identifier (e.g., "user/dataset")
         :param force_refresh: If True, bypass cache and fetch fresh data
         :return: Repository structure information
         :raises HfDataFetchError: If fetching fails
+
         """
         # Check cache first unless force refresh is requested
         if not force_refresh and repo_id in self._cached_structure:
@@ -141,7 +153,7 @@ class HfRepoStructureFetcher:
 
             # Extract file structure
             files = []
-            partitions: Dict[str, set] = {}
+            partitions: dict[str, set] = {}
 
             for sibling in info.siblings or []:
                 file_info = {
@@ -174,12 +186,14 @@ class HfRepoStructureFetcher:
             raise HfDataFetchError(error_msg) from e
 
     def _extract_partition_info(
-        self, file_path: str, partitions: Dict[str, Set[str]]
+        self, file_path: str, partitions: dict[str, set[str]]
     ) -> None:
-        """Extract partition information from file paths.
+        """
+        Extract partition information from file paths.
 
         :param file_path: Path to analyze for partitions
         :param partitions: Dictionary to update with partition info
+
         """
         # Look for partition patterns like "column=value" in path
         partition_pattern = r"([^/=]+)=([^/]+)"
@@ -190,29 +204,35 @@ class HfRepoStructureFetcher:
                 partitions[column] = set()
             partitions[column].add(value)
 
-    def get_partition_values(self, repo_id: str, partition_column: str, force_refresh: bool = False) -> List[str]:
-        """Get all values for a specific partition column.
+    def get_partition_values(
+        self, repo_id: str, partition_column: str, force_refresh: bool = False
+    ) -> list[str]:
+        """
+        Get all values for a specific partition column.
 
         :param repo_id: Repository identifier
         :param partition_column: Name of the partition column
         :param force_refresh: If True, bypass cache and fetch fresh data
         :return: List of unique partition values
         :raises HfDataFetchError: If fetching fails
+
         """
         structure = self.fetch(repo_id, force_refresh=force_refresh)
         partition_values = structure.get("partitions", {}).get(partition_column, set())
         return sorted(list(partition_values))
 
     def get_dataset_files(
-        self, repo_id: str, path_pattern: Optional[str] = None, force_refresh: bool = False
-    ) -> List[Dict[str, Any]]:
-        """Get dataset files, optionally filtered by path pattern.
+        self, repo_id: str, path_pattern: str | None = None, force_refresh: bool = False
+    ) -> list[dict[str, Any]]:
+        """
+        Get dataset files, optionally filtered by path pattern.
 
         :param repo_id: Repository identifier
         :param path_pattern: Optional regex pattern to filter files
         :param force_refresh: If True, bypass cache and fetch fresh data
         :return: List of matching files
         :raises HfDataFetchError: If fetching fails
+
         """
         structure = self.fetch(repo_id, force_refresh=force_refresh)
         files = structure["files"]

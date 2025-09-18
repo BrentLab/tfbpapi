@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional
 class DatasetError(Exception):
     """Base exception for all dataset-related errors."""
 
-    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
+    def __init__(self, message: str, details: dict[str, Any] | None = None):
         super().__init__(message)
         self.details = details or {}
 
@@ -42,9 +42,9 @@ class DataCardParsingError(DatasetError):
     def __init__(
         self,
         message: str,
-        repo_id: Optional[str] = None,
-        config_name: Optional[str] = None,
-        original_error: Optional[Exception] = None,
+        repo_id: str | None = None,
+        config_name: str | None = None,
+        original_error: Exception | None = None,
     ):
         details = {}
         if repo_id:
@@ -66,9 +66,9 @@ class HfDataFetchError(DatasetError):
     def __init__(
         self,
         message: str,
-        repo_id: Optional[str] = None,
-        status_code: Optional[int] = None,
-        endpoint: Optional[str] = None,
+        repo_id: str | None = None,
+        status_code: int | None = None,
+        endpoint: str | None = None,
     ):
         details = {}
         if repo_id:
@@ -87,7 +87,7 @@ class HfDataFetchError(DatasetError):
 class TableNotFoundError(DatasetError):
     """Raised when requested table doesn't exist."""
 
-    def __init__(self, table_name: str, available_tables: Optional[list] = None):
+    def __init__(self, table_name: str, available_tables: list | None = None):
         available_str = (
             f"Available tables: {available_tables}"
             if available_tables
@@ -109,7 +109,7 @@ class TableNotFoundError(DatasetError):
 class MissingDatasetTypeError(DatasetError):
     """Raised when dataset_type field is missing from config."""
 
-    def __init__(self, config_name: str, available_fields: Optional[list] = None):
+    def __init__(self, config_name: str, available_fields: list | None = None):
         fields_str = f"Available fields: {available_fields}" if available_fields else ""
         message = (
             f"Missing 'dataset_type' field in config '{config_name}'. {fields_str}"
@@ -129,7 +129,7 @@ class MissingDatasetTypeError(DatasetError):
 class InvalidDatasetTypeError(DatasetError):
     """Raised when dataset_type value is not recognized."""
 
-    def __init__(self, invalid_type: str, valid_types: Optional[list] = None):
+    def __init__(self, invalid_type: str, valid_types: list | None = None):
         valid_str = f"Valid types: {valid_types}" if valid_types else ""
         message = f"Invalid dataset type '{invalid_type}'. {valid_str}"
 
@@ -147,8 +147,8 @@ class ConfigNotFoundError(DatasetError):
     def __init__(
         self,
         config_name: str,
-        repo_id: Optional[str] = None,
-        available_configs: Optional[list] = None,
+        repo_id: str | None = None,
+        available_configs: list | None = None,
     ):
         repo_str = f" in repository '{repo_id}'" if repo_id else ""
         available_str = (
@@ -171,6 +171,7 @@ class ConfigNotFoundError(DatasetError):
 
 class DataCardError(DatasetError):
     """Base exception for DataCard operations."""
+
     pass
 
 
@@ -180,8 +181,8 @@ class DataCardValidationError(DataCardError):
     def __init__(
         self,
         message: str,
-        repo_id: Optional[str] = None,
-        validation_errors: Optional[list] = None,
+        repo_id: str | None = None,
+        validation_errors: list | None = None,
     ):
         details = {}
         if repo_id:
@@ -200,8 +201,8 @@ class DataCardMetadataError(DataCardError):
     def __init__(
         self,
         message: str,
-        config_name: Optional[str] = None,
-        field_name: Optional[str] = None,
+        config_name: str | None = None,
+        field_name: str | None = None,
     ):
         details = {}
         if config_name:

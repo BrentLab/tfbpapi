@@ -855,6 +855,7 @@ class HfQueryAPI:
         Get comprehensive cache information including current repo details.
 
         :return: Dictionary with cache stats, repo info, and recommendations
+
         """
         if not self._cache_manager:
             self.logger.debug("Cache management is disabled")
@@ -967,6 +968,7 @@ class HfQueryAPI:
 
         :param repo_id: Repository ID (defaults to current repo)
         :return: Dictionary with detailed repo cache information
+
         """
         if not self._cache_manager:
             self.logger.debug("Cache management is disabled")
@@ -1047,6 +1049,7 @@ class HfQueryAPI:
 
         :param table_name: Specific table to check (defaults to all tables)
         :return: Dictionary with file cache status
+
         """
         if not self._cache_manager:
             self.logger.debug("Cache management is disabled")
@@ -1157,6 +1160,7 @@ class HfQueryAPI:
         :param keep_current_repo: Whether to preserve current repo from cleanup
         :param dry_run: If True, show what would be deleted without executing
         :return: Dictionary with cleanup results and summary
+
         """
         if not self._cache_manager:
             self.logger.warning("Cache management is disabled, cannot perform cleanup")
@@ -1315,9 +1319,11 @@ class HfQueryAPI:
         """
         Automatically clean cache if configured policies are exceeded.
 
-        This method is called automatically during operations if auto_cleanup is enabled.
+        This method is called automatically during operations if auto_cleanup is
+        enabled.
 
         :return: Dictionary with cleanup results or None if no cleanup was needed
+
         """
         if not self._cache_manager or not getattr(self, "_cache_auto_cleanup", False):
             self.logger.debug("Auto-cleanup is disabled")
@@ -1377,6 +1383,7 @@ class HfQueryAPI:
         Analyze cache and provide cleanup recommendations without executing.
 
         :return: Dictionary with analysis and recommendations
+
         """
         if not self._cache_manager:
             return {"cache_management": "disabled"}
@@ -1491,9 +1498,11 @@ class HfQueryAPI:
 
         :param repo_ids: List of repository IDs to pre-download
         :param tables: List of table names from current repo to pre-download
-        :param include_current_repo: Whether to include current repo if repo_ids specified
+        :param include_current_repo: Whether to include current repo if repo_ids
+            specified
         :param dry_run: If True, show what would be downloaded without executing
         :return: Dictionary with warming results
+
         """
         if not self._cache_manager:
             return {"cache_management": "disabled"}
@@ -1607,6 +1616,7 @@ class HfQueryAPI:
         Verify integrity of cached files and detect corruption.
 
         :return: Dictionary with verification results
+
         """
         if not self._cache_manager:
             return {"cache_management": "disabled"}
@@ -1695,7 +1705,7 @@ class HfQueryAPI:
                                     "message": f"File size mismatch in {file_info.file_name}",
                                 }
                             )
-                    except (OSError, IOError) as e:
+                    except OSError as e:
                         repo_issues.append(
                             {
                                 "type": "access_error",
@@ -1769,6 +1779,7 @@ class HfQueryAPI:
 
         :param new_cache_dir: Target directory for cache migration
         :return: Dictionary with migration results
+
         """
         if not self._cache_manager:
             return {"cache_management": "disabled"}
@@ -1888,6 +1899,7 @@ class HfQueryAPI:
         :param max_size: Maximum total cache size (e.g., "10GB")
         :param save_to_env: Save configuration to environment variables
         :return: Dictionary with updated configuration
+
         """
         if not self._cache_manager:
             return {"cache_management": "disabled"}
@@ -1948,6 +1960,7 @@ class HfQueryAPI:
         Get current cache configuration including environment variables.
 
         :return: Dictionary with comprehensive cache configuration
+
         """
         import os
 
@@ -2016,6 +2029,7 @@ class HfQueryAPI:
 
         :param remove_env_vars: Also remove related environment variables
         :return: Dictionary with reset results
+
         """
         if not self._cache_manager:
             return {"cache_management": "disabled"}
@@ -2064,6 +2078,7 @@ class HfQueryAPI:
         Apply cache policies from environment variables.
 
         :return: Dictionary with applied configuration
+
         """
         if not self._cache_manager:
             return {"cache_management": "disabled"}
@@ -2112,6 +2127,7 @@ class HfQueryAPI:
 
         :param format: Export format - "env", "json", "yaml"
         :return: Dictionary with exported configuration
+
         """
         if not self._cache_manager:
             return {"cache_management": "disabled"}
