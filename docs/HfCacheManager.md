@@ -1,1 +1,1 @@
-::: tfbpapi.HfCacheManager.HFCacheManager
+::: tfbpapi.HfCacheManager.HfCacheManager

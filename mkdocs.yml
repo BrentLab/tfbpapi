@@ -150,6 +150,8 @@ nav:
   - Home: index.md
   - Tutorials:
     - "DataCard: Exploring Datasets": tutorials/datacard_tutorial.ipynb
+    - "Cache Management": tutorials/cache_manager_tutorial.ipynb
+    - "Querying the Datasets": tutorials/hfqueryapi_tutorial.ipynb
   - API Reference:
     - Core Components:
       - HfQueryAPI: HfQueryAPI.md

@@ -1,6 +1,6 @@
 """Custom exception classes for dataset management."""
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 
 class DatasetError(Exception):
@@ -22,7 +22,8 @@ class RepoTooLargeError(DatasetError):
     """Raised when repository exceeds auto-download threshold."""
 
     def __init__(self, repo_id: str, size_mb: float, threshold_mb: float):
-        message = f"Repository '{repo_id}' is too large for auto-download: {size_mb:.2f}MB exceeds {threshold_mb}MB threshold"
+        message = f"Repository '{repo_id}' is too large for "
+        f"auto-download: {size_mb:.2f}MB exceeds {threshold_mb}MB threshold"
         super().__init__(
             message,
             details={
@@ -46,7 +47,7 @@ class DataCardParsingError(DatasetError):
         config_name: str | None = None,
         original_error: Exception | None = None,
     ):
-        details = {}
+        details: dict[str, Any] = {}
         if repo_id:
             details["repo_id"] = repo_id
         if config_name:
@@ -70,7 +71,7 @@ class HfDataFetchError(DatasetError):
         status_code: int | None = None,
         endpoint: str | None = None,
     ):
-        details = {}
+        details: dict[str, Any] = {}
         if repo_id:
             details["repo_id"] = repo_id
         if status_code:
@@ -184,7 +185,7 @@ class DataCardValidationError(DataCardError):
         repo_id: str | None = None,
         validation_errors: list | None = None,
     ):
-        details = {}
+        details: dict[str, Any] = {}
         if repo_id:
             details["repo_id"] = repo_id
         if validation_errors:
@@ -204,7 +205,7 @@ class DataCardMetadataError(DataCardError):
         config_name: str | None = None,
         field_name: str | None = None,
     ):
-        details = {}
+        details: dict[str, Any] = {}
         if config_name:
             details["config_name"] = config_name
         if field_name:

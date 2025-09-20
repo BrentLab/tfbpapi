@@ -1,16 +1,246 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Literal
+from pathlib import Path
+from typing import Any, Literal
 
-from huggingface_hub import scan_cache_dir
+import duckdb
+from huggingface_hub import scan_cache_dir, try_to_load_from_cache
 from huggingface_hub.utils import DeleteCacheStrategy
 
+from .datainfo.datacard import DataCard
 
-class HFCacheManager:
-    """Cache memory management for Hugging Face Hub cache."""
 
-    def __init__(self, logger: logging.Logger | None = None):
+class HfCacheManager(DataCard):
+    """Enhanced cache management for Hugging Face Hub with metadata-focused
+    retrieval."""
+
+    def __init__(
+        self,
+        repo_id: str,
+        duckdb_conn: duckdb.DuckDBPyConnection,
+        token: str | None = None,
+        logger: logging.Logger | None = None,
+    ):
+        super().__init__(repo_id, token)
+        self.duckdb_conn = duckdb_conn
         self.logger = logger or logging.getLogger(__name__)
+
+    def _get_metadata_for_config(self, config) -> dict[str, Any]:
+        """Get metadata for a specific configuration using 3-case strategy."""
+        config_result = {
+            "config_name": config.config_name,
+            "strategy": None,
+            "table_name": None,
+            "success": False,
+            "message": "",
+        }
+
+        table_name = f"metadata_{config.config_name}"
+
+        try:
+            # Case 1: Check if metadata already exists in DuckDB
+            if self._check_metadata_exists_in_duckdb(table_name):
+                config_result.update(
+                    {
+                        "strategy": "duckdb_exists",
+                        "table_name": table_name,
+                        "success": True,
+                        "message": f"Metadata table {table_name} "
+                        "already exists in DuckDB",
+                    }
+                )
+                return config_result
+
+            # Case 2: Check if HF data is in cache, create DuckDB representation
+            if self._load_metadata_from_cache(config, table_name):
+                config_result.update(
+                    {
+                        "strategy": "cache_loaded",
+                        "table_name": table_name,
+                        "success": True,
+                        "message": "Loaded metadata from cache "
+                        f"into table {table_name}",
+                    }
+                )
+                return config_result
+
+            # Case 3: Download from HF (explicit vs embedded)
+            if self._download_and_load_metadata(config, table_name):
+                config_result.update(
+                    {
+                        "strategy": "downloaded",
+                        "table_name": table_name,
+                        "success": True,
+                        "message": "Downloaded and loaded metadata "
+                        f"into table {table_name}",
+                    }
+                )
+                return config_result
+
+            config_result["message"] = (
+                f"Failed to retrieve metadata for {config.config_name}"
+            )
+
+        except Exception as e:
+            config_result["message"] = f"Error processing {config.config_name}: {e}"
+            self.logger.error(f"Error in metadata config {config.config_name}: {e}")
+
+        return config_result
+
+    def _check_metadata_exists_in_duckdb(self, table_name: str) -> bool:
+        """Case 1: Check if metadata table already exists in DuckDB database."""
+        try:
+            # Query information schema to check if table exists
+            result = self.duckdb_conn.execute(
+                "SELECT table_name FROM information_schema.tables WHERE table_name = ?",
+                [table_name],
+            ).fetchone()
+
+            exists = result is not None
+            if exists:
+                self.logger.debug(f"Table {table_name} already exists in DuckDB")
+            return exists
+
+        except Exception as e:
+            self.logger.debug(f"Error checking DuckDB table existence: {e}")
+            return False
+
+    def _load_metadata_from_cache(self, config, table_name: str) -> bool:
+        """Case 2: HF data in cache, create DuckDB representation."""
+        try:
+            # Check if metadata files are cached locally
+            cached_files = []
+            for data_file in config.data_files:
+                cached_path = try_to_load_from_cache(
+                    repo_id=self.repo_id,
+                    filename=data_file.path,
+                    repo_type="dataset",
+                )
+
+                if isinstance(cached_path, str) and Path(cached_path).exists():
+                    cached_files.append(cached_path)
+
+            if not cached_files:
+                self.logger.debug(f"No cached files found for {config.config_name}")
+                return False
+
+            # Load cached parquet files into DuckDB
+            self._create_duckdb_table_from_files(cached_files, table_name)
+            self.logger.info(
+                f"Loaded {len(cached_files)} cached files into {table_name}"
+            )
+            return True
+
+        except Exception as e:
+            self.logger.debug(f"Error loading from cache for {config.config_name}: {e}")
+            return False
+
+    def _download_and_load_metadata(self, config, table_name: str) -> bool:
+        """Case 3: Download from HF (explicit vs embedded)."""
+        try:
+            from huggingface_hub import snapshot_download
+
+            # Download specific files for this metadata config
+            file_patterns = [data_file.path for data_file in config.data_files]
+
+            downloaded_path = snapshot_download(
+                repo_id=self.repo_id,
+                repo_type="dataset",
+                allow_patterns=file_patterns,
+                token=self.token,
+            )
+
+            # Find downloaded parquet files
+            downloaded_files = []
+            for pattern in file_patterns:
+                file_path = Path(downloaded_path) / pattern
+                if file_path.exists() and file_path.suffix == ".parquet":
+                    downloaded_files.append(str(file_path))
+                else:
+                    # Handle wildcard patterns
+                    parent_dir = Path(downloaded_path) / Path(pattern).parent
+                    if parent_dir.exists():
+                        downloaded_files.extend(
+                            [str(f) for f in parent_dir.glob("*.parquet")]
+                        )
+
+            if not downloaded_files:
+                self.logger.warning(
+                    f"No parquet files found after download for {config.config_name}"
+                )
+                return False
+
+            # Load downloaded files into DuckDB
+            self._create_duckdb_table_from_files(downloaded_files, table_name)
+            self.logger.info(
+                f"Downloaded and loaded {len(downloaded_files)} files into {table_name}"
+            )
+            return True
+
+        except Exception as e:
+            self.logger.error(
+                f"Error downloading metadata for {config.config_name}: {e}"
+            )
+            return False
+
+    def _create_duckdb_table_from_files(
+        self, file_paths: list[str], table_name: str
+    ) -> None:
+        """Create DuckDB table/view from parquet files."""
+        if len(file_paths) == 1:
+            # Single file
+            create_sql = f"""
+            CREATE OR REPLACE VIEW {table_name} AS
+            SELECT * FROM read_parquet('{file_paths[0]}')
+            """
+        else:
+            # Multiple files
+            files_str = "', '".join(file_paths)
+            create_sql = f"""
+            CREATE OR REPLACE VIEW {table_name} AS
+            SELECT * FROM read_parquet(['{files_str}'])
+            """
+
+        self.duckdb_conn.execute(create_sql)
+        self.logger.debug(
+            f"Created DuckDB view {table_name} from {len(file_paths)} files"
+        )
+
+    def _extract_embedded_metadata_field(
+        self, data_table_name: str, field_name: str, metadata_table_name: str
+    ) -> bool:
+        """Extract a specific metadata field from a data table."""
+        try:
+            # Create a metadata view with unique values from the specified field
+            extract_sql = f"""
+            CREATE OR REPLACE VIEW {metadata_table_name} AS
+            SELECT DISTINCT {field_name} as value, COUNT(*) as count
+            FROM {data_table_name}
+            WHERE {field_name} IS NOT NULL
+            GROUP BY {field_name}
+            ORDER BY count DESC
+            """
+
+            self.duckdb_conn.execute(extract_sql)
+
+            # Verify the table was created and has data
+            count_result = self.duckdb_conn.execute(
+                f"SELECT COUNT(*) FROM {metadata_table_name}"
+            ).fetchone()
+
+            if count_result and count_result[0] > 0:
+                self.logger.info(
+                    f"Extracted {count_result[0]} unique values for {field_name} "
+                    f"into {metadata_table_name}"
+                )
+                return True
+            else:
+                self.logger.warning(f"No data found for field {field_name}")
+                return False
+
+        except Exception as e:
+            self.logger.error(f"Error extracting field {field_name}: {e}")
+            return False
 
     def clean_cache_by_age(
         self,
