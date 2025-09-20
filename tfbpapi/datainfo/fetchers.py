@@ -1,14 +1,14 @@
 """Data fetchers for HuggingFace Hub integration."""
 
 import logging
-import os
 import re
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
 import requests
 from huggingface_hub import DatasetCard, repo_info
 from requests import HTTPError
 
+from ..constants import get_hf_token
 from ..errors import HfDataFetchError
 
 
@@ -23,7 +23,7 @@ class HfDataCardFetcher:
 
         """
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.token = token or os.getenv("HF_TOKEN")
+        self.token = token or get_hf_token()
 
     def fetch(self, repo_id: str, repo_type: str = "dataset") -> dict[str, Any]:
         """
@@ -62,7 +62,7 @@ class HfSizeInfoFetcher:
 
         """
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.token = token or os.getenv("HF_TOKEN")
+        self.token = token or get_hf_token()
         self.base_url = "https://datasets-server.huggingface.co"
 
     def _build_headers(self) -> dict[str, str]:
@@ -129,7 +129,7 @@ class HfRepoStructureFetcher:
 
         """
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.token = token or os.getenv("HF_TOKEN")
+        self.token = token or get_hf_token()
         self._cached_structure: dict[str, dict[str, Any]] = {}
 
     def fetch(self, repo_id: str, force_refresh: bool = False) -> dict[str, Any]:
