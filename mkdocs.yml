@@ -152,6 +152,7 @@ nav:
     - "DataCard: Exploring Datasets": tutorials/datacard_tutorial.ipynb
     - "Cache Management": tutorials/cache_manager_tutorial.ipynb
     - "Querying the Datasets": tutorials/hfqueryapi_tutorial.ipynb
+    - "Rank Response Analysis": tutorials/rank_response_tutorial.ipynb
   - API Reference:
     - Core Components:
       - HfQueryAPI: HfQueryAPI.md

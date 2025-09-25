@@ -25,8 +25,16 @@ class HfCacheManager(DataCard):
         self.duckdb_conn = duckdb_conn
         self.logger = logger or logging.getLogger(__name__)
 
-    def _get_metadata_for_config(self, config) -> dict[str, Any]:
-        """Get metadata for a specific configuration using 3-case strategy."""
+    def _get_metadata_for_config(
+        self, config, force_refresh: bool = False
+    ) -> dict[str, Any]:
+        """
+        Get metadata for a specific configuration using 3-case strategy.
+
+        :param config: Configuration object to process
+        :param force_refresh: If True, skip cache checks and download fresh from remote
+
+        """
         config_result = {
             "config_name": config.config_name,
             "strategy": None,
@@ -38,31 +46,33 @@ class HfCacheManager(DataCard):
         table_name = f"metadata_{config.config_name}"
 
         try:
-            # Case 1: Check if metadata already exists in DuckDB
-            if self._check_metadata_exists_in_duckdb(table_name):
-                config_result.update(
-                    {
-                        "strategy": "duckdb_exists",
-                        "table_name": table_name,
-                        "success": True,
-                        "message": f"Metadata table {table_name} "
-                        "already exists in DuckDB",
-                    }
-                )
-                return config_result
+            # Skip cache checks if force_refresh is True
+            if not force_refresh:
+                # Case 1: Check if metadata already exists in DuckDB
+                if self._check_metadata_exists_in_duckdb(table_name):
+                    config_result.update(
+                        {
+                            "strategy": "duckdb_exists",
+                            "table_name": table_name,
+                            "success": True,
+                            "message": f"Metadata table {table_name} "
+                            "already exists in DuckDB",
+                        }
+                    )
+                    return config_result
 
-            # Case 2: Check if HF data is in cache, create DuckDB representation
-            if self._load_metadata_from_cache(config, table_name):
-                config_result.update(
-                    {
-                        "strategy": "cache_loaded",
-                        "table_name": table_name,
-                        "success": True,
-                        "message": "Loaded metadata from cache "
-                        f"into table {table_name}",
-                    }
-                )
-                return config_result
+                # Case 2: Check if HF data is in cache, create DuckDB representation
+                if self._load_metadata_from_cache(config, table_name):
+                    config_result.update(
+                        {
+                            "strategy": "cache_loaded",
+                            "table_name": table_name,
+                            "success": True,
+                            "message": "Loaded metadata from cache "
+                            f"into table {table_name}",
+                        }
+                    )
+                    return config_result
 
             # Case 3: Download from HF (explicit vs embedded)
             if self._download_and_load_metadata(config, table_name):
@@ -157,12 +167,21 @@ class HfCacheManager(DataCard):
                 if file_path.exists() and file_path.suffix == ".parquet":
                     downloaded_files.append(str(file_path))
                 else:
-                    # Handle wildcard patterns
-                    parent_dir = Path(downloaded_path) / Path(pattern).parent
-                    if parent_dir.exists():
+                    # Handle wildcard patterns, including nested wildcards
+                    if "*" in pattern:
+                        # Use glob on the full pattern relative to downloaded_path
+                        base_path = Path(downloaded_path)
+                        matching_files = list(base_path.glob(pattern))
                         downloaded_files.extend(
-                            [str(f) for f in parent_dir.glob("*.parquet")]
+                            [str(f) for f in matching_files if f.suffix == ".parquet"]
                         )
+                    else:
+                        # Handle non-wildcard patterns that might be directories
+                        parent_dir = Path(downloaded_path) / Path(pattern).parent
+                        if parent_dir.exists():
+                            downloaded_files.extend(
+                                [str(f) for f in parent_dir.glob("*.parquet")]
+                            )
 
             if not downloaded_files:
                 self.logger.warning(

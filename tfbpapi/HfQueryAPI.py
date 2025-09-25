@@ -1,10 +1,13 @@
 import logging
+import re
 from pathlib import Path
 from typing import Literal
 
+import duckdb
 import pandas as pd
 
-from .constants import CACHE_DIR
+from .constants import CACHE_DIR, SQL_FILTER_KEYWORDS
+from .errors import InvalidFilterFieldError
 from .HfCacheManager import HfCacheManager
 
 
@@ -17,6 +20,7 @@ class HfQueryAPI(HfCacheManager):
         repo_type: Literal["model", "dataset", "space"] = "dataset",
         token: str | None = None,
         cache_dir: str | Path | None = None,
+        duckdb_conn: duckdb.DuckDBPyConnection = duckdb.connect(":memory:"),
     ):
         """
         Initialize the minimal HF Query API client.
@@ -27,10 +31,7 @@ class HfQueryAPI(HfCacheManager):
         :param cache_dir: HF cache_dir for downloads
 
         """
-        # No DuckDB connection needed for metadata-only functionality
-        import duckdb
-
-        self._duckdb_conn = duckdb.connect(":memory:")
+        self._duckdb_conn = duckdb_conn
 
         # Initialize parent with minimal setup
         super().__init__(
@@ -45,7 +46,9 @@ class HfQueryAPI(HfCacheManager):
         self.cache_dir = Path(cache_dir) if cache_dir is not None else CACHE_DIR
 
         # Filter storage system
-        self._table_filters: dict[str, str] = {}  # config_name -> SQL WHERE clause
+        # dict structure:
+        #   {config_name: "SQL WHERE clause", ...}
+        self._table_filters: dict[str, str] = {}
 
     @property
     def cache_dir(self) -> Path:
@@ -59,124 +62,494 @@ class HfQueryAPI(HfCacheManager):
             raise FileNotFoundError(f"Cache directory {path} does not exist")
         self._cache_dir = path
 
-    def get_metadata(self, config_name: str | None = None) -> pd.DataFrame:
+    def _get_explicit_metadata(self, config, table_name: str) -> pd.DataFrame:
+        """Helper function to handle explicit metadata configurations."""
+        sql = f"SELECT * FROM {table_name}"
+        return self.duckdb_conn.execute(sql).fetchdf()
+
+    def _get_embedded_metadata(self, config, table_name: str) -> pd.DataFrame:
+        """Helper function to handle embedded metadata configurations."""
+        if config.metadata_fields is None:
+            raise ValueError(f"Config {config.config_name} has no metadata fields")
+        fields = ", ".join(config.metadata_fields)
+        where_clauses = " AND ".join(
+            [f"{field} IS NOT NULL" for field in config.metadata_fields]
+        )
+        sql = f"""
+            SELECT DISTINCT {fields}, COUNT(*) as count
+            FROM {table_name}
+            WHERE {where_clauses}
+            GROUP BY {fields}
+            ORDER BY count DESC
         """
-        Retrieve metadata as a DataFrame with actual metadata values.
+        return self.duckdb_conn.execute(sql).fetchdf()
 
-        For explicit metadata (dataset_type == METADATA): Returns all rows from metadata
-        table. For embedded metadata (has metadata_fields): Returns distinct
-        combinations of metadata fields.
+    def _validate_metadata_fields(
+        self, config_name: str, field_names: list[str]
+    ) -> None:
+        """
+        Validate that field names exist in the config's metadata columns.
 
-        :param config_name: Optional specific config name, otherwise returns all
-            metadata
-        :return: DataFrame with metadata values
-        :raises ValueError: If config_name is specified but not found
+        :param config_name: Configuration name to validate against
+        :param field_names: List of field names to validate
+        :raises InvalidFilterFieldError: If any fields don't exist in metadata
 
         """
-        # Get explicit metadata configurations
-        explicit_metadata_configs = self.dataset_card.get_metadata_configs()
+        if not field_names:
+            return
 
-        # Get data configurations that have embedded metadata
-        # (metadata_fields specified)
-        embedded_metadata_configs = [
-            config
-            for config in self.dataset_card.get_data_configs()
-            if config.metadata_fields
-        ]
+        try:
+            metadata_df = self.get_metadata(config_name)
+            if metadata_df.empty:
+                raise InvalidFilterFieldError(
+                    config_name=config_name,
+                    invalid_fields=field_names,
+                    available_fields=[],
+                )
 
-        # Combine both types
-        all_metadata_sources = explicit_metadata_configs + embedded_metadata_configs
-
-        if not all_metadata_sources:
-            # Return empty DataFrame
-            return pd.DataFrame()
-
-        # Filter by config_name if specified
-        if config_name:
-            matching_configs = [
-                c for c in all_metadata_sources if c.config_name == config_name
+            available_fields = list(metadata_df.columns)
+            invalid_fields = [
+                field for field in field_names if field not in available_fields
             ]
-            if not matching_configs:
-                available_names = [c.config_name for c in all_metadata_sources]
-                raise ValueError(
-                    f"Config '{config_name}' not found. "
-                    f"Available metadata configs: {available_names}"
-                )
-            configs_to_process = matching_configs
-        else:
-            configs_to_process = all_metadata_sources
 
-        # Process each configuration and collect DataFrames
-        dataframes = []
-        for config in configs_to_process:
-            # Ensure the data/metadata is loaded
-            config_result = self._get_metadata_for_config(config)
-
-            if not config_result.get("success", False):
-                self.logger.warning(
-                    f"Failed to load data for config {config.config_name}"
+            if invalid_fields:
+                raise InvalidFilterFieldError(
+                    config_name=config_name,
+                    invalid_fields=invalid_fields,
+                    available_fields=available_fields,
                 )
+        except Exception as e:
+            if isinstance(e, InvalidFilterFieldError):
+                raise
+            # If metadata retrieval fails for other reasons, log warning but allow
+            self.logger.warning(
+                f"Could not validate filter fields for {config_name}: {e}"
+            )
+
+    def _extract_fields_from_sql(self, sql_where: str) -> list[str]:
+        """
+        Extract potential field names from SQL WHERE clause.
+
+        Uses a more robust approach to identify column references while avoiding string
+        literals used as values.
+
+        :param sql_where: SQL WHERE clause (without 'WHERE' keyword)
+        :return: List of potential field names found in the SQL
+
+        """
+        if not sql_where.strip():
+            return []
+
+        field_names = set()
+
+        # Tokenize the SQL to better understand context
+        # This regex splits on key tokens while preserving them
+        tokens = re.findall(
+            r"""
+            \bIN\s*\([^)]+\)|                    # IN clauses with content
+            \bBETWEEN\s+\S+\s+AND\s+\S+|        # BETWEEN clauses
+            (?:'[^']*')|(?:"[^"]*")|             # Quoted strings
+            \b(?:AND|OR|NOT|IS|NULL|LIKE|BETWEEN|IN)\b|  # SQL keywords
+            [=!<>]+|                             # Comparison operators
+            [(),]|                               # Delimiters
+            \b[a-zA-Z_][a-zA-Z0-9_]*\b|          # Identifiers
+            \S+                                  # Other tokens
+        """,
+            sql_where,
+            re.VERBOSE | re.IGNORECASE,
+        )
+
+        # Track the context to determine if an identifier is a field name or value
+        i = 0
+        while i < len(tokens):
+            token = tokens[i].strip()
+            if not token:
+                i += 1
                 continue
 
-            table_name = config_result.get("table_name")
-            if not table_name:
-                self.logger.warning(f"No table name for config {config.config_name}")
+            # Skip IN clauses entirely - they contain values, not field names
+            if re.match(r"\bIN\s*\(", token, re.IGNORECASE):
+                i += 1
                 continue
 
-            try:
-                if config in explicit_metadata_configs:
-                    # Explicit metadata: return all rows from metadata table
-                    sql = f"SELECT * FROM {table_name}"
-                else:
-                    # Embedded metadata: return distinct combinations of metadata fields
-                    if config.metadata_fields is None:
-                        raise ValueError(
-                            f"Config {config.config_name} has no metadata fields"
+            # Skip BETWEEN clauses entirely - they contain values, not field names
+            if re.match(r"\bBETWEEN\b", token, re.IGNORECASE):
+                i += 1
+                continue
+
+            # Handle quoted strings - could be identifiers or values depending on context
+            if token.startswith(("'", '"')):
+                # Extract the content inside quotes
+                quoted_content = token[1:-1]
+
+                # Find next significant token to determine context
+                next_significant_token = None
+                for j in range(i + 1, len(tokens)):
+                    next_token = tokens[j].strip()
+                    if next_token and next_token not in [" ", "\n", "\t"]:
+                        next_significant_token = next_token
+                        break
+
+                # Check if this quoted string is a field name based on context
+                is_quoted_field = False
+
+                # Check what comes after this quoted string
+                if next_significant_token:
+                    # If followed by comparison operators or SQL keywords, it's a field name
+                    if (
+                        next_significant_token
+                        in ["=", "!=", "<>", "<", ">", "<=", ">="]
+                        or next_significant_token.upper() in ["IS", "LIKE", "NOT"]
+                        or re.match(
+                            r"\bBETWEEN\b", next_significant_token, re.IGNORECASE
                         )
-                    fields = ", ".join(config.metadata_fields)
-                    where_clauses = " AND ".join(
-                        [f"{field} IS NOT NULL" for field in config.metadata_fields]
-                    )
-                    sql = f"""
-                        SELECT DISTINCT {fields}, COUNT(*) as count
-                        FROM {table_name}
-                        WHERE {where_clauses}
-                        GROUP BY {fields}
-                        ORDER BY count DESC
-                    """
+                        or re.match(r"\bIN\s*\(", next_significant_token, re.IGNORECASE)
+                    ):
+                        is_quoted_field = True
 
-                df = self.duckdb_conn.execute(sql).fetchdf()
+                # Also check what comes before this quoted string
+                if not is_quoted_field and i > 0:
+                    # Find the previous significant token
+                    prev_significant_token = None
+                    for j in range(i - 1, -1, -1):
+                        prev_token = tokens[j].strip()
+                        if prev_token and prev_token not in [" ", "\n", "\t"]:
+                            prev_significant_token = prev_token
+                            break
 
-                # Add config source column if multiple configs
-                if len(configs_to_process) > 1:
-                    df["config_name"] = config.config_name
+                    # If preceded by a comparison operator, could be a field name
+                    # But we need to be very careful not to treat string literals as field names
+                    if prev_significant_token and prev_significant_token in [
+                        "=",
+                        "!=",
+                        "<>",
+                        "<",
+                        ">",
+                        "<=",
+                        ">=",
+                    ]:
+                        # Only treat as field name if it looks like a database identifier
+                        # AND doesn't look like a typical string value
+                        if self._looks_like_identifier(
+                            quoted_content
+                        ) and self._looks_like_database_identifier(quoted_content):
+                            is_quoted_field = True
 
-                dataframes.append(df)
+                if is_quoted_field:
+                    field_names.add(quoted_content)
 
-            except Exception as e:
-                self.logger.error(
-                    f"Error querying metadata for {config.config_name}: {e}"
-                )
+                i += 1
                 continue
 
-        # Combine all DataFrames
-        if not dataframes:
-            return pd.DataFrame()
-        elif len(dataframes) == 1:
-            return dataframes[0]
+            # Skip SQL keywords and operators
+            if token.upper() in SQL_FILTER_KEYWORDS or token in [
+                "=",
+                "!=",
+                "<>",
+                "<",
+                ">",
+                "<=",
+                ">=",
+                "(",
+                ")",
+                ",",
+            ]:
+                i += 1
+                continue
+
+            # Skip numeric literals
+            if re.match(r"^-?\d+(\.\d+)?$", token):
+                i += 1
+                continue
+
+            # Check if this looks like an identifier (field name)
+            if re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", token):
+                # Check the context - if the next non-whitespace token is a comparison operator,
+                # then this is likely a field name
+                next_significant_token = None
+                for j in range(i + 1, len(tokens)):
+                    next_token = tokens[j].strip()
+                    if next_token and next_token not in [" ", "\n", "\t"]:
+                        next_significant_token = next_token
+                        break
+
+                # Check if followed by a comparison operator or SQL keyword that indicates a field
+                is_field = False
+
+                if next_significant_token:
+                    # Direct comparison operators
+                    if next_significant_token in [
+                        "=",
+                        "!=",
+                        "<>",
+                        "<",
+                        ">",
+                        "<=",
+                        ">=",
+                    ]:
+                        is_field = True
+                    # SQL keywords that follow field names
+                    elif next_significant_token.upper() in ["IS", "LIKE", "NOT"]:
+                        is_field = True
+                    # BETWEEN clause (could be just 'BETWEEN' or 'BETWEEN ... AND ...')
+                    elif next_significant_token.upper() == "BETWEEN" or re.match(
+                        r"\bBETWEEN\b", next_significant_token, re.IGNORECASE
+                    ):
+                        is_field = True
+                    # IN clause (could be just 'IN' or 'IN (...)')
+                    elif next_significant_token.upper() == "IN" or re.match(
+                        r"\bIN\s*\(", next_significant_token, re.IGNORECASE
+                    ):
+                        is_field = True
+
+                # If not a field yet, check other contexts
+                if not is_field and i > 0:
+                    # Find the previous significant token
+                    prev_significant_token = None
+                    for j in range(i - 1, -1, -1):
+                        prev_token = tokens[j].strip()
+                        if prev_token and prev_token not in [" ", "\n", "\t"]:
+                            prev_significant_token = prev_token
+                            break
+
+                    # Case 1: After AND/OR and before an operator (original logic)
+                    if (
+                        prev_significant_token
+                        and prev_significant_token.upper() in ["AND", "OR"]
+                        and next_significant_token
+                    ):
+                        # Same checks as above
+                        if next_significant_token in [
+                            "=",
+                            "!=",
+                            "<>",
+                            "<",
+                            ">",
+                            "<=",
+                            ">=",
+                        ]:
+                            is_field = True
+                        elif next_significant_token.upper() in ["IS", "LIKE", "NOT"]:
+                            is_field = True
+                        elif next_significant_token.upper() == "BETWEEN" or re.match(
+                            r"\bBETWEEN\b", next_significant_token, re.IGNORECASE
+                        ):
+                            is_field = True
+                        elif next_significant_token.upper() == "IN" or re.match(
+                            r"\bIN\s*\(", next_significant_token, re.IGNORECASE
+                        ):
+                            is_field = True
+
+                    # Case 2: After a comparison operator (second operand)
+                    elif prev_significant_token and prev_significant_token in [
+                        "=",
+                        "!=",
+                        "<>",
+                        "<",
+                        ">",
+                        "<=",
+                        ">=",
+                    ]:
+                        # But exclude function names (identifiers followed by '(')
+                        if next_significant_token != "(":
+                            is_field = True
+
+                    # Case 3: After opening parenthesis (function parameter)
+                    elif prev_significant_token == "(":
+                        is_field = True
+
+                if is_field:
+                    field_names.add(token)
+
+            i += 1
+
+        return list(field_names)
+
+    def _looks_like_identifier(self, content: str) -> bool:
+        """
+        Determine if quoted content looks like an identifier rather than a string
+        literal.
+
+        :param content: The content inside quotes
+        :return: True if it looks like an identifier, False if it looks like a string
+            literal
+
+        """
+        if not content:
+            return False
+
+        # Basic identifier pattern: starts with letter/underscore, contains only alphanumeric/underscore
+        if re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", content):
+            return True
+
+        # Extended identifier pattern: could contain spaces if it's a column name like "quoted field"
+        # but not if it contains many special characters or looks like natural language
+        if " " in content:
+            # If it contains spaces, it should still look identifier-like
+            # Allow simple cases like "quoted field" but not "this is a long string value"
+            words = content.split()
+            if len(words) <= 3 and all(
+                re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", word) for word in words
+            ):
+                return True
+            return False
+
+        return False
+
+    def _looks_like_database_identifier(self, content: str) -> bool:
+        """
+        Determine if content looks like a database identifier (field/table name).
+
+        This is more strict than _looks_like_identifier and helps distinguish between
+        quoted identifiers like "field_name" and string values like "value1".
+
+        :param content: The content to check
+        :return: True if it looks like a database identifier
+
+        """
+        if not content:
+            return False
+
+        # Database identifiers typically:
+        # 1. Don't start with numbers (field names rarely start with numbers)
+        # 2. Often contain underscores or descriptive words
+        # 3. Don't look like simple values
+
+        # Reject if starts with a number (like "value1", "123abc")
+        if content[0].isdigit():
+            return False
+
+        # Handle short simple values that could be literals or field names
+        if len(content) <= 6 and re.match(r"^[a-z]+\d*$", content.lower()):
+            # Allow common field name prefixes
+            field_prefixes = ["field", "col", "column", "attr", "prop"]
+            if any(content.lower().startswith(prefix) for prefix in field_prefixes):
+                return True  # It's a valid field name like "field1", "col2"
+            else:
+                return False  # It's likely a simple value like "value", "test"
+
+        # Accept if it contains underscore (common in field names)
+        if "_" in content:
+            return True
+
+        # Accept if it has multiple words (like "quoted field")
+        if " " in content:
+            return True
+
+        # Accept if it's a longer descriptive name
+        if len(content) > 8:
+            return True
+
+        # Reject otherwise (likely a simple value)
+        return False
+
+    def get_metadata(
+        self, config_name: str, refresh_cache: bool = False
+    ) -> pd.DataFrame:
+        """
+        Retrieve metadata as a DataFrame with actual metadata values for a specific
+        config.
+
+        Supports three types of metadata retrieval:
+        1. Direct metadata configs: config_name is itself a metadata config
+        2. Embedded metadata: config_name has metadata_fields defined
+        3. Applied metadata: config_name appears in another metadata config's applies_to list
+
+        For explicit metadata configs (types 1 & 3), returns all rows from metadata table.
+        For embedded metadata (type 2), returns distinct combinations of metadata fields.
+
+        :param config_name: Specific config name to retrieve metadata for
+        :param refresh_cache: If True, force refresh from remote instead of using cache
+        :return: DataFrame with metadata values for the specified config
+        :raises ValueError: If config_name has no associated metadata
+        :raises RuntimeError: If data loading fails for the config
+
+        """
+        # Get metadata relationships for this config
+        relationships = self.get_metadata_relationships(refresh_cache=refresh_cache)
+
+        relevant_relationships = None
+
+        # First priority: data_config matches (config_name is a data config with metadata)
+        data_config_matches = [r for r in relationships if r.data_config == config_name]
+
+        if data_config_matches:
+            relevant_relationships = data_config_matches
         else:
-            return pd.concat(dataframes, ignore_index=True)
+            # Second priority: metadata_config matches (config_name is itself a metadata config)
+            metadata_config_matches = [
+                r for r in relationships if r.metadata_config == config_name
+            ]
+            relevant_relationships = metadata_config_matches
+
+        if not relevant_relationships:
+            # Check what configs are available for helpful error message
+            all_data_configs = {r.data_config for r in relationships}
+            all_metadata_configs = {r.metadata_config for r in relationships}
+            all_available = sorted(all_data_configs | all_metadata_configs)
+
+            if not all_available:
+                return pd.DataFrame()
+
+            raise ValueError(
+                f"Config '{config_name}' not found. "
+                f"Available configs with metadata: {all_available}"
+            )
+
+        # Get the config object to process
+        # For explicit relationships, use the metadata config
+        # For embedded relationships, use the data config
+        relationship = relevant_relationships[0]  # Use first relationship found
+
+        if relationship.relationship_type == "explicit":
+            # Find the metadata config
+            if relationship.metadata_config == config_name:
+                # config_name is itself a metadata config
+                config = self.get_config(config_name)
+            else:
+                # config_name is a data config with metadata applied to it
+                config = self.get_config(relationship.metadata_config)
+        else:  # embedded
+            # config_name is a data config with embedded metadata
+            config = self.get_config(config_name)
+
+        if not config:
+            raise ValueError(f"Could not find config object for '{config_name}'")
+
+        # Process the single configuration
+        config_result = self._get_metadata_for_config(
+            config, force_refresh=refresh_cache
+        )
+
+        if not config_result.get("success", False):
+            raise RuntimeError(f"Failed to load data for config {config.config_name}")
+
+        table_name = config_result.get("table_name")
+        if not table_name:
+            raise RuntimeError(f"No table name for config {config.config_name}")
+
+        try:
+            if relationship.relationship_type == "explicit":
+                return self._get_explicit_metadata(config, table_name)
+            else:  # embedded
+                return self._get_embedded_metadata(config, table_name)
+        except Exception as e:
+            self.logger.error(f"Error querying metadata for {config.config_name}: {e}")
+            raise
 
     def set_filter(self, config_name: str, **kwargs) -> None:
         """
         Set simple filters using keyword arguments.
 
         Converts keyword arguments to SQL WHERE clause and stores
-        for automatic application.
+        for automatic application. Validates that all filter fields
+        exist in the config's metadata columns.
 
         :param config_name: Configuration name to apply filters to
         :param kwargs: Filter conditions as keyword arguments
             (e.g., time=15, mechanism="ZEV")
+        :raises InvalidFilterFieldError: If any filter field doesn't exist
+            in the metadata columns
 
         Example:
             api.set_filter("hackett_2020", time=15, mechanism="ZEV", restriction="P")
@@ -187,6 +560,9 @@ class HfQueryAPI(HfCacheManager):
             # If no kwargs provided, clear the filter
             self.clear_filter(config_name)
             return
+
+        # Validate that all filter fields exist in metadata columns
+        self._validate_metadata_fields(config_name, list(kwargs.keys()))
 
         # Convert kwargs to SQL WHERE clause
         conditions = []
@@ -205,22 +581,36 @@ class HfQueryAPI(HfCacheManager):
         self._table_filters[config_name] = where_clause
         self.logger.info(f"Set filter for {config_name}: {where_clause}")
 
-    def set_sql_filter(self, config_name: str, sql_where: str) -> None:
+    def set_sql_filter(
+        self, config_name: str, sql_where: str, validate_fields: bool = True
+    ) -> None:
         """
         Set complex filters using SQL WHERE clause.
 
         Stores raw SQL WHERE clause for automatic application to queries.
+        Validates that field references in the SQL exist in metadata columns
+        unless validation is disabled.
 
         :param config_name: Configuration name to apply filters to
         :param sql_where: SQL WHERE clause (without the 'WHERE' keyword)
+        :param validate_fields: Whether to validate field names (default: True)
+        :raises InvalidFilterFieldError: If any field references don't exist
+            in the metadata columns (when validate_fields=True)
 
         Example:
             api.set_sql_filter("hackett_2020", "time IN (15, 30) AND mechanism = 'ZEV'")
+            # To skip validation for complex SQL:
+            api.set_sql_filter("hackett_2020", "complex_expression(...)", validate_fields=False)
 
         """
         if not sql_where.strip():
             self.clear_filter(config_name)
             return
+
+        # Validate fields if requested
+        if validate_fields:
+            extracted_fields = self._extract_fields_from_sql(sql_where)
+            self._validate_metadata_fields(config_name, extracted_fields)
 
         self._table_filters[config_name] = sql_where.strip()
         self.logger.info(f"Set SQL filter for {config_name}: {sql_where}")
@@ -246,7 +636,9 @@ class HfQueryAPI(HfCacheManager):
         """
         return self._table_filters.get(config_name)
 
-    def query(self, sql: str, config_name: str) -> pd.DataFrame:
+    def query(
+        self, sql: str, config_name: str, refresh_cache: bool = False
+    ) -> pd.DataFrame:
         """
         Execute SQL query with automatic filter application.
 
@@ -255,6 +647,7 @@ class HfQueryAPI(HfCacheManager):
 
         :param sql: SQL query to execute
         :param config_name: Configuration name to query (table will be loaded if needed)
+        :param refresh_cache: If True, force refresh from remote instead of using cache
         :return: DataFrame with query results
         :raises ValueError: If config_name not found or query fails
 
@@ -266,19 +659,21 @@ class HfQueryAPI(HfCacheManager):
 
         """
         # Validate config exists
-        if config_name not in [c.config_name for c in self.dataset_card.configs]:
-            available_configs = [c.config_name for c in self.dataset_card.configs]
+        if config_name not in [c.config_name for c in self.configs]:
+            available_configs = [c.config_name for c in self.configs]
             raise ValueError(
                 f"Config '{config_name}' not found. "
                 f"Available configs: {available_configs}"
             )
 
         # Load the configuration data
-        config = self.dataset_card.get_config_by_name(config_name)
+        config = self.get_config(config_name)
         if not config:
             raise ValueError(f"Could not retrieve config '{config_name}'")
 
-        config_result = self._get_metadata_for_config(config)
+        config_result = self._get_metadata_for_config(
+            config, force_refresh=refresh_cache
+        )
         if not config_result.get("success", False):
             raise ValueError(
                 f"Failed to load data for config '{config_name}': "

@@ -30,6 +30,10 @@ class FeatureInfo(BaseModel):
         description="Data type (string, int64, float64, etc.) or categorical class labels",
     )
     description: str = Field(..., description="Detailed description of the field")
+    role: str | None = Field(
+        default=None,
+        description="Semantic role of the feature (e.g., 'target_identifier', 'regulator_identifier', 'quantitative_measure')",
+    )
 
     @field_validator("dtype", mode="before")
     @classmethod

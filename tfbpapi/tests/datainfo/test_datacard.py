@@ -7,11 +7,7 @@ from pydantic import ValidationError
 
 from tfbpapi.datainfo import DataCard
 from tfbpapi.datainfo.models import DatasetType
-from tfbpapi.errors import (
-    DataCardError,
-    DataCardValidationError,
-    HfDataFetchError,
-)
+from tfbpapi.errors import DataCardError, DataCardValidationError, HfDataFetchError
 
 
 class TestDataCard:
