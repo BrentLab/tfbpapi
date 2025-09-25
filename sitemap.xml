@@ -2,46 +2,50 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://brentlab.github.io/tfbpapi/</loc>
-         <lastmod>2025-09-20</lastmod>
+         <lastmod>2025-09-25</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/HfCacheManager/</loc>
-         <lastmod>2025-09-20</lastmod>
+         <lastmod>2025-09-25</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/HfQueryAPI/</loc>
-         <lastmod>2025-09-20</lastmod>
+         <lastmod>2025-09-25</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/HfRankResponse/</loc>
-         <lastmod>2025-09-20</lastmod>
+         <lastmod>2025-09-25</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/IncrementalAnalysisDB/</loc>
-         <lastmod>2025-09-20</lastmod>
+         <lastmod>2025-09-25</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/datainfo/</loc>
-         <lastmod>2025-09-20</lastmod>
+         <lastmod>2025-09-25</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/errors/</loc>
-         <lastmod>2025-09-20</lastmod>
+         <lastmod>2025-09-25</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/huggingface_datacard/</loc>
-         <lastmod>2025-09-20</lastmod>
+         <lastmod>2025-09-25</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/tutorials/cache_manager_tutorial/</loc>
-         <lastmod>2025-09-20</lastmod>
+         <lastmod>2025-09-25</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/tutorials/datacard_tutorial/</loc>
-         <lastmod>2025-09-20</lastmod>
+         <lastmod>2025-09-25</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/tutorials/hfqueryapi_tutorial/</loc>
-         <lastmod>2025-09-20</lastmod>
+         <lastmod>2025-09-25</lastmod>
+    </url>
+    <url>
+         <loc>https://brentlab.github.io/tfbpapi/tutorials/rank_response_tutorial/</loc>
+         <lastmod>2025-09-25</lastmod>
     </url>
 </urlset>
