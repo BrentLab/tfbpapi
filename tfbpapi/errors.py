@@ -214,3 +214,38 @@ class DataCardMetadataError(DataCardError):
         super().__init__(message, details)
         self.config_name = config_name
         self.field_name = field_name
+
+
+class InvalidFilterFieldError(DatasetError):
+    """Raised when filter fields don't exist in metadata columns."""
+
+    def __init__(
+        self,
+        config_name: str,
+        invalid_fields: list[str],
+        available_fields: list[str] | None = None,
+    ):
+        invalid_str = ", ".join(f"'{field}'" for field in invalid_fields)
+        available_str = (
+            f"Available fields: {sorted(available_fields)}"
+            if available_fields
+            else "No fields available"
+        )
+        message = (
+            f"Invalid filter field(s) {invalid_str} for config '{config_name}'. "
+            f"{available_str}"
+        )
+
+        super().__init__(
+            message,
+            details={
+                "config_name": config_name,
+                "invalid_fields": invalid_fields,
+                "available_fields": (
+                    sorted(available_fields) if available_fields else []
+                ),
+            },
+        )
+        self.config_name = config_name
+        self.invalid_fields = invalid_fields
+        self.available_fields = sorted(available_fields) if available_fields else []

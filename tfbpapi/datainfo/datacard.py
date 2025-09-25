@@ -5,11 +5,7 @@ from typing import Any, Dict, List, Optional, Set, Union
 
 from pydantic import ValidationError
 
-from ..errors import (
-    DataCardError,
-    DataCardValidationError,
-    HfDataFetchError,
-)
+from ..errors import DataCardError, DataCardValidationError, HfDataFetchError
 from .fetchers import HfDataCardFetcher, HfRepoStructureFetcher, HfSizeInfoFetcher
 from .models import (
     DatasetCard,
@@ -224,8 +220,19 @@ class DataCard:
             self.logger.warning(f"Failed to extract partition values for {field_name}")
             return set()
 
-    def get_metadata_relationships(self) -> list[MetadataRelationship]:
-        """Get relationships between data configs and their metadata."""
+    def get_metadata_relationships(
+        self, refresh_cache: bool = False
+    ) -> list[MetadataRelationship]:
+        """
+        Get relationships between data configs and their metadata.
+
+        :param refresh_cache: If True, force refresh dataset card from remote
+
+        """
+        # Clear cached dataset card if refresh requested
+        if refresh_cache:
+            self._dataset_card = None
+
         relationships = []
         data_configs = self.dataset_card.get_data_configs()
         metadata_configs = self.dataset_card.get_metadata_configs()
@@ -244,9 +251,8 @@ class DataCard:
                             relationship_type="explicit",
                         )
                     )
-                    continue
 
-            # Check for embedded metadata
+            # Check for embedded metadata (always runs regardless of explicit relationships)
             if data_config.metadata_fields:
                 relationships.append(
                     MetadataRelationship(

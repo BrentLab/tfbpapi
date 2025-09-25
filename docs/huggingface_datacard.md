@@ -78,6 +78,7 @@ dataset_info:
   - name: field_name           # Column name in the data
     dtype: string              # Data type (string, int64, float64, etc.)
     description: "Detailed description of what this field contains"
+    role: "target_identifier"  # Optional: semantic role of the feature
 ```
 
 ### Common Data Types
@@ -102,6 +103,17 @@ dataset_info:
 - `start`, `end`: Genomic coordinates
 - `pos`: Single position
 - `strand`: Strand information (+ or -)
+
+### Feature Roles
+
+The optional `role` field provides semantic meaning to features, especially useful for `annotated_features` datasets:
+
+**Standard Roles:**
+- `target_identifier`: Identifies target genes/features (e.g., target_locus_tag, target_symbol)
+- `regulator_identifier`: Identifies regulatory factors (e.g., regulator_locus_tag, regulator_symbol)
+- `quantitative_measure`: Quantitative measurements (e.g., binding_score, expression_level, p_value)
+- `experimental_condition`: Experimental conditions or metadata
+- `genomic_coordinate`: Positional information (chr, start, end, pos)
 
 ## Partitioned Datasets
 
@@ -270,12 +282,19 @@ configs:
     - name: regulator_symbol
       dtype: string
       description: Transcription factor name
+      role: regulator_identifier
+    - name: target_locus_tag
+      dtype: string
+      description: Target gene systematic identifier
+      role: target_identifier
     - name: target_symbol
       dtype: string
       description: Target gene name
+      role: target_identifier
     - name: binding_score
       dtype: float64
       description: Quantitative binding measurement
+      role: quantitative_measure
 
 - config_name: experiment_metadata
   description: Experimental conditions and sample information

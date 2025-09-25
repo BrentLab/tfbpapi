@@ -24,7 +24,7 @@ class HfRankResponse:
 
         """
         self.db = db
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def compute(
         self,
