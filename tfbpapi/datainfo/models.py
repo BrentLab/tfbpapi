@@ -1,7 +1,6 @@
 """Pydantic models for dataset card validation."""
 
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Union
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -27,12 +26,14 @@ class FeatureInfo(BaseModel):
     name: str = Field(..., description="Column name in the data")
     dtype: str | dict[str, ClassLabelType] = Field(
         ...,
-        description="Data type (string, int64, float64, etc.) or categorical class labels",
+        description="Data type (string, int64, float64, etc.)"
+        " or categorical class labels",
     )
     description: str = Field(..., description="Detailed description of the field")
     role: str | None = Field(
         default=None,
-        description="Semantic role of the feature (e.g., 'target_identifier', 'regulator_identifier', 'quantitative_measure')",
+        description="Semantic role of the feature (e.g., 'target_identifier',"
+        "'regulator_identifier', 'quantitative_measure')",
     )
 
     @field_validator("dtype", mode="before")
@@ -50,15 +51,18 @@ class FeatureInfo(BaseModel):
                     return {"class_label": ClassLabelType(**class_label_data)}
                 else:
                     raise ValueError(
-                        f"Invalid class_label structure: expected dict with 'names' key, got {class_label_data}"
+                        "Invalid class_label structure: expected dict with "
+                        f"'names' key, got {class_label_data}"
                     )
             else:
                 raise ValueError(
-                    f"Unknown dtype structure: expected 'class_label' key in dict, got keys: {list(v.keys())}"
+                    "Unknown dtype structure: expected 'class_label' "
+                    f"key in dict, got keys: {list(v.keys())}"
                 )
         else:
             raise ValueError(
-                f"dtype must be a string or dict with class_label info, got {type(v)}: {v}"
+                "dtype must be a string or dict with "
+                f"class_label info, got {type(v)}: {v}"
             )
 
     def get_dtype_summary(self) -> str:
@@ -251,4 +255,8 @@ class MetadataRelationship(BaseModel):
     metadata_config: str = Field(..., description="Metadata configuration name")
     relationship_type: str = Field(
         ..., description="Type of relationship (explicit, embedded)"
+    )
+    join_keys: list[str] | None = Field(
+        default=None,
+        description="Column names to join on (from data config to metadata config)",
     )

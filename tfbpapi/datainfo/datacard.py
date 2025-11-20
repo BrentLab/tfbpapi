@@ -1,7 +1,7 @@
 """DataCard class for easy exploration of HuggingFace dataset metadata."""
 
 import logging
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any
 
 from pydantic import ValidationError
 
@@ -82,8 +82,10 @@ class DataCard:
 
                 if "dtype" in field_path and error_type == "string_type":
                     error_details.append(
-                        f"Field '{field_path}': Expected a simple data type string (like 'string', 'int64', 'float64') "
-                        f"but got a complex structure. This might be a categorical field with class labels. "
+                        f"Field '{field_path}': Expected a simple data type "
+                        "string (like 'string', 'int64', 'float64') "
+                        f"but got a complex structure. This might be a "
+                        "categorical field with class labels. "
                         f"Actual value: {input_value}"
                     )
                 else:
@@ -184,11 +186,13 @@ class DataCard:
                     values.update(partition_values)
 
             # For embedded metadata fields, we would need to query the actual data
-            # This is a placeholder - in practice, you might use the HF datasets server API
+            # This is a placeholder - in practice, you might use the HF
+            # datasets server API
             if config.metadata_fields and field_name in config.metadata_fields:
                 # Placeholder for actual data extraction
                 self.logger.debug(
-                    f"Would extract embedded metadata for {field_name} in {config.config_name}"
+                    "Would extract embedded metadata for "
+                    f"{field_name} in {config.config_name}"
                 )
 
         except Exception as e:
@@ -244,21 +248,36 @@ class DataCard:
                     meta_config.applies_to
                     and data_config.config_name in meta_config.applies_to
                 ):
+                    # Infer join keys from column intersection
+                    data_columns = {
+                        feature.name for feature in data_config.dataset_info.features
+                    }
+                    meta_columns = {
+                        feature.name for feature in meta_config.dataset_info.features
+                    }
+                    common_columns = data_columns & meta_columns
+
+                    # Use common columns as join keys (sorted for consistency)
+                    join_keys = sorted(list(common_columns)) if common_columns else None
+
                     relationships.append(
                         MetadataRelationship(
                             data_config=data_config.config_name,
                             metadata_config=meta_config.config_name,
                             relationship_type="explicit",
+                            join_keys=join_keys,
                         )
                     )
 
-            # Check for embedded metadata (always runs regardless of explicit relationships)
+            # Check for embedded metadata (always runs regardless of
+            # explicit relationships)
             if data_config.metadata_fields:
                 relationships.append(
                     MetadataRelationship(
                         data_config=data_config.config_name,
                         metadata_config=f"{data_config.config_name}_embedded",
                         relationship_type="embedded",
+                        join_keys=None,  # Embedded metadata doesn't need joins
                     )
                 )
 

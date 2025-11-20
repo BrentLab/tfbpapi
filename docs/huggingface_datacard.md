@@ -157,6 +157,173 @@ configs:
   # ... rest of config
 ```
 
+### Automatic Metadata Joins
+
+**NEW**: When metadata is stored in separate files (using `applies_to`), the system automatically infers join keys from common columns and enables automatic metadata joins in queries.
+
+```yaml
+configs:
+# Data config
+- config_name: binding_data
+  dataset_type: annotated_features
+  data_files:
+  - split: train
+    path: binding_scores.parquet
+  dataset_info:
+    features:
+    - name: sample_id
+      dtype: string
+      description: Sample identifier
+    - name: gene_id
+      dtype: string
+      description: Gene identifier
+    - name: binding_score
+      dtype: float64
+      description: Binding score value
+
+# Metadata config - join keys inferred from common columns
+- config_name: experiment_metadata
+  dataset_type: metadata
+  applies_to: ["binding_data"]
+  data_files:
+  - split: train
+    path: metadata.parquet
+  dataset_info:
+    features:
+    - name: sample_id        # Common with binding_data - used for JOIN
+      dtype: string
+      description: Sample identifier
+    - name: cell_type
+      dtype: string
+      description: Cell type used in experiment
+    - name: treatment
+      dtype: string
+      description: Treatment condition
+```
+
+With this configuration, you can query metadata fields directly without manually writing JOINs:
+
+```python
+from tfbpapi import HfQueryAPI
+
+api = HfQueryAPI("username/dataset-repo")
+
+# Query metadata field directly - automatic JOIN is performed
+df = api.query(
+    "SELECT * FROM binding_data WHERE cell_type = 'K562'",
+    "binding_data"
+)
+# Behind the scenes, the system automatically:
+# 1. Detects that 'cell_type' is not in binding_data
+# 2. Finds that 'cell_type' is in experiment_metadata
+# 3. Identifies 'sample_id' as the common column for joining
+# 4. Loads the metadata view
+# 5. Rewrites the SQL to: SELECT * FROM binding_data
+#    LEFT JOIN experiment_metadata ON binding_data.sample_id = experiment_metadata.sample_id
+#    WHERE cell_type = 'K562'
+```
+
+#### Composite Join Keys
+
+When multiple columns are common between data and metadata configs, they are all used as join keys:
+
+```yaml
+- config_name: sample_level_metadata
+  dataset_type: metadata
+  applies_to: ["binding_data"]
+  data_files:
+  - split: train
+    path: sample_metadata.parquet
+  dataset_info:
+    features:
+    - name: sample_id    # Common column 1
+      dtype: string
+    - name: gene_id      # Common column 2
+      dtype: string
+    - name: replicate
+      dtype: int64
+      description: Biological replicate number
+```
+
+The system will automatically join on BOTH `sample_id` AND `gene_id`.
+
+#### Multiple Metadata Configs
+
+A data config can have multiple metadata configs applied to it, each inferred from their respective common columns:
+
+```yaml
+configs:
+- config_name: binding_data
+  dataset_type: annotated_features
+  dataset_info:
+    features:
+    - name: sample_id    # For joining with experiment_metadata
+    - name: gene_id      # For joining with gene_annotations
+    - name: binding_score
+
+- config_name: experiment_metadata
+  dataset_type: metadata
+  applies_to: ["binding_data"]
+  dataset_info:
+    features:
+    - name: sample_id    # Common with binding_data
+    - name: cell_type
+    - name: treatment
+
+- config_name: gene_annotations
+  dataset_type: metadata
+  applies_to: ["binding_data"]
+  dataset_info:
+    features:
+    - name: gene_id      # Common with binding_data
+    - name: gene_name
+    - name: gene_biotype
+```
+
+Queries can reference columns from multiple metadata sources:
+
+```python
+# Automatically joins BOTH metadata configs
+df = api.query(
+    "SELECT * FROM binding_data WHERE cell_type = 'K562' AND gene_biotype = 'protein_coding'",
+    "binding_data"
+)
+```
+
+#### Disabling Automatic Joins
+
+If you prefer to write JOINs manually, you can disable automatic metadata joining:
+
+```python
+df = api.query(
+    "SELECT * FROM binding_data",
+    "binding_data",
+    auto_join_metadata=False  # Disable automatic joins
+)
+```
+
+#### How Join Keys Are Inferred
+
+Join keys are automatically determined by finding the **intersection of column names** between:
+- The data config's features
+- The metadata config's features
+
+For example:
+- If `binding_data` has columns: `[sample_id, gene_id, binding_score]`
+- And `experiment_metadata` has columns: `[sample_id, cell_type, treatment]`
+- The join key will be: `[sample_id]` (the only common column)
+
+**Important**: Make sure your common columns have the same name in both configs. The system uses exact name matching.
+
+#### Composite Join Keys
+
+When multiple columns are common between configs, **all** common columns are used as join keys. For example:
+- If `annotated_features` has: `[id, batch, regulator_symbol, expression_value]`
+- And `sample_metadata` has: `[id, batch, cell_type, data_usable]`
+- The join keys will be: `[batch, id]` (both common columns)
+
+The system uses SQL `USING` clause for joins, which automatically deduplicates the join key columns in the result. This means you won't see duplicate columns like `id` and `id_1` in your results.
+
 ### Embedded Metadata with `metadata_fields`
 
 When no explicit metadata config exists, you can extract metadata directly from the dataset's own files using the `metadata_fields` field. This specifies which fields should be treated as metadata.

@@ -1,7 +1,7 @@
 """Comprehensive tests for HfQueryAPI class."""
 
 import logging
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import duckdb
 import pandas as pd
@@ -182,31 +182,33 @@ class TestHfQueryAPIHelpers:
 
     def test_validate_metadata_fields_invalid(self, mock_api):
         """Test _validate_metadata_fields with invalid fields."""
-        metadata_df = pd.DataFrame({"time": [15, 30], "mechanism": ["ZEV", "ZREV"]})
+        # Mock the new schema-based approach
+        with patch.object(
+            mock_api, "_get_columns_from_config", return_value={"time", "mechanism"}
+        ):
+            with patch.object(mock_api, "get_metadata_relationships", return_value=[]):
+                with pytest.raises(InvalidFilterFieldError) as exc_info:
+                    mock_api._validate_metadata_fields(
+                        "test_config", ["invalid_field", "time"]
+                    )
 
-        with patch.object(mock_api, "get_metadata", return_value=metadata_df):
-            with pytest.raises(InvalidFilterFieldError) as exc_info:
-                mock_api._validate_metadata_fields(
-                    "test_config", ["invalid_field", "time"]
-                )
-
-            error = exc_info.value
-            assert "invalid_field" in error.invalid_fields
-            assert "time" not in error.invalid_fields
-            assert "time" in error.available_fields
-            assert error.config_name == "test_config"
+                error = exc_info.value
+                assert "invalid_field" in error.invalid_fields
+                assert "time" not in error.invalid_fields
+                assert "time" in error.available_fields
+                assert error.config_name == "test_config"
 
     def test_validate_metadata_fields_empty_metadata(self, mock_api):
         """Test _validate_metadata_fields with empty metadata."""
-        empty_df = pd.DataFrame()
+        # Mock the new schema-based approach with no columns
+        with patch.object(mock_api, "_get_columns_from_config", return_value=set()):
+            with patch.object(mock_api, "get_metadata_relationships", return_value=[]):
+                with pytest.raises(InvalidFilterFieldError) as exc_info:
+                    mock_api._validate_metadata_fields("test_config", ["any_field"])
 
-        with patch.object(mock_api, "get_metadata", return_value=empty_df):
-            with pytest.raises(InvalidFilterFieldError) as exc_info:
-                mock_api._validate_metadata_fields("test_config", ["any_field"])
-
-            error = exc_info.value
-            assert error.invalid_fields == ["any_field"]
-            assert error.available_fields == []
+                error = exc_info.value
+                assert error.invalid_fields == ["any_field"]
+                assert error.available_fields == []
 
     def test_validate_metadata_fields_empty_list(self, mock_api):
         """Test _validate_metadata_fields with empty field list."""

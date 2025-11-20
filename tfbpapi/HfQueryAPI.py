@@ -88,26 +88,40 @@ class HfQueryAPI(HfCacheManager):
         self, config_name: str, field_names: list[str]
     ) -> None:
         """
-        Validate that field names exist in the config's metadata columns.
+        Validate that field names exist in the config's columns or joinable metadata.
+
+        Checks both:
+        1. The config's own columns
+        2. Columns from metadata configs that have join_keys defined
 
         :param config_name: Configuration name to validate against
         :param field_names: List of field names to validate
-        :raises InvalidFilterFieldError: If any fields don't exist in metadata
+        :raises InvalidFilterFieldError: If any fields don't exist in available columns
 
         """
         if not field_names:
             return
 
         try:
-            metadata_df = self.get_metadata(config_name)
-            if metadata_df.empty:
-                raise InvalidFilterFieldError(
-                    config_name=config_name,
-                    invalid_fields=field_names,
-                    available_fields=[],
-                )
+            # Get columns from the base config
+            base_columns = self._get_columns_from_config(config_name)
+            available_fields = set(base_columns)
 
-            available_fields = list(metadata_df.columns)
+            # Add columns from any metadata configs with join_keys
+            relationships = self.get_metadata_relationships()
+            data_relationships = [
+                r for r in relationships if r.data_config == config_name
+            ]
+
+            for rel in data_relationships:
+                if rel.relationship_type == "explicit" and rel.join_keys:
+                    # This metadata can be auto-joined, include its columns
+                    metadata_columns = self._get_columns_from_config(
+                        rel.metadata_config
+                    )
+                    available_fields.update(metadata_columns)
+
+            # Check for invalid fields
             invalid_fields = [
                 field for field in field_names if field not in available_fields
             ]
@@ -116,7 +130,7 @@ class HfQueryAPI(HfCacheManager):
                 raise InvalidFilterFieldError(
                     config_name=config_name,
                     invalid_fields=invalid_fields,
-                    available_fields=available_fields,
+                    available_fields=list(available_fields),
                 )
         except Exception as e:
             if isinstance(e, InvalidFilterFieldError):
@@ -177,7 +191,8 @@ class HfQueryAPI(HfCacheManager):
                 i += 1
                 continue
 
-            # Handle quoted strings - could be identifiers or values depending on context
+            # Handle quoted strings - could be identifiers or
+            # values depending on context
             if token.startswith(("'", '"')):
                 # Extract the content inside quotes
                 quoted_content = token[1:-1]
@@ -195,7 +210,8 @@ class HfQueryAPI(HfCacheManager):
 
                 # Check what comes after this quoted string
                 if next_significant_token:
-                    # If followed by comparison operators or SQL keywords, it's a field name
+                    # If followed by comparison operators or SQL keywords,
+                    # it's a field name
                     if (
                         next_significant_token
                         in ["=", "!=", "<>", "<", ">", "<=", ">="]
@@ -218,7 +234,8 @@ class HfQueryAPI(HfCacheManager):
                             break
 
                     # If preceded by a comparison operator, could be a field name
-                    # But we need to be very careful not to treat string literals as field names
+                    # But we need to be very careful not to treat string
+                    # literals as field names
                     if prev_significant_token and prev_significant_token in [
                         "=",
                         "!=",
@@ -228,7 +245,8 @@ class HfQueryAPI(HfCacheManager):
                         "<=",
                         ">=",
                     ]:
-                        # Only treat as field name if it looks like a database identifier
+                        # Only treat as field name if it looks like a
+                        # database identifier
                         # AND doesn't look like a typical string value
                         if self._looks_like_identifier(
                             quoted_content
@@ -264,7 +282,8 @@ class HfQueryAPI(HfCacheManager):
 
             # Check if this looks like an identifier (field name)
             if re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", token):
-                # Check the context - if the next non-whitespace token is a comparison operator,
+                # Check the context - if the next non-whitespace token is a
+                # comparison operator,
                 # then this is likely a field name
                 next_significant_token = None
                 for j in range(i + 1, len(tokens)):
@@ -273,7 +292,8 @@ class HfQueryAPI(HfCacheManager):
                         next_significant_token = next_token
                         break
 
-                # Check if followed by a comparison operator or SQL keyword that indicates a field
+                # Check if followed by a comparison operator or SQL keyword that
+                # indicates a field
                 is_field = False
 
                 if next_significant_token:
@@ -378,15 +398,18 @@ class HfQueryAPI(HfCacheManager):
         if not content:
             return False
 
-        # Basic identifier pattern: starts with letter/underscore, contains only alphanumeric/underscore
+        # Basic identifier pattern: starts with letter/underscore, contains only
+        # alphanumeric/underscore
         if re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", content):
             return True
 
-        # Extended identifier pattern: could contain spaces if it's a column name like "quoted field"
+        # Extended identifier pattern: could contain spaces if it's a column name
+        # like "quoted field"
         # but not if it contains many special characters or looks like natural language
         if " " in content:
             # If it contains spaces, it should still look identifier-like
-            # Allow simple cases like "quoted field" but not "this is a long string value"
+            # Allow simple cases like "quoted field" but not "this is a long string
+            # value"
             words = content.split()
             if len(words) <= 3 and all(
                 re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", word) for word in words
@@ -453,10 +476,13 @@ class HfQueryAPI(HfCacheManager):
         Supports three types of metadata retrieval:
         1. Direct metadata configs: config_name is itself a metadata config
         2. Embedded metadata: config_name has metadata_fields defined
-        3. Applied metadata: config_name appears in another metadata config's applies_to list
+        3. Applied metadata: config_name appears in another metadata config's
+        applies_to list
 
-        For explicit metadata configs (types 1 & 3), returns all rows from metadata table.
-        For embedded metadata (type 2), returns distinct combinations of metadata fields.
+        For explicit metadata configs (types 1 & 3), returns all rows from metadata
+        table.
+        For embedded metadata (type 2), returns distinct combinations of metadata
+        fields.
 
         :param config_name: Specific config name to retrieve metadata for
         :param refresh_cache: If True, force refresh from remote instead of using cache
@@ -470,13 +496,15 @@ class HfQueryAPI(HfCacheManager):
 
         relevant_relationships = None
 
-        # First priority: data_config matches (config_name is a data config with metadata)
+        # First priority: data_config matches (config_name is a data config
+        # with metadata)
         data_config_matches = [r for r in relationships if r.data_config == config_name]
 
         if data_config_matches:
             relevant_relationships = data_config_matches
         else:
-            # Second priority: metadata_config matches (config_name is itself a metadata config)
+            # Second priority: metadata_config matches (config_name is itself a
+            # metadata config)
             metadata_config_matches = [
                 r for r in relationships if r.metadata_config == config_name
             ]
@@ -600,7 +628,8 @@ class HfQueryAPI(HfCacheManager):
         Example:
             api.set_sql_filter("hackett_2020", "time IN (15, 30) AND mechanism = 'ZEV'")
             # To skip validation for complex SQL:
-            api.set_sql_filter("hackett_2020", "complex_expression(...)", validate_fields=False)
+            api.set_sql_filter("hackett_2020", "complex_expression(...)",
+            validate_fields=False)
 
         """
         if not sql_where.strip():
@@ -637,17 +666,25 @@ class HfQueryAPI(HfCacheManager):
         return self._table_filters.get(config_name)
 
     def query(
-        self, sql: str, config_name: str, refresh_cache: bool = False
+        self,
+        sql: str,
+        config_name: str,
+        refresh_cache: bool = False,
+        auto_join_metadata: bool = True,
     ) -> pd.DataFrame:
         """
-        Execute SQL query with automatic filter application.
+        Execute SQL query with automatic filter application and metadata joins.
 
         Loads the specified configuration, applies any stored filters,
-        and executes the query.
+        and executes the query. If auto_join_metadata is True (default),
+        automatically detects metadata columns in the query and joins
+        the appropriate metadata tables.
 
         :param sql: SQL query to execute
         :param config_name: Configuration name to query (table will be loaded if needed)
         :param refresh_cache: If True, force refresh from remote instead of using cache
+        :param auto_join_metadata: If True, automatically join metadata tables
+        when needed
         :return: DataFrame with query results
         :raises ValueError: If config_name not found or query fails
 
@@ -656,6 +693,12 @@ class HfQueryAPI(HfCacheManager):
             df = api.query("SELECT regulator_locus_tag, target_locus_tag
                 FROM hackett_2020", "hackett_2020")
             # Automatically applies: WHERE time = 15 AND mechanism = 'ZEV'
+
+        Example with metadata:
+            # If cell_type is in experiment_metadata that applies_to binding_data:
+            df = api.query("SELECT * FROM binding_data WHERE cell_type = 'K562'",
+                          "binding_data")
+            # Automatically joins experiment_metadata and filters by cell_type
 
         """
         # Validate config exists
@@ -686,6 +729,49 @@ class HfQueryAPI(HfCacheManager):
 
         # Replace config name with actual table name in SQL for user convenience
         sql_with_table = sql.replace(config_name, table_name)
+
+        # Handle automatic metadata joins if enabled
+        if auto_join_metadata:
+            # Extract column references from the query
+            referenced_columns = self._extract_column_references(sql_with_table)
+
+            # Also check for columns in stored filters
+            if config_name in self._table_filters:
+                filter_sql = self._table_filters[config_name]
+                filter_columns = self._extract_column_references(filter_sql)
+                referenced_columns.update(filter_columns)
+
+            # Get columns from the base config
+            base_columns = self._get_columns_from_config(config_name)
+
+            # Find columns that aren't in the base config
+            missing_columns = referenced_columns - base_columns
+
+            if missing_columns:
+                # Find metadata configs that might have these columns
+                metadata_matches = self._find_metadata_for_columns(
+                    config_name, missing_columns
+                )
+
+                if metadata_matches:
+                    # Load metadata views and build JOIN clauses
+                    metadata_joins = []
+                    for metadata_config, join_keys in metadata_matches:
+                        metadata_table = self._load_metadata_view(
+                            metadata_config, refresh_cache=refresh_cache
+                        )
+                        metadata_joins.append(
+                            (metadata_config, metadata_table, join_keys)
+                        )
+                        self.logger.info(
+                            f"Auto-joining metadata '{metadata_config}' "
+                            f"on keys: {join_keys}"
+                        )
+
+                    # Rewrite SQL to include JOINs
+                    sql_with_table = self._build_join_sql(
+                        sql_with_table, table_name, metadata_joins
+                    )
 
         # Apply stored filters
         final_sql = self._apply_filter_to_sql(sql_with_table, config_name)
@@ -737,3 +823,250 @@ class HfQueryAPI(HfCacheManager):
                     f"{sql[:insert_position].rstrip()} "
                     f"WHERE {filter_clause} {sql[insert_position:]}"
                 )
+
+    def _get_columns_from_config(self, config_name: str) -> set[str]:
+        """
+        Get all column names from a config's schema.
+
+        :param config_name: Configuration name
+        :return: Set of column names
+
+        """
+        config = self.get_config(config_name)
+        if not config:
+            return set()
+        return {feature.name for feature in config.dataset_info.features}
+
+    def _extract_column_references(self, sql: str) -> set[str]:
+        """
+        Extract column references from SQL query.
+
+        Simple regex-based extraction that looks for identifiers in common SQL contexts.
+        Not a full SQL parser, but good enough for most queries.
+
+        :param sql: SQL query string
+        :return: Set of potential column names
+
+        """
+        # Remove string literals to avoid false positives
+        sql_no_strings = re.sub(r"'[^']*'", "", sql)
+        sql_no_strings = re.sub(r'"[^"]*"', "", sql_no_strings)
+
+        # Extract identifiers that appear in typical column contexts:
+        # - After SELECT, WHERE, GROUP BY, ORDER BY, HAVING
+        # - In comparisons (=, !=, <, >, etc.)
+        # - After AS keyword
+        column_patterns = [
+            r"\b(?:SELECT|WHERE|AND|OR|ON|GROUP BY|ORDER BY|HAVING)\s+[\w.]+",
+            r"[\w.]+\s*(?:=|!=|<>|<|>|<=|>=|LIKE|IN|IS)",
+            r"AS\s+([\w.]+)",
+        ]
+
+        columns = set()
+        for pattern in column_patterns:
+            matches = re.finditer(pattern, sql_no_strings, re.IGNORECASE)
+            for match in matches:
+                # Extract the identifier part
+                text = match.group(0)
+                # Remove SQL keywords and operators
+                for keyword in [
+                    "SELECT",
+                    "WHERE",
+                    "AND",
+                    "OR",
+                    "ON",
+                    "GROUP BY",
+                    "ORDER BY",
+                    "HAVING",
+                    "AS",
+                    "=",
+                    "!=",
+                    "<>",
+                    "<",
+                    ">",
+                    "<=",
+                    ">=",
+                    "LIKE",
+                    "IN",
+                    "IS",
+                ]:
+                    text = re.sub(
+                        r"\b" + keyword + r"\b", "", text, flags=re.IGNORECASE
+                    )
+                # Extract remaining identifiers
+                identifiers = re.findall(r"\b[\w.]+\b", text)
+                for ident in identifiers:
+                    # Remove table prefixes (e.g., "table.column" -> "column")
+                    if "." in ident:
+                        columns.add(ident.split(".")[-1])
+                    else:
+                        columns.add(ident)
+
+        # Filter out common SQL keywords and functions
+        sql_keywords = {
+            "SELECT",
+            "FROM",
+            "WHERE",
+            "AND",
+            "OR",
+            "NOT",
+            "IN",
+            "IS",
+            "NULL",
+            "AS",
+            "ON",
+            "JOIN",
+            "LEFT",
+            "RIGHT",
+            "INNER",
+            "OUTER",
+            "GROUP",
+            "BY",
+            "ORDER",
+            "HAVING",
+            "LIMIT",
+            "OFFSET",
+            "DISTINCT",
+            "COUNT",
+            "SUM",
+            "AVG",
+            "MIN",
+            "MAX",
+            "CASE",
+            "WHEN",
+            "THEN",
+            "ELSE",
+            "END",
+            "CAST",
+            "TRUE",
+            "FALSE",
+        }
+        columns = {c for c in columns if c.upper() not in sql_keywords}
+
+        return columns
+
+    def _find_metadata_for_columns(
+        self, config_name: str, columns: set[str]
+    ) -> list[tuple[str, list[str]]]:
+        """
+        Find metadata configs that contain the specified columns.
+
+        :param config_name: Data config name being queried
+        :param columns: Set of column names to search for
+        :return: List of tuples (metadata_config_name, join_keys)
+
+        """
+        relationships = self.get_metadata_relationships()
+        data_relationships = [r for r in relationships if r.data_config == config_name]
+
+        metadata_matches = []
+        for rel in data_relationships:
+            if rel.relationship_type == "embedded":
+                # Skip embedded metadata - columns are already in the data table
+                continue
+
+            # Get metadata config schema
+            metadata_columns = self._get_columns_from_config(rel.metadata_config)
+
+            # Check if any of the queried columns are in this metadata
+            if columns & metadata_columns:
+                if rel.join_keys:
+                    metadata_matches.append((rel.metadata_config, rel.join_keys))
+                else:
+                    # Log warning if columns match but no join keys defined
+                    self.logger.warning(
+                        f"Columns {columns & metadata_columns} found in metadata "
+                        f"config '{rel.metadata_config}' but no join_keys defined. "
+                        f"Cannot automatically join. Please add join_keys to datacard."
+                    )
+
+        return metadata_matches
+
+    def _load_metadata_view(
+        self, metadata_config_name: str, refresh_cache: bool = False
+    ) -> str:
+        """
+        Load metadata config into DuckDB and return the table name.
+
+        :param metadata_config_name: Metadata config to load
+        :param refresh_cache: Whether to refresh cache
+        :return: Table name in DuckDB
+
+        """
+        config = self.get_config(metadata_config_name)
+        if not config:
+            raise ValueError(f"Metadata config '{metadata_config_name}' not found")
+
+        config_result = self._get_metadata_for_config(
+            config, force_refresh=refresh_cache
+        )
+        if not config_result.get("success", False):
+            raise ValueError(
+                f"Failed to load metadata '{metadata_config_name}': "
+                f"{config_result.get('message')}"
+            )
+
+        # TODO: fix this type ignore
+        return config_result.get("table_name")  # type: ignore
+
+    def _build_join_sql(
+        self,
+        base_sql: str,
+        base_table: str,
+        metadata_joins: list[tuple[str, str, list[str]]],
+    ) -> str:
+        """
+        Rewrite SQL to include metadata JOINs.
+
+        :param base_sql: Original SQL query
+        :param base_table: Base table name
+        :param metadata_joins: List of (metadata_config, metadata_table, join_keys)
+        :return: Rewritten SQL with JOINs
+
+        """
+        if not metadata_joins:
+            return base_sql
+
+        # Extract the FROM clause position
+        from_pattern = r"\bFROM\s+" + re.escape(base_table)
+        match = re.search(from_pattern, base_sql, re.IGNORECASE)
+        if not match:
+            # Can't find FROM clause, return original
+            self.logger.warning("Could not find FROM clause for automatic join")
+            return base_sql
+
+        from_end = match.end()
+
+        # Build JOIN clauses
+        join_clauses = []
+        for metadata_config, metadata_table, join_keys in metadata_joins:
+            # Use USING clause to avoid duplicate join columns in result
+            # USING automatically deduplicates the join keys
+            join_keys_str = ", ".join(join_keys)
+            join_clause = f"\nLEFT JOIN {metadata_table} USING ({join_keys_str})"
+            join_clauses.append(join_clause)
+
+        # Insert JOINs after FROM clause
+        sql_before = base_sql[:from_end]
+        sql_after = base_sql[from_end:]
+
+        # Check if there's already a WHERE/GROUP BY/etc after FROM
+        # We need to insert JOINs before those
+        insert_keywords = ["WHERE", "GROUP BY", "ORDER BY", "HAVING", "LIMIT"]
+        insert_position = len(sql_after)
+
+        for keyword in insert_keywords:
+            match = re.search(r"\b" + keyword + r"\b", sql_after, re.IGNORECASE)
+            if match and match.start() < insert_position:
+                insert_position = match.start()
+
+        final_sql = (
+            sql_before
+            + "".join(join_clauses)
+            + " "
+            + sql_after[:insert_position].strip()
+            + " "
+            + sql_after[insert_position:]
+        )
+
+        return final_sql.strip()
