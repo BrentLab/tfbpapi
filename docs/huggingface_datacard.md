@@ -117,6 +117,7 @@ configs:
       role: quantitative_measure
 ```
 
+
 ## Feature Definitions
 
 Each config must include detailed feature definitions in `dataset_info.features`:
@@ -130,11 +131,34 @@ dataset_info:
     role: "target_identifier"  # Optional: semantic role of the feature
 ```
 
-### Common Data Types
-- `string`: Text data, identifiers, categories
-- `int64`: Integer values
-- `float64`: Decimal numbers, measurements
-- `int32`, `float32`: For large datasets where precision/memory matters
+### Categorical Fields with Value Definitions
+
+For fields with `role: experimental_condition` that contain categorical values, you can
+provide structured definitions for each value using the `definitions` field. This allows
+machine-parsable specification of what each condition value means experimentally:
+
+```yaml
+- name: condition
+  dtype:
+    class_label:
+      names: ["standard", "heat_shock"]
+  role: experimental_condition
+  description: Growth condition of the sample
+  definitions:
+    standard:
+      growth_conditions:
+        media:
+          name: synthetic_complete
+    heat_shock:
+      growth_conditions:
+        temperature_celsius: 37
+        duration_minutes: 10
+```
+
+Each key in `definitions` must correspond to a possible value in the field.
+The structure under each value provides experimental parameters specific to that
+condition using the same nested format as `experimental_conditions` at config or
+top level.
 
 ### Naming Conventions
 
@@ -166,7 +190,9 @@ for annotated_features datasets. The following roles are recognized by tfbpapi:
 - **quantitative_measure**: Quantitative measurements (e.g., binding_score,
   expression_level, p_value)
 - **experimental_condition**: Experimental conditions or metadata
+  (can include `definitions` field for categorical values)
 - **genomic_coordinate**: Positional information (chr, start, end, pos)
+
 
 ## Partitioned Datasets
 
