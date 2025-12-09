@@ -443,6 +443,19 @@ configs:
               names: ["GEV", "ZEV"]
           description: Synthetic TF induction system (GEV or ZEV)
           role: experimental_condition
+          definitions:
+            GEV:
+              perturbation_method:
+                type: inducible_overexpression
+                system: GEV
+                inducer: beta-estradiol
+                description: "Galactose-inducible estrogen receptor-VP16 fusion system"
+            ZEV:
+              perturbation_method:
+                type: inducible_overexpression
+                system: ZEV
+                inducer: beta-estradiol
+                description: "Z3 (synthetic zinc finger)-estrogen receptor-VP16 fusion system"
         - name: restriction
           dtype:
             class_label:
