@@ -68,7 +68,6 @@ Quality control metrics and assessments
 ## Experimental Conditions
 
 Experimental conditions can be specified in three ways:
-
 1. **Top-level** `experimental_conditions`: Apply to all configs in the repository.
   Use when experimental parameters are common across all datasets. This will occur
   at the same level as `configs`
@@ -76,59 +75,403 @@ Experimental conditions can be specified in three ways:
   ([dataset](#dataset)). Use when certain datasets have experimental parameters that
   are not shared by all other datasets in the [repository](#huggingface-repo), but
   are common to all [samples](#sample) within that dataset.
-3. **Field-level** with [`role: experimental_condition`](#feature-roles): For
+3. **Field-level** with `role: experimental_condition` ([feature-roles](#feature-roles)): For
   per-sample or per-measurement variation in experimental conditions stored as
   data columns. This is specified in the
-  [`dataset_info.features`](#feature-definitions) section of a config.
+  `dataset_info.features` ([feature-definitions](#feature-definitions)) section of a config.
 
 **Example of all three methods:**
 ```yaml
 # Top-level experimental conditions (apply to all configs)
 experimental_conditions:
-  growth_media: "YPD"
-  temperature: "30C"
-
+  environmental_conditions:
+    temperature_celsius: 30
 configs:
 # The overexpression_data dataset has an additional experimental condition that is
-# specific to this dataset and applied to all samples (`strain_background`) in addition
-# to a field (`mechanism`) that varies per sample and is identified by the
-# role `experimental_condition`.
+# specific to this dataset and applied to all samples (strain_background) in addition
+# to a field (mechanism) that varies per sample and is identified by the
+# role experimental_condition.
 - config_name: overexpression_data
   description: TF overexpression perturbation data
   dataset_type: annotated_features
   experimental_conditions:
     strain_background: "BY4741"
   data_files:
-  - split: train
-    path: overexpression.parquet
+    - split: train
+      path: overexpression.parquet
   dataset_info:
     features:
-    - name: time
-      dtype: float
-      description: Time point in minutes
-      role: experimental_condition
-    - name: mechanism
-      dtype: string
-      description: Induction mechanism (GEV or ZEV)
-      role: experimental_condition
-    - name: log2_ratio
-      dtype: float
-      description: Log2 fold change
-      role: quantitative_measure
+      - name: time
+        dtype: float
+        description: Time point in minutes
+        role: experimental_condition
+      - name: mechanism
+        dtype: string
+        description: Induction mechanism (GEV or ZEV)
+        role: experimental_condition
+      - name: log2_ratio
+        dtype: float
+        description: Log2 fold change
+        role: quantitative_measure
 ```
 
+### Environmental Conditions
+
+Environmental conditions are nested under `experimental_conditions` and describe the
+physical and chemical environment in which samples were cultivated. This includes
+growth media specifications, temperature, cultivation method, and other environmental
+parameters.
+
+#### Core Environmental Fields
+
+The following fields are supported within `environmental_conditions`:
+
+- **temperature_celsius** (float): Growth temperature in Celsius
+- **cultivation_method** (string): Method of cultivation (e.g., "liquid_culture", "plate", "chemostat")
+- **growth_phase_at_harvest** (object): Growth phase information (see [Growth Phase Specification](#growth-phase-specification))
+- **media** (object): Growth medium specification (see [Growth Media Specification](#growth-media-specification))
+- **chemical_treatment** (object): Chemical treatment information (see [Chemical Treatments](#chemical-treatments))
+- **drug_treatment** (object): Drug treatment (same structure as chemical_treatment)
+- **heat_treatment** (object): Heat treatment specification
+- **temperature_shift** (object): Temperature shift for heat shock experiments (see [Temperature Shifts](#temperature-shifts))
+- **induction** (object): Induction system for expression experiments (see [Induction Systems](#induction-systems))
+- **incubation_duration_hours** (float): Total incubation duration in hours
+- **incubation_duration_minutes** (int): Total incubation duration in minutes
+- **description** (string): Additional descriptive information
+
+#### Growth Phase Specification
+
+Growth phase at harvest can be specified using:
+
+```yaml
+growth_phase_at_harvest:
+  stage: mid_log_phase           # or: early_log_phase, late_log_phase, stationary_phase, etc.
+  od600: 0.6                     # Optical density at 600nm
+  od600_tolerance: 0.1           # Optional: measurement tolerance
+  description: "Additional context"
+```
+
+**Note**: The field `phase` is accepted as an alias for `stage` for backward compatibility.
+
+Recognized stage values:
+- `mid_log_phase`, `early_log_phase`, `late_log_phase`
+- `stationary_phase`, `early_stationary_phase`, `overnight_stationary_phase`
+- `mid_log`, `early_log`, `late_log`, `exponential_phase`
+
+#### Chemical Treatments
+
+Chemical treatments (including drugs) are specified with:
+
+```yaml
+chemical_treatment:
+  compound: rapamycin            # Chemical compound name
+  concentration_percent: 0.001   # Concentration as percentage
+  duration_minutes: 20           # Treatment duration in minutes
+  duration_hours: 0.33           # Alternative: duration in hours
+  target_pH: 4.0                 # Optional: target pH for pH adjustments
+  description: "TOR inhibition"  # Optional: additional context
+```
+
+The `drug_treatment` field uses the same structure and is interchangeable with `chemical_treatment`.
+
+#### Temperature Shifts
+
+For heat shock and temperature shift experiments:
+
+```yaml
+temperature_shift:
+  initial_temperature_celsius: 30
+  temperature_shift_celsius: 37
+  temperature_shift_duration_minutes: 45
+  description: "Heat shock treatment"
+```
+
+#### Induction Systems
+
+For expression induction systems (e.g., GAL, estradiol-inducible):
+
+```yaml
+induction:
+  inducer:
+    compound: D-galactose
+    concentration_percent: 2
+  duration_hours: 3
+  duration_minutes: 180          # Alternative to duration_hours
+  description: "GAL promoter induction"
+```
+
+#### Growth Media Specification
+
+The `media` field specifies the growth medium used in an experiment. Media is nested
+under `environmental_conditions` and can be specified at the top-level, config-level,
+or within field-level definitions depending on whether they are common across all
+datasets, specific to a config, or vary per sample.
+
+##### Media Structure
+
+Each media specification has the following required structure:
+
+```yaml
+experimental_conditions:
+  environmental_conditions:
+    media:
+      name: string              # Canonical or descriptive media name (see below)
+      carbon_source:            # Required
+        - compound: string      # Chemical compound name
+          concentration_percent: float
+      nitrogen_source:          # Required
+        - compound: string      # Chemical compound name
+          concentration_percent: float
+      phosphate_source:         # Optional
+        - compound: string
+          concentration_percent: float
+      additives:                # Optional: for additional media components
+        - compound: string      # e.g., butanol for filamentation
+          concentration_percent: float
+          description: string
+```
+
+Both `carbon_source` and `nitrogen_source` are **required fields**. Each can contain
+one or more compound entries with their respective concentrations specified as a
+percentage.
+
+**Handling Unknown Values**: When a component is truly unknown or not reported in the
+source publication, omit the field or use `null`. Do NOT use the string `"unspecified"` as
+a compound name, as this will generate validation warnings.
+
+##### Canonical Media Names
+
+Three base media types are standardized across the collection:
+
+1. **minimal**
+   - Minimal defined medium with inorganic nitrogen source
+   - Typically used for targeted nutrient deprivation studies
+   - Example: Hackett 2020
+
+2. **synthetic_complete**
+   - Defined medium with amino acid supplements
+   - Contains yeast nitrogen base (without amino acids) plus amino acid dropout mix
+   - Used as baseline in many stress studies
+   - Example: Kemmeren 2014, Mahendrawada 2025, Harbison 2004
+
+3. **YPD** (yeast peptone dextrose)
+   - Rich, complex medium with yeast extract and peptone as nitrogen sources
+   - Used as standard rich-media baseline condition
+   - Also known as: yeast_peptone_dextrose, yeast_extract_peptone (context-dependent)
+   - Example: Hu Reimand 2010, Harbison 2004, Rossi 2021, Barkai compendium
+
+**Descriptive Media Names**: While the canonical names above are preferred, descriptive
+variations that provide additional specificity are acceptable (e.g.,
+`synthetic_complete_dextrose`, `selective_medium`, `synthetic_complete_minus_uracil`).
+The key requirement is that the actual media composition be fully specified in the
+`carbon_source`, `nitrogen_source`, and optional `phosphate_source` and `additives` fields.
+
+##### Specifying Carbon and Nitrogen Sources
+
+###### Carbon Sources
+
+Common carbon sources in yeast media:
+
+```yaml
+carbon_source:
+  - compound: D-glucose
+    concentration_percent: 2
+```
+
+Typical values: D-glucose, D-galactose, D-raffinose, D-dextrose
+
+Concentrations are expressed as a percentage (e.g., 2% glucose).
+
+###### Nitrogen Sources
+
+Nitrogen sources vary by media type:
+
+**For synthetic_complete and minimal media:**
+```yaml
+nitrogen_source:
+  - compound: yeast_nitrogen_base
+    concentration_g_per_l: 6.71
+    specifications:
+      - without_amino_acids
+      - without_ammonium_sulfate
+  - compound: ammonium_sulfate
+    # if specified differently in the paper, add the authors'
+    # specification in a comment
+    concentration_percent: 0.5
+  - compound: amino_acid_dropout_mix
+    # lastname et al 2025 used 20 g/L
+    concentration_percent: 2
+```
+
+**For YPD media:**
+```yaml
+nitrogen_source:
+  - compound: yeast_extract
+    concentration_percent: 1
+  - compound: peptone
+    concentration_percent: 2
+```
+
+##### Media Examples
+
+**Minimal Medium**
+```yaml
+experimental_conditions:
+  environmental_conditions:
+    media:
+      name: minimal
+      carbon_source:
+        - compound: D-glucose
+          concentration_percent: 2
+      nitrogen_source:
+        - compound: ammonium_sulfate
+          concentration_g_per_l: 5
+```
+
+**Synthetic Complete (Base)**
+```yaml
+experimental_conditions:
+  environmental_conditions:
+    media:
+      name: synthetic_complete
+      carbon_source:
+        - compound: D-glucose
+          concentration_percent: 2
+      nitrogen_source:
+        - compound: yeast_nitrogen_base
+          # lastname et al 2025 used 6.71 g/L
+          concentration_percent: 0.671
+          specifications:
+            - without_amino_acids
+            - without_ammonium_sulfate
+        - compound: ammonium_sulfate
+          # lastname et al 2025 used 5 g/L
+          concentration_percent: 0.5
+        - compound: amino_acid_dropout_mix
+          # lastname et al 2025 used 2 g/L
+          concentration_percent: 0.2
+```
+
+**Synthetic Complete with Alternative Carbon Source**
+```yaml
+experimental_conditions:
+  environmental_conditions:
+    media:
+      name: synthetic_complete
+      carbon_source:
+        - compound: D-galactose
+          concentration_percent: 2
+      nitrogen_source:
+        - compound: yeast_nitrogen_base
+          # lastname et al 2025 used 6.71 g/L
+          concentration_percent: 0.671
+          specifications:
+            - without_amino_acids
+            - without_ammonium_sulfate
+        - compound: ammonium_sulfate
+          # lastname et al 2025 used 5 g/L
+          concentration_percent: 0.5
+        - compound: amino_acid_dropout_mix
+          # lastname et al 2025 used 2 g/L
+          concentration_percent: 0.2
+```
+
+**YPD**
+```yaml
+experimental_conditions:
+  environmental_conditions:
+    media:
+      name: YPD
+      carbon_source:
+        - compound: D-glucose
+          concentration_percent: 2
+      nitrogen_source:
+        - compound: yeast_extract
+          concentration_percent: 1
+        - compound: peptone
+          concentration_percent: 2
+```
+
+##### Selective/Dropout Media Variants
+
+When a dataset uses a selective medium with specific amino acid or nutrient dropouts,
+specify this using the base `synthetic_complete` name and adjust the `nitrogen_source`
+to reflect the modified composition:
+
+```yaml
+experimental_conditions:
+  environmental_conditions:
+    media:
+      name: synthetic_complete
+      carbon_source:
+        - compound: D-glucose
+          concentration_percent: 2
+      nitrogen_source:
+        - compound: yeast_nitrogen_base
+          # lastname et al 2025 used 6.71 g/L
+          concentration_percent: 0.671
+          specifications:
+            - without_amino_acids
+            - without_ammonium_sulfate
+        - compound: ammonium_sulfate
+          # lastname et al 2025 used 5 g/L
+          concentration_percent: 0.5
+        - compound: amino_acid_dropout_mix
+          # lastname et al 2025 used 2 g/L
+          concentration_percent: 0.2
+          specifications:
+            - minus_uracil
+            - minus_histidine
+            - minus_leucine
+```
+
+##### Media in Field-Level Definitions
+
+When media varies per sample and is captured in a categorical field with definitions:
+
+```yaml
+- name: condition
+  dtype:
+    class_label:
+      names: ["standard", "galactose"]
+  role: experimental_condition
+  definitions:
+    standard:
+      environmental_conditions:
+        media:
+          name: YPD
+          carbon_source:
+            - compound: D-glucose
+              concentration_percent: 2
+          nitrogen_source:
+            - compound: yeast_extract
+              concentration_percent: 1
+            - compound: peptone
+              concentration_percent: 2
+    galactose:
+      environmental_conditions:
+        media:
+          name: YPD
+          carbon_source:
+            - compound: D-galactose
+              concentration_percent: 2
+          nitrogen_source:
+            - compound: yeast_extract
+              concentration_percent: 1
+            - compound: peptone
+              concentration_percent: 2
+```
 
 ## Feature Definitions
 
 Each config must include detailed feature definitions in `dataset_info.features`:
-
 ```yaml
 dataset_info:
   features:
-  - name: field_name           # Column name in the data
-    dtype: string              # Data type (string, int64, float64, etc.)
-    description: "Detailed description of what this field contains"
-    role: "target_identifier"  # Optional: semantic role of the feature
+    - name: field_name           # Column name in the data
+      dtype: string              # Data type (string, int64, float64, etc.)
+      description: "Detailed description of what this field contains"
+      role: "target_identifier"  # Optional: semantic role of the feature
 ```
 
 ### Categorical Fields with Value Definitions
@@ -136,7 +479,6 @@ dataset_info:
 For fields with `role: experimental_condition` that contain categorical values, you can
 provide structured definitions for each value using the `definitions` field. This allows
 machine-parsable specification of what each condition value means experimentally:
-
 ```yaml
 - name: condition
   dtype:
@@ -146,11 +488,24 @@ machine-parsable specification of what each condition value means experimentally
   description: Growth condition of the sample
   definitions:
     standard:
-      growth_conditions:
+      environmental_conditions:
         media:
           name: synthetic_complete
+          carbon_source:
+            - compound: D-glucose
+              concentration_percent: 2
+          nitrogen_source:
+            - compound: yeast_nitrogen_base
+              concentration_g_per_l: 6.71
+              specifications:
+                - without_amino_acids
+                - without_ammonium_sulfate
+            - compound: ammonium_sulfate
+              concentration_g_per_l: 5
+            - compound: amino_acid_dropout_mix
+              concentration_g_per_l: 2
     heat_shock:
-      growth_conditions:
+      environmental_conditions:
         temperature_celsius: 37
         duration_minutes: 10
 ```
@@ -180,18 +535,53 @@ Unless otherwise noted, assume that coordinates are 0-based, half-open intervals
 
 ## Feature Roles
 
-The optional role field provides semantic meaning to features, especially useful
+The optional `role` field provides semantic meaning to features, especially useful
 for annotated_features datasets. The following roles are recognized by tfbpapi:
 
-- **target_identifier**: Identifies target genes/features (e.g., target_locus_tag,
-  target_symbol)
-- **regulator_identifier**: Identifies regulatory factors (e.g., regulator_locus_tag,
-  regulator_symbol)
-- **quantitative_measure**: Quantitative measurements (e.g., binding_score,
-  expression_level, p_value)
+- **target_identifier**: Identifies target genes/features (e.g., `target_locus_tag`,
+  `target_symbol`)
+- **regulator_identifier**: Identifies regulatory factors (e.g., `regulator_locus_tag`,
+  `regulator_symbol`)
+- **quantitative_measure**: Quantitative measurements (e.g., `binding_score`,
+  `expression_level`, `p_value`)
 - **experimental_condition**: Experimental conditions or metadata
   (can include `definitions` field for categorical values)
-- **genomic_coordinate**: Positional information (chr, start, end, pos)
+- **genomic_coordinate**: Positional information (`chr`, `start`, `end`, `pos`)
+
+**Validation**: Only these specific role values are accepted. Other values (e.g., `"identifier"`)
+will cause validation errors.
+
+## Strain Background and Definitions
+
+The `strain_background` field can appear in two locations:
+
+1. **Top-level or config-level** `experimental_conditions`:
+   ```yaml
+   experimental_conditions:
+     strain_background:
+       genotype: BY4741
+       mating_type: MATa
+       markers: [his3Δ1, leu2Δ0, met15Δ0, ura3Δ0]
+   ```
+
+2. **Within field-level definitions** for condition-specific strain information:
+   ```yaml
+   - name: heat_shock
+     dtype:
+       class_label:
+         names: ["control", "treated"]
+     role: experimental_condition
+     definitions:
+       treated:
+         environmental_conditions:
+           temperature_celsius: 37
+         strain_background:
+           genotype: W303_derivative
+           description: "Heat-sensitive strain"
+   ```
+
+The `strain_background` field accepts flexible structure as a dictionary to accommodate
+varying levels of detail about strain information.
 
 
 ## Partitioned Datasets

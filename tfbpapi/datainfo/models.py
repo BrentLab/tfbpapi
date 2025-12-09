@@ -1,9 +1,10 @@
 """Pydantic models for dataset card validation."""
 
+import warnings
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class DatasetType(str, Enum):
@@ -13,6 +14,317 @@ class DatasetType(str, Enum):
     ANNOTATED_FEATURES = "annotated_features"
     GENOME_MAP = "genome_map"
     METADATA = "metadata"
+    QC_DATA = "qc_data"
+
+
+class FieldRole(str, Enum):
+    """Valid role values for feature fields."""
+
+    REGULATOR_IDENTIFIER = "regulator_identifier"
+    TARGET_IDENTIFIER = "target_identifier"
+    QUANTITATIVE_MEASURE = "quantitative_measure"
+    EXPERIMENTAL_CONDITION = "experimental_condition"
+    GENOMIC_COORDINATE = "genomic_coordinate"
+
+
+class GrowthStage(str, Enum):
+    """Common growth stages."""
+
+    MID_LOG_PHASE = "mid_log_phase"
+    EARLY_LOG_PHASE = "early_log_phase"
+    LATE_LOG_PHASE = "late_log_phase"
+    STATIONARY_PHASE = "stationary_phase"
+    EARLY_STATIONARY_PHASE = "early_stationary_phase"
+    OVERNIGHT_STATIONARY_PHASE = "overnight_stationary_phase"
+    MID_LOG = "mid_log"
+    EARLY_LOG = "early_log"
+    LATE_LOG = "late_log"
+    EXPONENTIAL_PHASE = "exponential_phase"
+
+
+class CompoundInfo(BaseModel):
+    """Information about a chemical compound in media."""
+
+    compound: str = Field(..., description="Chemical compound name")
+    concentration_percent: float | None = Field(
+        default=None, description="Concentration as percentage (w/v)"
+    )
+    concentration_g_per_l: float | None = Field(
+        default=None, description="Concentration in grams per liter"
+    )
+    concentration_molar: float | None = Field(
+        default=None, description="Concentration in molar (M)"
+    )
+    specifications: list[str] | None = Field(
+        default=None,
+        description="Additional specifications (e.g., 'without_amino_acids')",
+    )
+
+
+class MediaAdditiveInfo(BaseModel):
+    """Information about media additives (e.g., butanol for filamentation)."""
+
+    compound: str = Field(..., description="Additive compound name")
+    concentration_percent: float | None = Field(
+        default=None, description="Concentration as percentage (w/v)"
+    )
+    description: str | None = Field(
+        default=None, description="Additional context about the additive"
+    )
+
+
+class MediaInfo(BaseModel):
+    """Growth media specification."""
+
+    name: str = Field(
+        ...,
+        description="Canonical or descriptive media name (minimal, synthetic_complete, YPD, etc.)",
+    )
+    carbon_source: list[CompoundInfo] = Field(
+        ..., description="Carbon source compounds and concentrations"
+    )
+    nitrogen_source: list[CompoundInfo] = Field(
+        ..., description="Nitrogen source compounds and concentrations"
+    )
+    phosphate_source: list[CompoundInfo] | None = Field(
+        default=None, description="Phosphate source compounds and concentrations"
+    )
+    additives: list[MediaAdditiveInfo] | None = Field(
+        default=None,
+        description="Additional media components (e.g., butanol for filamentation)",
+    )
+
+    @field_validator("carbon_source", "nitrogen_source", mode="before")
+    @classmethod
+    def validate_compound_list(cls, v):
+        """Validate compound lists and handle 'unspecified' strings."""
+        if v is None:
+            return []
+        if isinstance(v, str):
+            if v == "unspecified":
+                warnings.warn(
+                    "Compound source specified as string 'unspecified'. "
+                    "Should be null/omitted or a structured list.",
+                    UserWarning,
+                )
+                return []
+            # Try to parse as single compound
+            return [{"compound": v}]
+        return v
+
+
+class GrowthPhaseInfo(BaseModel):
+    """Growth phase information at harvest."""
+
+    od600: float | None = Field(
+        default=None, description="Optical density at 600nm at harvest"
+    )
+    od600_tolerance: float | None = Field(
+        default=None, description="Measurement tolerance for OD600"
+    )
+    stage: str | None = Field(
+        default=None, description="Growth stage (preferred field name)"
+    )
+    phase: str | None = Field(
+        default=None,
+        description="Growth stage (alias for 'stage' for backward compatibility)",
+    )
+    description: str | None = Field(
+        default=None, description="Additional context about growth phase"
+    )
+
+    @field_validator("stage", "phase", mode="before")
+    @classmethod
+    def validate_stage(cls, v):
+        """Validate stage and warn if not a common value."""
+        if v is None:
+            return None
+        # Get the list of known stages from the enum
+        known_stages = {stage.value for stage in GrowthStage}
+        if v not in known_stages:
+            warnings.warn(
+                f"Growth stage '{v}' not in recognized stages: {known_stages}",
+                UserWarning,
+            )
+        return v
+
+    @model_validator(mode="after")
+    def check_stage_phase_consistency(self):
+        """Ensure stage and phase are consistent if both provided."""
+        if self.stage and self.phase and self.stage != self.phase:
+            raise ValueError(
+                f"Inconsistent growth phase: stage='{self.stage}' vs phase='{self.phase}'"
+            )
+        return self
+
+
+class ChemicalTreatmentInfo(BaseModel):
+    """Chemical treatment applied to cultures."""
+
+    compound: str = Field(..., description="Chemical compound name")
+    concentration_percent: float | None = Field(
+        default=None, description="Concentration as percentage"
+    )
+    concentration_molar: float | None = Field(
+        default=None, description="Concentration in molar (M)"
+    )
+    duration_minutes: int | None = Field(
+        default=None, description="Duration in minutes"
+    )
+    duration_hours: float | None = Field(default=None, description="Duration in hours")
+    target_pH: float | None = Field(
+        default=None, description="Target pH for pH adjustments"
+    )
+    description: str | None = Field(
+        default=None, description="Additional context about the treatment"
+    )
+
+
+class DrugTreatmentInfo(ChemicalTreatmentInfo):
+    """Drug treatment - same structure as chemical treatment."""
+
+    pass
+
+
+class HeatTreatmentInfo(BaseModel):
+    """Heat treatment information."""
+
+    duration_minutes: int = Field(
+        ..., description="Duration of heat treatment in minutes"
+    )
+    description: str | None = Field(
+        default=None, description="Additional description of treatment"
+    )
+
+
+class TemperatureShiftInfo(BaseModel):
+    """Temperature shift for heat shock experiments."""
+
+    initial_temperature_celsius: float = Field(
+        ..., description="Initial cultivation temperature in Celsius"
+    )
+    temperature_shift_celsius: float = Field(
+        ..., description="Temperature after shift in Celsius"
+    )
+    temperature_shift_duration_minutes: int | None = Field(
+        default=None, description="Duration of temperature shift in minutes"
+    )
+    description: str | None = Field(
+        default=None, description="Additional context about the temperature shift"
+    )
+
+
+class InductionInfo(BaseModel):
+    """Induction information for expression systems."""
+
+    inducer: CompoundInfo = Field(..., description="Inducer compound and concentration")
+    duration_hours: float | None = Field(
+        default=None, description="Duration of induction in hours"
+    )
+    duration_minutes: int | None = Field(
+        default=None, description="Duration of induction in minutes"
+    )
+    description: str | None = Field(
+        default=None, description="Additional context about the induction"
+    )
+
+
+class EnvironmentalConditions(BaseModel):
+    """Environmental conditions for sample cultivation."""
+
+    temperature_celsius: float | None = Field(
+        default=None, description="Cultivation temperature in Celsius"
+    )
+    cultivation_method: str | None = Field(
+        default=None,
+        description="Cultivation method (e.g., 'batch_culture', 'chemostat')",
+    )
+    growth_phase_at_harvest: GrowthPhaseInfo | None = Field(
+        default=None, description="Growth phase at time of harvest"
+    )
+    media: MediaInfo | None = Field(
+        default=None, description="Growth media specification"
+    )
+    chemical_treatment: ChemicalTreatmentInfo | None = Field(
+        default=None, description="Chemical treatment applied"
+    )
+    drug_treatment: DrugTreatmentInfo | None = Field(
+        default=None,
+        description="Drug treatment applied (same structure as chemical_treatment)",
+    )
+    heat_treatment: HeatTreatmentInfo | None = Field(
+        default=None, description="Heat treatment applied"
+    )
+    temperature_shift: TemperatureShiftInfo | None = Field(
+        default=None, description="Temperature shift for heat shock experiments"
+    )
+    induction: InductionInfo | None = Field(
+        default=None, description="Induction system for expression experiments"
+    )
+    incubation_duration_hours: float | None = Field(
+        default=None, description="Total incubation duration in hours"
+    )
+    incubation_duration_minutes: int | None = Field(
+        default=None, description="Total incubation duration in minutes"
+    )
+    description: str | None = Field(
+        default=None, description="Additional descriptive information"
+    )
+
+    model_config = ConfigDict(extra="allow")
+
+    @model_validator(mode="after")
+    def warn_extra_fields(self):
+        """Warn about any extra fields not in the specification."""
+        known_fields = {
+            "temperature_celsius",
+            "cultivation_method",
+            "growth_phase_at_harvest",
+            "media",
+            "chemical_treatment",
+            "drug_treatment",
+            "heat_treatment",
+            "temperature_shift",
+            "induction",
+            "incubation_duration_hours",
+            "incubation_duration_minutes",
+            "description",
+        }
+        extra = set(self.__dict__.keys()) - known_fields
+        if extra:
+            warnings.warn(
+                f"EnvironmentalConditions contains non-standard fields: {extra}. "
+                "Consider adding to specification.",
+                UserWarning,
+            )
+        return self
+
+
+class ExperimentalConditions(BaseModel):
+    """Experimental conditions including environmental and other parameters."""
+
+    environmental_conditions: EnvironmentalConditions | None = Field(
+        default=None, description="Environmental cultivation conditions"
+    )
+    strain_background: str | dict[str, Any] | None = Field(
+        default=None,
+        description="Strain background information (string or flexible dict structure)",
+    )
+
+    model_config = ConfigDict(extra="allow")
+
+    @model_validator(mode="after")
+    def warn_extra_fields(self):
+        """Warn about any extra fields not in the specification."""
+        known_fields = {"environmental_conditions", "strain_background"}
+        extra = set(self.__dict__.keys()) - known_fields
+        if extra:
+            warnings.warn(
+                f"ExperimentalConditions contains non-standard fields: {extra}. "
+                "Consider adding to specification.",
+                UserWarning,
+            )
+        return self
 
 
 class ClassLabelType(BaseModel):
@@ -27,12 +339,19 @@ class FeatureInfo(BaseModel):
     name: str = Field(..., description="Column name in the data")
     dtype: str | dict[str, ClassLabelType] = Field(
         ...,
-        description="Data type (string, int64, float64, etc.) or categorical class labels",
+        description="Data type (string, int64, float64, etc.) "
+        "or categorical class labels",
     )
     description: str = Field(..., description="Detailed description of the field")
-    role: str | None = Field(
+    role: FieldRole | None = Field(
         default=None,
-        description="Semantic role of the feature (e.g., 'target_identifier', 'regulator_identifier', 'quantitative_measure')",
+        description="Semantic role of the feature (e.g., 'target_identifier', "
+        "'regulator_identifier', 'quantitative_measure')",
+    )
+    definitions: dict[str, Any] | None = Field(
+        default=None,
+        description="Definitions for categorical field values "
+        "with experimental conditions",
     )
 
     @field_validator("dtype", mode="before")
@@ -50,15 +369,18 @@ class FeatureInfo(BaseModel):
                     return {"class_label": ClassLabelType(**class_label_data)}
                 else:
                     raise ValueError(
-                        f"Invalid class_label structure: expected dict with 'names' key, got {class_label_data}"
+                        "Invalid class_label structure: expected dict "
+                        f"with 'names' key, got {class_label_data}"
                     )
             else:
                 raise ValueError(
-                    f"Unknown dtype structure: expected 'class_label' key in dict, got keys: {list(v.keys())}"
+                    "Unknown dtype structure: expected 'class_label' key "
+                    f"in dict, got keys: {list(v.keys())}"
                 )
         else:
             raise ValueError(
-                f"dtype must be a string or dict with class_label info, got {type(v)}: {v}"
+                "dtype must be a string or dict with "
+                f"class_label info, got {type(v)}: {v}"
             )
 
     def get_dtype_summary(self) -> str:
@@ -115,18 +437,22 @@ class DatasetConfig(BaseModel):
     metadata_fields: list[str] | None = Field(
         default=None, description="Fields for embedded metadata extraction"
     )
+    experimental_conditions: ExperimentalConditions | None = Field(
+        default=None, description="Experimental conditions for this config"
+    )
     data_files: list[DataFileInfo] = Field(..., description="Data file information")
     dataset_info: DatasetInfo = Field(..., description="Dataset structure information")
 
     @field_validator("applies_to")
     @classmethod
     def applies_to_only_for_metadata(cls, v, info):
-        """Validate that applies_to is only used for metadata configs."""
+        """Validate that applies_to is only used for metadata or qc_data configs."""
         if v is not None:
             dataset_type = info.data.get("dataset_type")
-            if dataset_type != DatasetType.METADATA:
+            if dataset_type not in (DatasetType.METADATA, DatasetType.QC_DATA):
                 raise ValueError(
-                    "applies_to field is only valid for metadata dataset types"
+                    "applies_to field is only valid "
+                    "for metadata and qc_data dataset types"
                 )
         return v
 
@@ -157,6 +483,9 @@ class DatasetCard(BaseModel):
     """Complete dataset card model."""
 
     configs: list[DatasetConfig] = Field(..., description="Dataset configurations")
+    experimental_conditions: ExperimentalConditions | None = Field(
+        default=None, description="Top-level experimental conditions for all configs"
+    )
     license: str | None = Field(default=None, description="Dataset license")
     language: list[str] | None = Field(default=None, description="Dataset languages")
     tags: list[str] | None = Field(default=None, description="Descriptive tags")
@@ -166,6 +495,11 @@ class DatasetCard(BaseModel):
     size_categories: list[str] | None = Field(
         default=None, description="Dataset size categories"
     )
+    strain_information: dict[str, Any] | None = Field(
+        default=None, description="Strain background information"
+    )
+
+    model_config = ConfigDict(extra="allow")
 
     @field_validator("configs")
     @classmethod

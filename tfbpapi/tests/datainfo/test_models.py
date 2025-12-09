@@ -4,13 +4,20 @@ import pytest
 from pydantic import ValidationError
 
 from tfbpapi.datainfo.models import (
+    ChemicalTreatmentInfo,
+    CompoundInfo,
     DataFileInfo,
     DatasetCard,
     DatasetConfig,
     DatasetInfo,
     DatasetType,
+    EnvironmentalConditions,
+    ExperimentalConditions,
     ExtractedMetadata,
     FeatureInfo,
+    GrowthPhaseInfo,
+    HeatTreatmentInfo,
+    MediaInfo,
     MetadataRelationship,
     PartitioningInfo,
 )
@@ -36,6 +43,328 @@ class TestDatasetType:
         """Test invalid dataset type raises error."""
         with pytest.raises(ValueError):
             DatasetType("invalid_type")
+
+
+class TestCompoundInfo:
+    """Test CompoundInfo model."""
+
+    def test_compound_info_with_percentage(self):
+        """Test CompoundInfo with percentage concentration."""
+        compound = CompoundInfo(compound="glucose", concentration_percent=2.0)
+        assert compound.compound == "glucose"
+        assert compound.concentration_percent == 2.0
+        assert compound.concentration_g_per_l is None
+        assert compound.specifications is None
+
+    def test_compound_info_with_g_per_l(self):
+        """Test CompoundInfo with g/L concentration."""
+        compound = CompoundInfo(compound="dextrose", concentration_g_per_l=20.0)
+        assert compound.compound == "dextrose"
+        assert compound.concentration_g_per_l == 20.0
+        assert compound.concentration_percent is None
+
+    def test_compound_info_with_specifications(self):
+        """Test CompoundInfo with specifications."""
+        compound = CompoundInfo(
+            compound="yeast_nitrogen_base",
+            concentration_g_per_l=6.7,
+            specifications=["without_amino_acids"],
+        )
+        assert compound.compound == "yeast_nitrogen_base"
+        assert compound.specifications == ["without_amino_acids"]
+
+    def test_compound_info_minimal(self):
+        """Test CompoundInfo with only required fields."""
+        compound = CompoundInfo(compound="ethanol")
+        assert compound.compound == "ethanol"
+        assert compound.concentration_percent is None
+        assert compound.concentration_g_per_l is None
+
+
+class TestMediaInfo:
+    """Test MediaInfo model."""
+
+    def test_media_info_minimal(self):
+        """Test MediaInfo with required fields only."""
+        media = MediaInfo(
+            name="minimal",
+            carbon_source=[CompoundInfo(compound="glucose", concentration_percent=2.0)],
+            nitrogen_source=[
+                CompoundInfo(compound="ammonium_sulfate", concentration_g_per_l=5.0)
+            ],
+        )
+        assert media.name == "minimal"
+        assert len(media.carbon_source) == 1
+        assert len(media.nitrogen_source) == 1
+        assert media.phosphate_source is None
+
+    def test_media_info_with_phosphate(self):
+        """Test MediaInfo with phosphate source."""
+        media = MediaInfo(
+            name="synthetic_complete",
+            carbon_source=[CompoundInfo(compound="glucose", concentration_percent=2.0)],
+            nitrogen_source=[
+                CompoundInfo(compound="yeast_nitrogen_base", concentration_g_per_l=6.7)
+            ],
+            phosphate_source=[
+                CompoundInfo(compound="potassium_phosphate", concentration_g_per_l=1.0)
+            ],
+        )
+        assert media.phosphate_source is not None
+        assert len(media.phosphate_source) == 1
+
+    def test_media_info_multiple_compounds(self):
+        """Test MediaInfo with multiple carbon/nitrogen sources."""
+        media = MediaInfo(
+            name="YPD",
+            carbon_source=[
+                CompoundInfo(compound="glucose", concentration_percent=2.0),
+                CompoundInfo(compound="glycerol", concentration_percent=3.0),
+            ],
+            nitrogen_source=[
+                CompoundInfo(compound="yeast_extract", concentration_percent=1.0),
+                CompoundInfo(compound="peptone", concentration_percent=2.0),
+            ],
+        )
+        assert len(media.carbon_source) == 2
+        assert len(media.nitrogen_source) == 2
+
+
+class TestGrowthPhaseInfo:
+    """Test GrowthPhaseInfo model."""
+
+    def test_growth_phase_with_od600(self):
+        """Test GrowthPhaseInfo with OD600."""
+        phase = GrowthPhaseInfo(od600=0.5, stage="mid_log_phase")
+        assert phase.od600 == 0.5
+        assert phase.stage == "mid_log_phase"
+
+    def test_growth_phase_od600_only(self):
+        """Test GrowthPhaseInfo with only OD600."""
+        phase = GrowthPhaseInfo(od600=0.8)
+        assert phase.od600 == 0.8
+        assert phase.stage is None
+
+    def test_growth_phase_stage_only(self):
+        """Test GrowthPhaseInfo with only stage."""
+        phase = GrowthPhaseInfo(stage="stationary_phase")
+        assert phase.stage == "stationary_phase"
+        assert phase.od600 is None
+
+    def test_growth_phase_empty(self):
+        """Test GrowthPhaseInfo with no values."""
+        phase = GrowthPhaseInfo()
+        assert phase.od600 is None
+        assert phase.stage is None
+
+
+class TestChemicalTreatmentInfo:
+    """Test ChemicalTreatmentInfo model."""
+
+    def test_chemical_treatment_with_percent(self):
+        """Test ChemicalTreatmentInfo with percentage concentration."""
+        treatment = ChemicalTreatmentInfo(
+            compound="ethanol",
+            concentration_percent=5.0,
+            duration_minutes=30,
+        )
+        assert treatment.compound == "ethanol"
+        assert treatment.concentration_percent == 5.0
+        assert treatment.duration_minutes == 30
+        assert treatment.concentration_molar is None
+
+    def test_chemical_treatment_with_molar(self):
+        """Test ChemicalTreatmentInfo with molar concentration."""
+        treatment = ChemicalTreatmentInfo(
+            compound="rapamycin",
+            concentration_molar=0.0002,
+            duration_hours=2.0,
+        )
+        assert treatment.compound == "rapamycin"
+        assert treatment.concentration_molar == 0.0002
+        assert treatment.duration_hours == 2.0
+
+    def test_chemical_treatment_minimal(self):
+        """Test ChemicalTreatmentInfo with only compound."""
+        treatment = ChemicalTreatmentInfo(compound="hydrogen_peroxide")
+        assert treatment.compound == "hydrogen_peroxide"
+        assert treatment.concentration_percent is None
+        assert treatment.duration_minutes is None
+
+
+class TestHeatTreatmentInfo:
+    """Test HeatTreatmentInfo model."""
+
+    def test_heat_treatment_basic(self):
+        """Test HeatTreatmentInfo with required field."""
+        treatment = HeatTreatmentInfo(duration_minutes=30)
+        assert treatment.duration_minutes == 30
+        assert treatment.description is None
+
+    def test_heat_treatment_with_description(self):
+        """Test HeatTreatmentInfo with description."""
+        treatment = HeatTreatmentInfo(
+            duration_minutes=15, description="Heat shock at 37C"
+        )
+        assert treatment.duration_minutes == 15
+        assert treatment.description == "Heat shock at 37C"
+
+    def test_heat_treatment_missing_duration(self):
+        """Test HeatTreatmentInfo requires duration_minutes."""
+        with pytest.raises(ValidationError):
+            HeatTreatmentInfo(description="Some treatment")
+
+
+class TestEnvironmentalConditions:
+    """Test EnvironmentalConditions model."""
+
+    def test_environmental_conditions_minimal(self):
+        """Test EnvironmentalConditions with no fields."""
+        env = EnvironmentalConditions()
+        assert env.temperature_celsius is None
+        assert env.cultivation_method is None
+        assert env.growth_phase_at_harvest is None
+        assert env.media is None
+        assert env.chemical_treatment is None
+        assert env.heat_treatment is None
+
+    def test_environmental_conditions_temperature(self):
+        """Test EnvironmentalConditions with temperature."""
+        env = EnvironmentalConditions(temperature_celsius=30.0)
+        assert env.temperature_celsius == 30.0
+
+    def test_environmental_conditions_with_media(self):
+        """Test EnvironmentalConditions with media info."""
+        media = MediaInfo(
+            name="YPD",
+            carbon_source=[CompoundInfo(compound="glucose", concentration_percent=2.0)],
+            nitrogen_source=[
+                CompoundInfo(compound="peptone", concentration_percent=2.0)
+            ],
+        )
+        env = EnvironmentalConditions(
+            temperature_celsius=30.0,
+            cultivation_method="batch_culture",
+            media=media,
+        )
+        assert env.media is not None
+        assert env.media.name == "YPD"
+
+    def test_environmental_conditions_with_growth_phase(self):
+        """Test EnvironmentalConditions with growth phase."""
+        growth_phase = GrowthPhaseInfo(od600=0.5, stage="mid_log_phase")
+        env = EnvironmentalConditions(growth_phase_at_harvest=growth_phase)
+        assert env.growth_phase_at_harvest is not None
+        assert env.growth_phase_at_harvest.od600 == 0.5
+
+    def test_environmental_conditions_with_chemical_treatment(self):
+        """Test EnvironmentalConditions with chemical treatment."""
+        treatment = ChemicalTreatmentInfo(
+            compound="rapamycin",
+            concentration_molar=0.0002,
+            duration_minutes=120,
+        )
+        env = EnvironmentalConditions(chemical_treatment=treatment)
+        assert env.chemical_treatment is not None
+        assert env.chemical_treatment.compound == "rapamycin"
+
+    def test_environmental_conditions_with_heat_treatment(self):
+        """Test EnvironmentalConditions with heat treatment."""
+        treatment = HeatTreatmentInfo(duration_minutes=30, description="Heat shock")
+        env = EnvironmentalConditions(heat_treatment=treatment)
+        assert env.heat_treatment is not None
+        assert env.heat_treatment.duration_minutes == 30
+
+    def test_environmental_conditions_complete(self):
+        """Test EnvironmentalConditions with all fields."""
+        media = MediaInfo(
+            name="minimal",
+            carbon_source=[CompoundInfo(compound="glucose", concentration_percent=2.0)],
+            nitrogen_source=[
+                CompoundInfo(compound="ammonium_sulfate", concentration_g_per_l=5.0)
+            ],
+        )
+        growth_phase = GrowthPhaseInfo(od600=0.6, stage="mid_log_phase")
+        chemical = ChemicalTreatmentInfo(
+            compound="rapamycin", concentration_molar=0.0002, duration_minutes=60
+        )
+        heat = HeatTreatmentInfo(duration_minutes=15, description="Brief heat shock")
+
+        env = EnvironmentalConditions(
+            temperature_celsius=30.0,
+            cultivation_method="batch_culture",
+            growth_phase_at_harvest=growth_phase,
+            media=media,
+            chemical_treatment=chemical,
+            heat_treatment=heat,
+        )
+
+        assert env.temperature_celsius == 30.0
+        assert env.cultivation_method == "batch_culture"
+        assert env.growth_phase_at_harvest.od600 == 0.6
+        assert env.media.name == "minimal"
+        assert env.chemical_treatment.compound == "rapamycin"
+        assert env.heat_treatment.duration_minutes == 15
+
+    def test_environmental_conditions_extra_fields_allowed(self):
+        """Test that EnvironmentalConditions allows extra fields."""
+        env = EnvironmentalConditions(
+            temperature_celsius=30.0, custom_field="custom_value"
+        )
+        assert env.temperature_celsius == 30.0
+
+
+class TestExperimentalConditions:
+    """Test ExperimentalConditions model."""
+
+    def test_experimental_conditions_minimal(self):
+        """Test ExperimentalConditions with no fields."""
+        exp = ExperimentalConditions()
+        assert exp.environmental_conditions is None
+        assert exp.strain_background is None
+
+    def test_experimental_conditions_with_strain(self):
+        """Test ExperimentalConditions with strain background."""
+        exp = ExperimentalConditions(strain_background="BY4741")
+        assert exp.strain_background == "BY4741"
+
+    def test_experimental_conditions_with_environmental(self):
+        """Test ExperimentalConditions with environmental conditions."""
+        env = EnvironmentalConditions(
+            temperature_celsius=30.0, cultivation_method="batch_culture"
+        )
+        exp = ExperimentalConditions(environmental_conditions=env)
+        assert exp.environmental_conditions is not None
+        assert exp.environmental_conditions.temperature_celsius == 30.0
+
+    def test_experimental_conditions_complete(self):
+        """Test ExperimentalConditions with all fields."""
+        env = EnvironmentalConditions(
+            temperature_celsius=30.0,
+            cultivation_method="batch_culture",
+            media=MediaInfo(
+                name="YPD",
+                carbon_source=[
+                    CompoundInfo(compound="glucose", concentration_percent=2.0)
+                ],
+                nitrogen_source=[
+                    CompoundInfo(compound="peptone", concentration_percent=2.0)
+                ],
+            ),
+        )
+        exp = ExperimentalConditions(
+            environmental_conditions=env, strain_background="BY4741"
+        )
+        assert exp.strain_background == "BY4741"
+        assert exp.environmental_conditions.temperature_celsius == 30.0
+        assert exp.environmental_conditions.media.name == "YPD"
+
+    def test_experimental_conditions_extra_fields_allowed(self):
+        """Test that ExperimentalConditions allows extra fields."""
+        exp = ExperimentalConditions(
+            strain_background="BY4741", custom_metadata="custom_value"
+        )
+        assert exp.strain_background == "BY4741"
 
 
 class TestFeatureInfo:
@@ -244,7 +573,8 @@ class TestDatasetConfig:
 
         with pytest.raises(
             ValidationError,
-            match="applies_to field is only valid for metadata dataset types",
+            match="applies_to field is only valid for "
+            "metadata and qc_data dataset types",
         ):
             DatasetConfig(
                 config_name="invalid_config",

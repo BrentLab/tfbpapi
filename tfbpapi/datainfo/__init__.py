@@ -1,5 +1,6 @@
 from .datacard import DataCard
 from .fetchers import HfDataCardFetcher, HfRepoStructureFetcher, HfSizeInfoFetcher
+from .metadata_manager import MetadataManager
 from .models import (
     DatasetCard,
     DatasetConfig,
@@ -14,6 +15,7 @@ __all__ = [
     "HfDataCardFetcher",
     "HfRepoStructureFetcher",
     "HfSizeInfoFetcher",
+    "MetadataManager",
     "DatasetCard",
     "DatasetConfig",
     "DatasetType",

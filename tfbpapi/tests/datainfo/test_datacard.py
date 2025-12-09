@@ -3,7 +3,6 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from pydantic import ValidationError
 
 from tfbpapi.datainfo import DataCard
 from tfbpapi.datainfo.models import DatasetType

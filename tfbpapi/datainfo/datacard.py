@@ -12,6 +12,7 @@ from .models import (
     DatasetConfig,
     DatasetType,
     ExtractedMetadata,
+    FieldRole,
     MetadataRelationship,
 )
 
@@ -327,6 +328,55 @@ class DataCard:
             info["metadata_fields"] = config.metadata_fields
 
         return info
+
+    def extract_metadata_schema(self, config_name: str) -> dict[str, Any]:
+        """
+        Extract metadata schema for a configuration.
+
+        Returns structured schema identifying metadata fields by their role,
+        suitable for metadata extraction by MetadataManager. Includes
+        experimental conditions at all three hierarchy levels:
+        - Top-level (repo-wide, applies to all configs/samples)
+        - Config-level (applies to this config's samples)
+        - Field-level (varies per sample, from field definitions)
+
+        :param config_name: Configuration name to extract schema for
+        :return: Dict with field lists grouped by role and condition definitions
+        :raises DataCardError: If configuration not found
+
+        """
+        config = self.get_config(config_name)
+        if not config:
+            raise DataCardError(f"Configuration '{config_name}' not found")
+
+        schema: dict[str, Any] = {
+            "regulator_fields": [],  # Fields with role=regulator_identifier
+            "target_fields": [],  # Fields with role=target_identifier
+            "condition_fields": [],  # Fields with role=experimental_condition
+            "condition_definitions": {},  # Field-level condition details
+            "top_level_conditions": None,  # Repo-level conditions
+            "config_level_conditions": None,  # Config-level conditions
+        }
+
+        for feature in config.dataset_info.features:
+            if feature.role == FieldRole.REGULATOR_IDENTIFIER:
+                schema["regulator_fields"].append(feature.name)
+            elif feature.role == FieldRole.TARGET_IDENTIFIER:
+                schema["target_fields"].append(feature.name)
+            elif feature.role == FieldRole.EXPERIMENTAL_CONDITION:
+                schema["condition_fields"].append(feature.name)
+                if feature.definitions:
+                    schema["condition_definitions"][feature.name] = feature.definitions
+
+        # Add top-level conditions (applies to all configs/samples)
+        if self.dataset_card.experimental_conditions:
+            schema["top_level_conditions"] = self.dataset_card.experimental_conditions
+
+        # Add config-level conditions (applies to this config's samples)
+        if config.experimental_conditions:
+            schema["config_level_conditions"] = config.experimental_conditions
+
+        return schema
 
     def summary(self) -> str:
         """Get a human-readable summary of the dataset."""
