@@ -78,13 +78,14 @@ class MediaInfo(BaseModel):
 
     name: str = Field(
         ...,
-        description="Canonical or descriptive media name (minimal, synthetic_complete, YPD, etc.)",
+        description="Canonical or descriptive media name "
+        "(minimal, synthetic_complete, YPD, etc.)",
     )
-    carbon_source: list[CompoundInfo] = Field(
-        ..., description="Carbon source compounds and concentrations"
+    carbon_source: list[CompoundInfo] | None = Field(
+        default=None, description="Carbon source compounds and concentrations"
     )
-    nitrogen_source: list[CompoundInfo] = Field(
-        ..., description="Nitrogen source compounds and concentrations"
+    nitrogen_source: list[CompoundInfo] | None = Field(
+        default=None, description="Nitrogen source compounds and concentrations"
     )
     phosphate_source: list[CompoundInfo] | None = Field(
         default=None, description="Phosphate source compounds and concentrations"
@@ -99,7 +100,7 @@ class MediaInfo(BaseModel):
     def validate_compound_list(cls, v):
         """Validate compound lists and handle 'unspecified' strings."""
         if v is None:
-            return []
+            return None
         if isinstance(v, str):
             if v == "unspecified":
                 warnings.warn(
@@ -107,7 +108,7 @@ class MediaInfo(BaseModel):
                     "Should be null/omitted or a structured list.",
                     UserWarning,
                 )
-                return []
+                return None
             # Try to parse as single compound
             return [{"compound": v}]
         return v
@@ -153,7 +154,8 @@ class GrowthPhaseInfo(BaseModel):
         """Ensure stage and phase are consistent if both provided."""
         if self.stage and self.phase and self.stage != self.phase:
             raise ValueError(
-                f"Inconsistent growth phase: stage='{self.stage}' vs phase='{self.phase}'"
+                "Inconsistent growth phase: "
+                f"stage='{self.stage}' vs phase='{self.phase}'"
             )
         return self
 
