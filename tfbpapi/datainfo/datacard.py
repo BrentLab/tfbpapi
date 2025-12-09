@@ -1,7 +1,7 @@
 """DataCard class for easy exploration of HuggingFace dataset metadata."""
 
 import logging
-from typing import Any, Dict, List, Optional, Set, Union
+from typing import Any
 
 from pydantic import ValidationError
 
@@ -83,8 +83,10 @@ class DataCard:
 
                 if "dtype" in field_path and error_type == "string_type":
                     error_details.append(
-                        f"Field '{field_path}': Expected a simple data type string (like 'string', 'int64', 'float64') "
-                        f"but got a complex structure. This might be a categorical field with class labels. "
+                        f"Field '{field_path}': Expected a simple data type "
+                        "string (like 'string', 'int64', 'float64') "
+                        "but got a complex structure. This might be a categorical "
+                        "field with class labels. "
                         f"Actual value: {input_value}"
                     )
                 else:
@@ -185,11 +187,13 @@ class DataCard:
                     values.update(partition_values)
 
             # For embedded metadata fields, we would need to query the actual data
-            # This is a placeholder - in practice, you might use the HF datasets server API
+            # This is a placeholder - in practice, you might use the
+            # HF datasets server API
             if config.metadata_fields and field_name in config.metadata_fields:
                 # Placeholder for actual data extraction
                 self.logger.debug(
-                    f"Would extract embedded metadata for {field_name} in {config.config_name}"
+                    "Would extract embedded metadata for "
+                    f"{field_name} in {config.config_name}"
                 )
 
         except Exception as e:
@@ -253,7 +257,8 @@ class DataCard:
                         )
                     )
 
-            # Check for embedded metadata (always runs regardless of explicit relationships)
+            # Check for embedded metadata (always runs regardless of
+            # explicit relationships)
             if data_config.metadata_fields:
                 relationships.append(
                     MetadataRelationship(
@@ -377,6 +382,52 @@ class DataCard:
             schema["config_level_conditions"] = config.experimental_conditions
 
         return schema
+
+    def get_condition_levels(
+        self, config_name: str, field_name: str
+    ) -> dict[str, Any] | list[str]:
+        """
+        Get factor levels for an experimental condition field.
+
+        Returns definitions if available (structured dict with descriptions), otherwise
+        queries distinct values from the parquet file.
+
+        :param config_name: Configuration name
+        :param field_name: Experimental condition field name
+        :return: Dict of definitions if available, otherwise list of distinct values
+        :raises DataCardError: If config or field not found, or field is not an
+            experimental condition
+
+        """
+        config = self.get_config(config_name)
+        if not config:
+            raise DataCardError(f"Configuration '{config_name}' not found")
+
+        # Find the feature and verify it's an experimental condition
+        feature = None
+        for f in config.dataset_info.features:
+            if f.name == field_name:
+                feature = f
+                break
+
+        if not feature:
+            raise DataCardError(
+                f"Field '{field_name}' not found in config '{config_name}'"
+            )
+
+        if feature.role != FieldRole.EXPERIMENTAL_CONDITION:
+            raise DataCardError(
+                f"Field '{field_name}' is not an experimental condition "
+                f"(role={feature.role})"
+            )
+
+        # If field has definitions, return those
+        if feature.definitions:
+            return feature.definitions
+
+        # Otherwise, query distinct values from parquet file
+        values = self.get_field_values(config_name, field_name)
+        return sorted(list(values))
 
     def summary(self) -> str:
         """Get a human-readable summary of the dataset."""
