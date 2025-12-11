@@ -13,18 +13,17 @@ pretty_name: Barkai ChEC-seq Compendium
 size_categories:
   - 100M<n<1B
 experimental_conditions:
-  environmental_conditions:
-    temperature_celsius: 30
-    cultivation_method: liquid_culture
-    growth_phase_at_harvest:
-      od600: 4.0
-      stage: overnight_stationary_phase
-    media:
-      name: synthetic_complete_dextrose
-      carbon_source:
-        - compound: D-dextrose
-          concentration_percent: unspecified
-      nitrogen_source: unspecified
+  temperature_celsius: 30
+  cultivation_method: liquid_culture
+  growth_phase_at_harvest:
+    od600: 4.0
+    stage: overnight_stationary_phase
+  media:
+    name: synthetic_complete_dextrose
+    # the D-dextrose concentration and nitrogen_source
+    # are unspecified
+    carbon_source:
+      - compound: D-dextrose
 configs:
 - config_name: genomic_coverage
   description: Genomic coverage data with pileup counts at specific positions
@@ -179,22 +178,20 @@ tags:
 pretty_name: "Calling Cards Transcription Factor Binding Dataset"
 
 experimental_conditions:
-  environmental_conditions:
-    temperature_celsius: unspecified
-    cultivation_method: unspecified
-    growth_phase_at_harvest: unspecified
-    media:
-      name: synthetic_complete_minus_ura_his_leu
-      carbon_source:
-        - compound: D-galactose
-          concentration_percent: 2
-      nitrogen_source:
-        - compound: amino_acid_dropout_mix
-          concentration_percent: unspecified
-          specifications:
-            - minus_ura
-            - minus_his
-            - minus_leu
+  temperature_celsius: room
+  # growth phase and cultivation method unspecified
+  media:
+    name: synthetic_complete_minus_ura_his_leu
+    carbon_source:
+      - compound: D-galactose
+        concentration_percent: 2
+    nitrogen_source:
+      # concentration percent unspecified
+      - compound: amino_acid_dropout_mix
+        specifications:
+          - minus_ura
+          - minus_his
+          - minus_leu
 configs:
 - config_name: annotated_features
   description: Calling Cards transcription factor binding data with enrichment scores and statistical significance
@@ -378,15 +375,14 @@ pretty_name: Hackett, 2020 Overexpression
 size_categories:
 - 1M<n<10M
 experimental_conditions:
-  environmental_conditions:
-    temperature_celsius: 30
-    cultivation_method: chemostat
-    media:
-      name: minimal
-      carbon_source:
-        - compound: D-glucose
-          # Saldanha et al 2004: 10 g/l
-          concentration_percent: 1
+  temperature_celsius: 30
+  cultivation_method: chemostat
+  media:
+    name: minimal
+    carbon_source:
+      - compound: D-glucose
+        # Saldanha et al 2004: 10 g/l
+        concentration_percent: 1
 configs:
   - config_name: hackett_2020
     description: TF overexpression data from Hackett 2020
@@ -467,23 +463,21 @@ configs:
           role: experimental_condition
           definitions:
             P:
-              environmental_conditions:
-                media:
-                  nitrogen_source:
-                    - compound: ammonium_sulfate
-                      # Saldanha et al 2004: 5 g/l
-                      concentration_percent: 0.5
-                  phosphate_source:
-                    - compound: potassium_phosphate_monobasic
-                      # Hackett et al 2020: 20 mg/l
-                      concentration_percent: 0.002
+              media:
+                nitrogen_source:
+                  - compound: ammonium_sulfate
+                    # Saldanha et al 2004: 5 g/l
+                    concentration_percent: 0.5
+                phosphate_source:
+                  - compound: potassium_phosphate_monobasic
+                    # Hackett et al 2020: 20 mg/l
+                    concentration_percent: 0.002
             N:
-              environmental_conditions:
-                media:
-                  nitrogen_source:
-                    - compound: ammonium_sulfate
-                      # Hackett et al 2020: 40 mg/l
-                      concentration_percent: 0.004
+              media:
+                nitrogen_source:
+                  - compound: ammonium_sulfate
+                    # Hackett et al 2020: 40 mg/l
+                    concentration_percent: 0.004
             M:
               description: "Not defined in the paper or on the Calico website"
         - name: date
@@ -575,290 +569,276 @@ configs:
       definitions:
         YPD:
           description: Rich media baseline condition
-          environmental_conditions:
-            # Harbison et al 2004: grown at 30°C (from HEAT condition context)
-            temperature_celsius: 30
-            cultivation_method: unspecified
-            growth_phase_at_harvest:
-              # Harbison et al 2004: OD600 ~0.8
-              od600: 0.8
-            media:
-              # Harbison et al 2004: 1% yeast extract / 2% peptone / 2% glucose
-              name: YPD
-              carbon_source:
-                - compound: D-glucose
-                  concentration_percent: 2
-              nitrogen_source:
-                - compound: yeast_extract
-                  concentration_percent: 1
-                - compound: peptone
-                  concentration_percent: 2
+          # Harbison et al 2004: grown at 30°C (from HEAT condition context)
+          temperature_celsius: 30
+          cultivation_method: unspecified
+          growth_phase_at_harvest:
+            # Harbison et al 2004: OD600 ~0.8
+            od600: 0.8
+          media:
+            # Harbison et al 2004: 1% yeast extract / 2% peptone / 2% glucose
+            name: YPD
+            carbon_source:
+              - compound: D-glucose
+                concentration_percent: 2
+            nitrogen_source:
+              - compound: yeast_extract
+                concentration_percent: 1
+              - compound: peptone
+                concentration_percent: 2
         SM:
           description: Amino acid starvation stress condition
-          environmental_conditions:
-            temperature_celsius: 30
-            cultivation_method: unspecified
-            growth_phase_at_harvest:
-              # Harbison et al 2004: OD600 ~0.6
-              od600: 0.6
-            media:
-              # Harbison et al 2004: synthetic complete medium
-              name: synthetic_complete
-              carbon_source: unspecified
-              nitrogen_source: unspecified
-            chemical_treatment:
-              compound: sulfometuron_methyl
-              # Harbison et al 2004: 0.2 mg/ml
-              concentration_percent: 0.02
-              duration_hours: 2
+          temperature_celsius: 30
+          cultivation_method: unspecified
+          growth_phase_at_harvest:
+            # Harbison et al 2004: OD600 ~0.6
+            od600: 0.6
+          media:
+            # Harbison et al 2004: synthetic complete medium
+            name: synthetic_complete
+            carbon_source: unspecified
+            nitrogen_source: unspecified
+          chemical_treatment:
+            compound: sulfometuron_methyl
+            # Harbison et al 2004: 0.2 mg/ml
+            concentration_percent: 0.02
+            duration_hours: 2
         RAPA:
           description: Nutrient deprivation via TOR inhibition
-          environmental_conditions:
-            temperature_celsius: 30
-            cultivation_method: unspecified
-            growth_phase_at_harvest:
-              # Harbison et al 2004: OD600 ~0.8
-              od600: 0.8
-            media:
-              name: YPD
-              carbon_source:
-                - compound: D-glucose
-                  concentration_percent: 2
-              nitrogen_source:
-                - compound: yeast_extract
-                  concentration_percent: 1
-                - compound: peptone
-                  concentration_percent: 2
-            chemical_treatment:
-              compound: rapamycin
-              # Harbison et al 2004: 100 nM
-              concentration_percent: 9.142e-6
-              duration_minutes: 20
+          temperature_celsius: 30
+          cultivation_method: unspecified
+          growth_phase_at_harvest:
+            # Harbison et al 2004: OD600 ~0.8
+            od600: 0.8
+          media:
+            name: YPD
+            carbon_source:
+              - compound: D-glucose
+                concentration_percent: 2
+            nitrogen_source:
+              - compound: yeast_extract
+                concentration_percent: 1
+              - compound: peptone
+                concentration_percent: 2
+          chemical_treatment:
+            compound: rapamycin
+            # Harbison et al 2004: 100 nM
+            concentration_percent: 9.142e-6
+            duration_minutes: 20
         H2O2Hi:
           description: High oxidative stress condition
-          environmental_conditions:
-            temperature_celsius: 30
-            cultivation_method: unspecified
-            growth_phase_at_harvest:
-              # Harbison et al 2004: OD600 ~0.5
-              od600: 0.5
-            media:
-              name: YPD
-              carbon_source:
-                - compound: D-glucose
-                  concentration_percent: 2
-              nitrogen_source:
-                - compound: yeast_extract
-                  concentration_percent: 1
-                - compound: peptone
-                  concentration_percent: 2
-            chemical_treatment:
-              compound: hydrogen_peroxide
-              # Harbison et al 2004: 4 mM
-              concentration_percent: 0.0136
-              duration_minutes: 30
+          temperature_celsius: 30
+          cultivation_method: unspecified
+          growth_phase_at_harvest:
+            # Harbison et al 2004: OD600 ~0.5
+            od600: 0.5
+          media:
+            name: YPD
+            carbon_source:
+              - compound: D-glucose
+                concentration_percent: 2
+            nitrogen_source:
+              - compound: yeast_extract
+                concentration_percent: 1
+              - compound: peptone
+                concentration_percent: 2
+          chemical_treatment:
+            compound: hydrogen_peroxide
+            # Harbison et al 2004: 4 mM
+            concentration_percent: 0.0136
+            duration_minutes: 30
         H2O2Lo:
           description: Moderate oxidative stress condition
-          environmental_conditions:
-            temperature_celsius: 30
-            cultivation_method: unspecified
-            growth_phase_at_harvest:
-              # Harbison et al 2004: OD600 ~0.5
-              od600: 0.5
-            media:
-              name: YPD
-              carbon_source:
-                - compound: D-glucose
-                  concentration_percent: 2
-              nitrogen_source:
-                - compound: yeast_extract
-                  concentration_percent: 1
-                - compound: peptone
-                  concentration_percent: 2
-            chemical_treatment:
-              compound: hydrogen_peroxide
-              # Harbison et al 2004: 0.4 mM
-              concentration_percent: 0.00136
-              duration_minutes: 20
+          temperature_celsius: 30
+          cultivation_method: unspecified
+          growth_phase_at_harvest:
+            # Harbison et al 2004: OD600 ~0.5
+            od600: 0.5
+          media:
+            name: YPD
+            carbon_source:
+              - compound: D-glucose
+                concentration_percent: 2
+            nitrogen_source:
+              - compound: yeast_extract
+                concentration_percent: 1
+              - compound: peptone
+                concentration_percent: 2
+          chemical_treatment:
+            compound: hydrogen_peroxide
+            # Harbison et al 2004: 0.4 mM
+            concentration_percent: 0.00136
+            duration_minutes: 20
         Acid:
           description: Acidic pH stress condition
-          environmental_conditions:
-            temperature_celsius: 30
-            cultivation_method: unspecified
-            growth_phase_at_harvest:
-              # Harbison et al 2004: OD600 ~0.5
-              od600: 0.5
-            media:
-              name: YPD
-              carbon_source:
-                - compound: D-glucose
-                  concentration_percent: 2
-              nitrogen_source:
-                - compound: yeast_extract
-                  concentration_percent: 1
-                - compound: peptone
-                  concentration_percent: 2
-            chemical_treatment:
-              compound: succinic_acid
-              # Harbison et al 2004: 0.05 M to reach pH 4.0
-              concentration_percent: 0.59
-              target_pH: 4.0
-              duration_minutes: 30
+          temperature_celsius: 30
+          cultivation_method: unspecified
+          growth_phase_at_harvest:
+            # Harbison et al 2004: OD600 ~0.5
+            od600: 0.5
+          media:
+            name: YPD
+            carbon_source:
+              - compound: D-glucose
+                concentration_percent: 2
+            nitrogen_source:
+              - compound: yeast_extract
+                concentration_percent: 1
+              - compound: peptone
+                concentration_percent: 2
+          chemical_treatment:
+            compound: succinic_acid
+            # Harbison et al 2004: 0.05 M to reach pH 4.0
+            concentration_percent: 0.59
+            target_pH: 4.0
+            duration_minutes: 30
         Alpha:
           description: Mating pheromone induction condition
-          environmental_conditions:
-            temperature_celsius: 30
-            cultivation_method: unspecified
-            growth_phase_at_harvest:
-              # Harbison et al 2004: OD600 ~0.8
-              od600: 0.8
-            media:
-              name: YPD
-              carbon_source:
-                - compound: D-glucose
-                  concentration_percent: 2
-              nitrogen_source:
-                - compound: yeast_extract
-                  concentration_percent: 1
-                - compound: peptone
-                  concentration_percent: 2
-            chemical_treatment:
-              compound: alpha_factor_pheromone
-              # Harbison et al 2004: 5 mg/ml
-              concentration_percent: 0.5
-              duration_minutes: 30
+          temperature_celsius: 30
+          cultivation_method: unspecified
+          growth_phase_at_harvest:
+            # Harbison et al 2004: OD600 ~0.8
+            od600: 0.8
+          media:
+            name: YPD
+            carbon_source:
+              - compound: D-glucose
+                concentration_percent: 2
+            nitrogen_source:
+              - compound: yeast_extract
+                concentration_percent: 1
+              - compound: peptone
+                concentration_percent: 2
+          chemical_treatment:
+            compound: alpha_factor_pheromone
+            # Harbison et al 2004: 5 mg/ml
+            concentration_percent: 0.5
+            duration_minutes: 30
         BUT14:
           description: Long-term filamentation induction with butanol
-          environmental_conditions:
-            temperature_celsius: 30
-            cultivation_method: unspecified
-            growth_phase_at_harvest:
-              # Harbison et al 2004: OD600 ~0.8
-              od600: 0.8
-            media:
-              # Harbison et al 2004: YPD containing 1% butanol
-              name: YPD
-              carbon_source:
-                - compound: D-glucose
-                  concentration_percent: 2
-              nitrogen_source:
-                - compound: yeast_extract
-                  concentration_percent: 1
-                - compound: peptone
-                  concentration_percent: 2
-              additives:
-                - compound: butanol
-                  concentration_percent: 1
-            incubation_duration_hours: 14
+          temperature_celsius: 30
+          cultivation_method: unspecified
+          growth_phase_at_harvest:
+            # Harbison et al 2004: OD600 ~0.8
+            od600: 0.8
+          media:
+            # Harbison et al 2004: YPD containing 1% butanol
+            name: YPD
+            carbon_source:
+              - compound: D-glucose
+                concentration_percent: 2
+            nitrogen_source:
+              - compound: yeast_extract
+                concentration_percent: 1
+              - compound: peptone
+                concentration_percent: 2
+            additives:
+              - compound: butanol
+                concentration_percent: 1
+          incubation_duration_hours: 14
         BUT90:
           description: Short-term filamentation induction with butanol
-          environmental_conditions:
-            temperature_celsius: 30
-            cultivation_method: unspecified
-            growth_phase_at_harvest:
-              # Harbison et al 2004: OD600 ~0.8
-              od600: 0.8
-            media:
-              # Harbison et al 2004: YPD containing 1% butanol
-              name: YPD
-              carbon_source:
-                - compound: D-glucose
-                  concentration_percent: 2
-              nitrogen_source:
-                - compound: yeast_extract
-                  concentration_percent: 1
-                - compound: peptone
-                  concentration_percent: 2
-              additives:
-                - compound: butanol
-                  concentration_percent: 1
-            incubation_duration_minutes: 90
+          temperature_celsius: 30
+          cultivation_method: unspecified
+          growth_phase_at_harvest:
+            # Harbison et al 2004: OD600 ~0.8
+            od600: 0.8
+          media:
+            # Harbison et al 2004: YPD containing 1% butanol
+            name: YPD
+            carbon_source:
+              - compound: D-glucose
+                concentration_percent: 2
+            nitrogen_source:
+              - compound: yeast_extract
+                concentration_percent: 1
+              - compound: peptone
+                concentration_percent: 2
+            additives:
+              - compound: butanol
+                concentration_percent: 1
+          incubation_duration_minutes: 90
         "Thi-":
           description: Vitamin B1 deprivation stress condition
-          environmental_conditions:
-            temperature_celsius: 30
-            cultivation_method: unspecified
-            growth_phase_at_harvest:
-              # Harbison et al 2004: OD600 ~0.8
-              od600: 0.8
-            media:
-              # Harbison et al 2004: synthetic complete medium lacking thiamin
-              name: synthetic_complete_minus_thiamine
-              carbon_source: unspecified
-              nitrogen_source: unspecified
+          temperature_celsius: 30
+          cultivation_method: unspecified
+          growth_phase_at_harvest:
+            # Harbison et al 2004: OD600 ~0.8
+            od600: 0.8
+          media:
+            # Harbison et al 2004: synthetic complete medium lacking thiamin
+            name: synthetic_complete_minus_thiamine
+            carbon_source: unspecified
+            nitrogen_source: unspecified
         GAL:
           description: Galactose-based growth medium condition
-          environmental_conditions:
-            temperature_celsius: 30
-            cultivation_method: unspecified
-            growth_phase_at_harvest:
-              # Harbison et al 2004: OD600 ~0.8
-              od600: 0.8
-            media:
-              # Harbison et al 2004: YEP medium supplemented with galactose (2%)
-              name: yeast_extract_peptone
-              carbon_source:
-                - compound: D-galactose
-                  concentration_percent: 2
-              nitrogen_source:
-                - compound: yeast_extract
-                  concentration_percent: unspecified
-                - compound: peptone
-                  concentration_percent: unspecified
+          temperature_celsius: 30
+          cultivation_method: unspecified
+          growth_phase_at_harvest:
+            # Harbison et al 2004: OD600 ~0.8
+            od600: 0.8
+          media:
+            # Harbison et al 2004: YEP medium supplemented with galactose (2%)
+            name: yeast_extract_peptone
+            carbon_source:
+              - compound: D-galactose
+                concentration_percent: 2
+            nitrogen_source:
+              - compound: yeast_extract
+                concentration_percent: unspecified
+              - compound: peptone
+                concentration_percent: unspecified
         HEAT:
           description: Heat shock stress condition
-          environmental_conditions:
-            # Harbison et al 2004: grown at 30°C, shifted to 37°C for 45 min
-            initial_temperature_celsius: 30
-            temperature_shift_celsius: 37
-            temperature_shift_duration_minutes: 45
-            cultivation_method: unspecified
-            growth_phase_at_harvest:
-              # Harbison et al 2004: OD600 ~0.5
-              od600: 0.5
-            media:
-              # Harbison et al 2004: YPD
-              name: YPD
-              carbon_source:
-                - compound: D-glucose
-                  concentration_percent: 2
-              nitrogen_source:
-                - compound: yeast_extract
-                  concentration_percent: 1
-                - compound: peptone
-                  concentration_percent: 2
+          # Harbison et al 2004: grown at 30°C, shifted to 37°C for 45 min
+          initial_temperature_celsius: 30
+          temperature_shift_celsius: 37
+          temperature_shift_duration_minutes: 45
+          cultivation_method: unspecified
+          growth_phase_at_harvest:
+            # Harbison et al 2004: OD600 ~0.5
+            od600: 0.5
+          media:
+            # Harbison et al 2004: YPD
+            name: YPD
+            carbon_source:
+              - compound: D-glucose
+                concentration_percent: 2
+            nitrogen_source:
+              - compound: yeast_extract
+                concentration_percent: 1
+              - compound: peptone
+                concentration_percent: 2
         "Pi-":
           description: Phosphate deprivation stress condition
-          environmental_conditions:
-            temperature_celsius: 30
-            cultivation_method: unspecified
-            growth_phase_at_harvest:
-              # Harbison et al 2004: OD600 ~0.8
-              od600: 0.8
-            media:
-              # Harbison et al 2004: synthetic complete medium lacking phosphate
-              name: synthetic_complete_minus_phosphate
-              carbon_source: unspecified
-              nitrogen_source: unspecified
+          temperature_celsius: 30
+          cultivation_method: unspecified
+          growth_phase_at_harvest:
+            # Harbison et al 2004: OD600 ~0.8
+            od600: 0.8
+          media:
+            # Harbison et al 2004: synthetic complete medium lacking phosphate
+            name: synthetic_complete_minus_phosphate
+            carbon_source: unspecified
+            nitrogen_source: unspecified
         RAFF:
           description: Raffinose-based growth medium condition
-          environmental_conditions:
-            temperature_celsius: 30
-            cultivation_method: unspecified
-            growth_phase_at_harvest:
-              # Harbison et al 2004: OD600 ~0.8
-              od600: 0.8
-            media:
-              # Harbison et al 2004: YEP medium supplemented with raffinose (2%)
-              name: yeast_extract_peptone
-              carbon_source:
-                - compound: D-raffinose
-                  concentration_percent: 2
-              nitrogen_source:
-                - compound: yeast_extract
-                  concentration_percent: unspecified
-                - compound: peptone
-                  concentration_percent: unspecified
+          temperature_celsius: 30
+          cultivation_method: unspecified
+          growth_phase_at_harvest:
+            # Harbison et al 2004: OD600 ~0.8
+            od600: 0.8
+          media:
+            # Harbison et al 2004: YEP medium supplemented with raffinose (2%)
+            name: yeast_extract_peptone
+            carbon_source:
+              - compound: D-raffinose
+                concentration_percent: 2
+            nitrogen_source:
+              - compound: yeast_extract
+                concentration_percent: unspecified
+              - compound: peptone
+                concentration_percent: unspecified
     - name: regulator_locus_tag
       dtype: string
       description: Systematic gene name (ORF identifier) of the ChIPd transcription factor
@@ -903,24 +883,23 @@ size_categories:
   - 1M<n<10M
 
 experimental_conditions:
-  environmental_conditions:
-    # Hu et al 2007: Temperature not explicitly stated, assuming standard 30°C
-    temperature_celsius: 30
-    cultivation_method: batch
-    growth_phase_at_harvest: mid_log
-    media:
-      name: YPD
-      carbon_source:
-        - compound: D-glucose
-          # Standard YPD: 2% glucose
-          concentration_percent: 2
-      nitrogen_source:
-        - compound: yeast_extract
-          # Standard YPD: 1% yeast extract
-          concentration_percent: 1
-        - compound: peptone
-          # Standard YPD: 2% peptone
-          concentration_percent: 2
+  # Hu et al 2007: Temperature not explicitly stated, assuming standard 30°C
+  temperature_celsius: 30
+  cultivation_method: batch
+  growth_phase_at_harvest: mid_log
+  media:
+    name: YPD
+    carbon_source:
+      - compound: D-glucose
+        # Standard YPD: 2% glucose
+        concentration_percent: 2
+    nitrogen_source:
+      - compound: yeast_extract
+        # Standard YPD: 1% yeast extract
+        concentration_percent: 1
+      - compound: peptone
+        # Standard YPD: 2% peptone
+        concentration_percent: 2
 
 configs:
   - config_name: data
@@ -979,10 +958,9 @@ configs:
           role: experimental_condition
           definitions:
             true:
-              environmental_conditions:
-                # Hu et al 2007: "15-min heat shock at 39°C"
-                temperature_celsius: 39
-                duration_minutes: 15
+              # Hu et al 2007: "15-min heat shock at 39°C"
+              temperature_celsius: 39
+              duration_minutes: 15
               strain_background:
                 genotype: BY4741
                 mating_type: MATa
@@ -994,8 +972,7 @@ configs:
                 source: Open_Biosystems
                 description: Knockout strains for nonessential transcription factors
             false:
-              environmental_conditions:
-                description: Standard growth conditions at 30°C
+              description: Standard growth conditions at 30°C
               strain_background:
                 genotype: BY4741
                 mating_type: MATa
@@ -1015,13 +992,12 @@ configs:
           role: experimental_condition
           definitions:
             true:
-              environmental_conditions:
-                drug_treatment:
-                  compound: doxycycline
-                  # Hu et al 2007: 10 mg/ml
-                  concentration_percent: 1
-                  duration_hours_min: 14
-                  duration_hours_max: 16
+              drug_treatment:
+                compound: doxycycline
+                # Hu et al 2007: 10 mg/ml
+                concentration_percent: 1
+                duration_hours_min: 14
+                duration_hours_max: 16
               strain_background:
                 genotype: BY4741_derivative
                 mating_type: MATa
@@ -1033,8 +1009,7 @@ configs:
                 source: Open_Biosystems
                 description: Essential transcription factors with TetO7-promoter regulation
             false:
-              environmental_conditions:
-                description: No doxycycline treatment; TetO7 promoter active
+              description: No doxycycline treatment; TetO7 promoter active
               strain_background:
                 genotype: BY4741_derivative
                 mating_type: MATa
@@ -1121,18 +1096,15 @@ configs:
   data_files:
   - split: train
     path: overexpression.parquet
-  experimental_conditions:
-    environmental_conditions:
-      temperature_celsius: unspecified
-      cultivation_method: unspecified
-      media:
-        # Hughes et al 2006: "selective medium supplemented with 2% raffinose"
-        name: selective_medium
-        carbon_source:
-          - compound: D-raffinose
-            # Hughes et al 2006: 2% raffinose
-            concentration_percent: 2
-        nitrogen_source: unspecified
+    # temperature and growth phase are unspecified. nitrogen_source is
+    # also unspecified
+    media:
+      # Hughes et al 2006: "selective medium supplemented with 2% raffinose"
+      name: selective_medium
+      carbon_source:
+        - compound: D-raffinose
+          # Hughes et al 2006: 2% raffinose
+          concentration_percent: 2
     induction:
       # Hughes et al 2006: "induction with 2% galactose for 3 h"
       inducer:
@@ -1193,17 +1165,16 @@ configs:
   - split: train
     path: knockout.parquet
   experimental_conditions:
-    environmental_conditions:
-      temperature_celsius: unspecified
-      cultivation_method: unspecified
-      media:
-        # Hughes et al 2006: "synthetic medium supplemented with 2% dextrose"
-        name: synthetic_medium
-        carbon_source:
-          - compound: D-glucose
-            # Hughes et al 2006: 2% dextrose
-            concentration_percent: 2
-        nitrogen_source: unspecified
+    temperature_celsius: unspecified
+    cultivation_method: unspecified
+    media:
+      # Hughes et al 2006: "synthetic medium supplemented with 2% dextrose"
+      name: synthetic_medium
+      carbon_source:
+        - compound: D-glucose
+          # Hughes et al 2006: 2% dextrose
+          concentration_percent: 2
+      nitrogen_source: unspecified
   dataset_info:
     features:
     - name: sample_id
@@ -1271,30 +1242,30 @@ size_categories:
 - 1M<n<10M
 
 experimental_conditions:
-  environmental_conditions:
-    temperature_celsius: 30
-    cultivation_method: plate
-    growth_phase_at_harvest:
-      phase: "early_mid_log"
-      od600: 0.6
-      od600_tolerance: 0.1
-    media:
-      name: synthetic_complete
-      carbon_source:
-        - compound: D-glucose
-          # Kemmeren et al 2014: 2% D-glucose
-          concentration_percent: 2
-      nitrogen_source:
-        - compound: yeast_nitrogen_base
-          # Kemmeren et al 2014: 6.71 g/l
-          concentration_percent: 0.671
-          specifications:
-            - without_amino_acids
-            - without_carbohydrate
-            - with_ammonium_sulfate
-        - compound: amino_acid_dropout_mix
-          # Kemmeren et al 2014: 2.0 g/l
-          concentration_percent: 0.2
+  temperature_celsius: 30
+  cultivation_method: plate
+  growth_phase_at_harvest:
+    # harbison et al., specified this as early mid log phase. simplified here
+    phase: "mid_log_phase"
+    od600: 0.6
+    od600_tolerance: 0.1
+  media:
+    name: synthetic_complete
+    carbon_source:
+      - compound: D-glucose
+        # Kemmeren et al 2014: 2% D-glucose
+        concentration_percent: 2
+    nitrogen_source:
+      - compound: yeast_nitrogen_base
+        # Kemmeren et al 2014: 6.71 g/l
+        concentration_percent: 0.671
+        specifications:
+          - without_amino_acids
+          - without_carbohydrate
+          - with_ammonium_sulfate
+      - compound: amino_acid_dropout_mix
+        # Kemmeren et al 2014: 2.0 g/l
+        concentration_percent: 0.2
 configs:
 - config_name: kemmeren_2014
   description: >-
@@ -1611,36 +1582,35 @@ configs:
     - condition
     - regulator_locus_tag
   experimental_conditions:
-    environmental_conditions:
-      # Mahendrawada et al 2025: "30 °C culture"
-      temperature_celsius: 30
-      cultivation_method: unspecified
-      growth_phase_at_harvest:
-        # Mahendrawada et al 2025: "A600 of ~1.0"
-        od600: 1.0
-      media:
-        # Mahendrawada et al 2025: "synthetic complete (SC) media"
-        name: synthetic_complete
-        carbon_source: unspecified
-        nitrogen_source:
-          - compound: yeast_nitrogen_base
-            # Mahendrawada et al 2025: 1.7 g/L (without ammonium sulfate or amino acids (BD Difco))
-            concentration_percent: 0.17
-            specifications:
-              - without_ammonium_sulfate
-              - without_amino_acids
-          - compound: ammonium_sulfate
-            # Mahendrawada et al 2025: 5 g/L
-            concentration_percent: 0.5
-          - compound: amino_acid_dropout_mix
-            # Mahendrawada et al 2025: 0.6 g/L
-            concentration_percent: 0.06
-          - compound: adenine_sulfate
-            # Mahendrawada et al 2025: 40 μg/ml = 0.04 g/L
-            concentration_percent: 0.004
-          - compound: uracil
-            # Mahendrawada et al 2025: 2 μg/ml = 0.002 g/L
-            concentration_percent: 0.0002
+    # Mahendrawada et al 2025: "30 °C culture"
+    temperature_celsius: 30
+    cultivation_method: unspecified
+    growth_phase_at_harvest:
+      # Mahendrawada et al 2025: "A600 of ~1.0"
+      od600: 1.0
+    media:
+      # Mahendrawada et al 2025: "synthetic complete (SC) media"
+      name: synthetic_complete
+      carbon_source: unspecified
+      nitrogen_source:
+        - compound: yeast_nitrogen_base
+          # Mahendrawada et al 2025: 1.7 g/L (without ammonium sulfate or amino acids (BD Difco))
+          concentration_percent: 0.17
+          specifications:
+            - without_ammonium_sulfate
+            - without_amino_acids
+        - compound: ammonium_sulfate
+          # Mahendrawada et al 2025: 5 g/L
+          concentration_percent: 0.5
+        - compound: amino_acid_dropout_mix
+          # Mahendrawada et al 2025: 0.6 g/L
+          concentration_percent: 0.06
+        - compound: adenine_sulfate
+          # Mahendrawada et al 2025: 40 μg/ml = 0.04 g/L
+          concentration_percent: 0.004
+        - compound: uracil
+          # Mahendrawada et al 2025: 2 μg/ml = 0.002 g/L
+          concentration_percent: 0.0002
   data_files:
   - split: train
     path: reprocess_diffcontrol_5prime.parquet
@@ -1731,22 +1701,21 @@ language:
 - en
 pretty_name: Rossi ChIP-exo 2021
 experimental_conditions:
-  environmental_conditions:
-    temperature_celsius: 25
-    cultivation_method: unspecified
-    growth_phase_at_harvest:
-      phase: mid_log
-      od600: 0.8
-    media:
-      name: yeast_peptone_dextrose
-      carbon_source:
-        - compound: D-glucose
-          concentration_percent: unspecified
-      nitrogen_source:
-        - compound: yeast_extract
-          concentration_percent: unspecified
-        - compound: peptone
-          concentration_percent: unspecified
+  temperature_celsius: 25
+  cultivation_method: unspecified
+  growth_phase_at_harvest:
+    phase: mid_log
+    od600: 0.8
+  media:
+    name: yeast_peptone_dextrose
+    carbon_source:
+      - compound: D-glucose
+        concentration_percent: unspecified
+    nitrogen_source:
+      - compound: yeast_extract
+        concentration_percent: unspecified
+      - compound: peptone
+        concentration_percent: unspecified
 
   # Heat shock applied only to SAGA strains
   # note that im not sure which strains this

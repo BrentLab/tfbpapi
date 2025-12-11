@@ -1,4 +1,20 @@
-"""DataCard class for easy exploration of HuggingFace dataset metadata."""
+"""
+DataCard class for parsing and exploring HuggingFace dataset metadata.
+
+This module provides the DataCard class for parsing HuggingFace dataset cards
+into structured Python objects that can be easily explored. The focus is on
+enabling users to drill down into the YAML structure to understand:
+
+- Dataset configurations and their types
+- Feature definitions and roles
+- Experimental conditions at all hierarchy levels (top/config/field)
+- Field-level condition definitions
+- Metadata relationships
+
+Users can then use this information to plan metadata table structures and
+data loading strategies.
+
+"""
 
 import logging
 from typing import Any
@@ -12,17 +28,48 @@ from .models import (
     DatasetConfig,
     DatasetType,
     ExtractedMetadata,
-    FieldRole,
+    FeatureInfo,
     MetadataRelationship,
 )
 
 
 class DataCard:
     """
-    Easy-to-use interface for exploring HuggingFace dataset metadata.
+    Parser and explorer for HuggingFace dataset metadata.
 
-    Provides methods to discover and explore dataset contents, configurations, and
-    metadata without loading the actual genomic data.
+    DataCard parses HuggingFace dataset cards into flexible Python objects,
+    enabling users to drill down into the YAML structure to understand dataset
+    organization, experimental conditions, and metadata relationships.
+
+    The parsed structure uses Pydantic models with `extra="allow"` to accept
+    arbitrary fields (like experimental_conditions) without requiring code
+    changes. This makes the system flexible enough to handle domain-specific
+    metadata variations.
+
+    Key capabilities:
+    - Parse dataset card YAML into structured objects
+    - Navigate experimental conditions at 3 levels (top/config/field)
+    - Explore field definitions and roles
+    - Extract metadata schema for table design
+    - Discover metadata relationships
+
+    Example (new API):
+        >>> card = DataCard("BrentLab/harbison_2004")
+        >>> # Use context manager for config exploration
+        >>> with card.config("harbison_2004") as cfg:
+        ...     # Get all experimental conditions
+        ...     conds = cfg.experimental_conditions()
+        ...     # Get condition fields with definitions
+        ...     fields = cfg.condition_fields()
+        ...     # Drill down into specific field
+        ...     for name, info in fields.items():
+        ...         for value, definition in info['definitions'].items():
+        ...             print(f"{name}={value}: {definition}")
+
+    Example (legacy API still supported):
+        >>> card = DataCard("BrentLab/harbison_2004")
+        >>> conditions = card.get_experimental_conditions("harbison_2004")
+        >>> defs = card.get_field_definitions("harbison_2004", "condition")
 
     """
 
@@ -120,25 +167,97 @@ class DataCard:
             dataset_type = DatasetType(dataset_type)
         return self.dataset_card.get_configs_by_type(dataset_type)
 
-    def get_regulators(self, config_name: str | None = None) -> set[str]:
+    def get_card_metadata(self) -> dict[str, Any]:
         """
-        Get all regulators mentioned in the dataset.
+        Get all top-level metadata fields from the dataset card.
 
-        :param config_name: Optional specific config to search, otherwise searches all
-        :return: Set of regulator identifiers found
+        Returns all fields stored in model_extra (e.g., license, tags, pretty_name,
+        etc.) as a dict. This gives direct access to the raw YAML structure at the card
+        level.
 
-        """
-        raise NotImplementedError("Method not yet implemented")
-
-    def get_experimental_conditions(self, config_name: str | None = None) -> set[str]:
-        """
-        Get all experimental conditions mentioned in the dataset.
-
-        :param config_name: Optional specific config to search, otherwise searches all
-        :return: Set of experimental conditions found
+        :return: Dict of all extra metadata fields
 
         """
-        raise NotImplementedError("Method not yet implemented")
+        if self.dataset_card.model_extra:
+            return dict(self.dataset_card.model_extra)
+        return {}
+
+    def get_config_metadata(self, config_name: str) -> dict[str, Any]:
+        """
+        Get all extra metadata fields from a specific config.
+
+        Returns all fields stored in the config's model_extra (e.g.,
+        experimental_conditions, custom fields, etc.) as a dict.
+
+        :param config_name: Configuration name
+        :return: Dict of all extra metadata fields for this config
+        :raises DataCardError: If config not found
+
+        """
+        config = self.get_config(config_name)
+        if not config:
+            raise DataCardError(f"Configuration '{config_name}' not found")
+
+        if config.model_extra:
+            return dict(config.model_extra)
+        return {}
+
+    def get_features(self, config_name: str) -> list[FeatureInfo]:
+        """
+        Get all feature definitions for a configuration.
+
+        :param config_name: Configuration name
+        :return: List of FeatureInfo objects
+        :raises DataCardError: If config not found
+
+        """
+        config = self.get_config(config_name)
+        if not config:
+            raise DataCardError(f"Configuration '{config_name}' not found")
+
+        return config.dataset_info.features
+
+    def get_features_by_role(
+        self, config_name: str, role: str | None = None
+    ) -> dict[str, list[str]]:
+        """
+        Get features grouped by role.
+
+        If role is specified, returns only features with that role.
+        If role is None, returns all features grouped by role.
+
+        :param config_name: Configuration name
+        :param role: Optional specific role to filter by
+        :return: Dict mapping role -> list of field names
+        :raises DataCardError: If config not found
+
+        Example:
+            >>> # Get all features by role
+            >>> by_role = card.get_features_by_role("config_name")
+            >>> # {'regulator_identifier': ['regulator_locus_tag'],
+            >>> #  'target_identifier': ['target_locus_tag'], ...}
+            >>>
+            >>> # Get only experimental condition features
+            >>> cond_fields = card.get_features_by_role("config_name",
+            ...                                          "experimental_condition")
+            >>> # {'experimental_condition': ['condition', 'treatment']}
+
+        """
+        features = self.get_features(config_name)
+
+        # Group by role
+        by_role: dict[str, list[str]] = {}
+        for feature in features:
+            feature_role = feature.role if feature.role else "no_role"
+            if feature_role not in by_role:
+                by_role[feature_role] = []
+            by_role[feature_role].append(feature.name)
+
+        # Filter by specific role if requested
+        if role is not None:
+            return {role: by_role.get(role, [])}
+
+        return by_role
 
     def get_field_values(self, config_name: str, field_name: str) -> set[str]:
         """
@@ -164,7 +283,7 @@ class DataCard:
         return self._extract_field_values(config, field_name)
 
     def _extract_field_values(self, config: DatasetConfig, field_name: str) -> set[str]:
-        """Extract unique values for a field from various sources."""
+        """Extract unique values for a field from partition structure only."""
         values = set()
 
         # Check cache first
@@ -185,19 +304,27 @@ class DataCard:
                 partition_values = self._extract_partition_values(config, field_name)
                 if partition_values:
                     values.update(partition_values)
+                    # Cache the result
+                    self._metadata_cache[cache_key] = [
+                        ExtractedMetadata(
+                            config_name=config.config_name,
+                            field_name=field_name,
+                            values=values,
+                            extraction_method="partition_structure",
+                        )
+                    ]
+                    return values
 
-            # For embedded metadata fields, we would need to query the actual data
-            # This is a placeholder - in practice, you might use the
-            # HF datasets server API
-            if config.metadata_fields and field_name in config.metadata_fields:
-                # Placeholder for actual data extraction
-                self.logger.debug(
-                    "Would extract embedded metadata for "
-                    f"{field_name} in {config.config_name}"
-                )
+            # For non-partitioned fields, we can no longer query parquet files
+            self.logger.debug(
+                f"Cannot extract values for {field_name} in {config.config_name}: "
+                "field is not partitioned and parquet querying is not supported"
+            )
 
         except Exception as e:
             self.logger.warning(f"Failed to extract values for {field_name}: {e}")
+            # Return empty set on failure instead of raising
+            # This maintains backward compatibility
 
         return values
 
@@ -296,8 +423,21 @@ class DataCard:
             "has_default_config": self.dataset_card.get_default_config() is not None,
         }
 
-    def explore_config(self, config_name: str) -> dict[str, Any]:
-        """Get detailed information about a specific configuration."""
+    def explore_config(
+        self, config_name: str, include_extra: bool = True
+    ) -> dict[str, Any]:
+        """
+        Get detailed information about a specific configuration.
+
+        Returns a comprehensive dict with config structure including features, data
+        files, partitioning, and optionally all extra metadata fields.
+
+        :param config_name: Configuration name
+        :param include_extra: If True, include all fields from model_extra
+        :return: Dict with config details
+        :raises DataCardError: If config not found
+
+        """
         config = self.get_config(config_name)
         if not config:
             raise DataCardError(f"Configuration '{config_name}' not found")
@@ -309,7 +449,13 @@ class DataCard:
             "is_default": config.default,
             "num_features": len(config.dataset_info.features),
             "features": [
-                {"name": f.name, "dtype": f.dtype, "description": f.description}
+                {
+                    "name": f.name,
+                    "dtype": f.dtype,
+                    "description": f.description,
+                    "role": f.role,
+                    "has_definitions": f.definitions is not None,
+                }
                 for f in config.dataset_info.features
             ],
             "data_files": [
@@ -332,22 +478,52 @@ class DataCard:
         if config.metadata_fields:
             info["metadata_fields"] = config.metadata_fields
 
+        # Add all extra fields from model_extra
+        if include_extra and config.model_extra:
+            info["extra_fields"] = dict(config.model_extra)
+
         return info
 
     def extract_metadata_schema(self, config_name: str) -> dict[str, Any]:
         """
-        Extract metadata schema for a configuration.
+        Extract complete metadata schema for planning metadata table structure.
 
-        Returns structured schema identifying metadata fields by their role,
-        suitable for metadata extraction by MetadataManager. Includes
-        experimental conditions at all three hierarchy levels:
-        - Top-level (repo-wide, applies to all configs/samples)
-        - Config-level (applies to this config's samples)
-        - Field-level (varies per sample, from field definitions)
+        This is the primary method for understanding what metadata is available and
+        how to structure it into a metadata table. It consolidates information from
+        all sources:
+
+        - **Field roles**: Which fields are regulators, targets, conditions, etc.
+        - **Top-level conditions**: Repo-wide conditions (constant for all samples)
+        - **Config-level conditions**: Config-specific conditions (constant for this config)
+        - **Field-level definitions**: Per-sample condition definitions
+
+        The returned schema provides all the information needed to:
+        1. Identify sample identifier fields (regulator_identifier, etc.)
+        2. Determine which conditions are constant vs. variable
+        3. Access condition definitions for creating flattened columns
+        4. Plan metadata table structure
 
         :param config_name: Configuration name to extract schema for
-        :return: Dict with field lists grouped by role and condition definitions
+        :return: Dict with comprehensive schema including:
+            - regulator_fields: List of regulator identifier field names
+            - target_fields: List of target identifier field names
+            - condition_fields: List of experimental_condition field names
+            - condition_definitions: Dict mapping field -> value -> definition
+            - top_level_conditions: Dict of repo-wide conditions
+            - config_level_conditions: Dict of config-specific conditions
         :raises DataCardError: If configuration not found
+
+        Example:
+            >>> schema = card.extract_metadata_schema('harbison_2004')
+            >>> # Identify identifier fields
+            >>> print(f"Regulator fields: {schema['regulator_fields']}")
+            >>> # Check for constant conditions
+            >>> if schema['top_level_conditions']:
+            ...     print("Has repo-wide constant conditions")
+            >>> # Get field-level definitions for metadata table
+            >>> for field in schema['condition_fields']:
+            ...     defs = schema['condition_definitions'][field]
+            ...     print(f"{field} has {len(defs)} levels")
 
         """
         config = self.get_config(config_name)
@@ -364,22 +540,28 @@ class DataCard:
         }
 
         for feature in config.dataset_info.features:
-            if feature.role == FieldRole.REGULATOR_IDENTIFIER:
+            if feature.role == "regulator_identifier":
                 schema["regulator_fields"].append(feature.name)
-            elif feature.role == FieldRole.TARGET_IDENTIFIER:
+            elif feature.role == "target_identifier":
                 schema["target_fields"].append(feature.name)
-            elif feature.role == FieldRole.EXPERIMENTAL_CONDITION:
+            elif feature.role == "experimental_condition":
                 schema["condition_fields"].append(feature.name)
                 if feature.definitions:
                     schema["condition_definitions"][feature.name] = feature.definitions
 
         # Add top-level conditions (applies to all configs/samples)
-        if self.dataset_card.experimental_conditions:
-            schema["top_level_conditions"] = self.dataset_card.experimental_conditions
+        # Stored in model_extra as dict
+        if self.dataset_card.model_extra:
+            top_level = self.dataset_card.model_extra.get("experimental_conditions")
+            if top_level:
+                schema["top_level_conditions"] = top_level
 
         # Add config-level conditions (applies to this config's samples)
-        if config.experimental_conditions:
-            schema["config_level_conditions"] = config.experimental_conditions
+        # Stored in model_extra as dict
+        if config.model_extra:
+            config_level = config.model_extra.get("experimental_conditions")
+            if config_level:
+                schema["config_level_conditions"] = config_level
 
         return schema
 
@@ -415,7 +597,7 @@ class DataCard:
                 f"Field '{field_name}' not found in config '{config_name}'"
             )
 
-        if feature.role != FieldRole.EXPERIMENTAL_CONDITION:
+        if feature.role != "experimental_condition":
             raise DataCardError(
                 f"Field '{field_name}' is not an experimental condition "
                 f"(role={feature.role})"
@@ -428,6 +610,191 @@ class DataCard:
         # Otherwise, query distinct values from parquet file
         values = self.get_field_values(config_name, field_name)
         return sorted(list(values))
+
+    def get_experimental_conditions(
+        self, config_name: str | None = None
+    ) -> dict[str, Any]:
+        """
+        Get experimental conditions with proper hierarchy handling.
+
+        This method enables drilling down into the experimental conditions hierarchy:
+        - Top-level (repo-wide): Common to all configs/samples
+        - Config-level: Specific to a config, common to its samples
+        - Field-level: Per-sample variation (use get_field_definitions instead)
+
+        Returns experimental conditions at the appropriate level:
+        - If config_name is None: returns top-level (repo-wide) conditions only
+        - If config_name is provided: returns merged (top + config) conditions
+
+        All conditions are returned as flexible dicts that preserve the original
+        YAML structure. Navigate nested dicts to access specific values.
+
+        :param config_name: Optional config name. If provided, merges top and config levels
+        :return: Dict of experimental conditions (empty dict if none defined)
+
+        Example:
+            >>> # Get top-level conditions
+            >>> top = card.get_experimental_conditions()
+            >>> temp = top.get('temperature_celsius', 30)
+            >>>
+            >>> # Get merged conditions for a config
+            >>> merged = card.get_experimental_conditions('config_name')
+            >>> media = merged.get('media', {})
+            >>> media_name = media.get('name', 'unspecified')
+
+        """
+        # Get top-level conditions (stored in model_extra)
+        top_level = (
+            self.dataset_card.model_extra.get("experimental_conditions", {})
+            if self.dataset_card.model_extra
+            else {}
+        )
+
+        # If no config specified, return top-level only
+        if config_name is None:
+            return top_level.copy() if isinstance(top_level, dict) else {}
+
+        # Get config-level conditions
+        config = self.get_config(config_name)
+        if not config:
+            raise DataCardError(f"Configuration '{config_name}' not found")
+
+        config_level = (
+            config.model_extra.get("experimental_conditions", {})
+            if config.model_extra
+            else {}
+        )
+
+        # Merge: config-level overrides top-level
+        merged = {}
+        if isinstance(top_level, dict):
+            merged.update(top_level)
+        if isinstance(config_level, dict):
+            merged.update(config_level)
+
+        return merged
+
+    def get_field_definitions(
+        self, config_name: str, field_name: str
+    ) -> dict[str, Any]:
+        """
+        Get definitions for a specific field (field-level conditions).
+
+        This is the third level of the experimental conditions hierarchy - conditions
+        that vary per sample. Returns a dict mapping each possible field value to its
+        detailed specification.
+
+        For fields with role=experimental_condition, the definitions typically include
+        nested structures like media composition, temperature, treatments, etc. that
+        define what each categorical value means experimentally.
+
+        :param config_name: Configuration name
+        :param field_name: Field name (typically has role=experimental_condition)
+        :return: Dict mapping field values to their definition dicts (empty if no definitions)
+        :raises DataCardError: If config or field not found
+
+        Example:
+            >>> # Get condition definitions
+            >>> defs = card.get_field_definitions('harbison_2004', 'condition')
+            >>> # defs = {'YPD': {...}, 'HEAT': {...}, ...}
+            >>>
+            >>> # Drill down into a specific condition
+            >>> ypd = defs['YPD']
+            >>> env_conds = ypd.get('environmental_conditions', {})
+            >>> media = env_conds.get('media', {})
+            >>> media_name = media.get('name')
+
+        """
+        config = self.get_config(config_name)
+        if not config:
+            raise DataCardError(f"Configuration '{config_name}' not found")
+
+        # Find the feature
+        feature = None
+        for f in config.dataset_info.features:
+            if f.name == field_name:
+                feature = f
+                break
+
+        if not feature:
+            raise DataCardError(
+                f"Field '{field_name}' not found in config '{config_name}'"
+            )
+
+        # Return definitions if present, otherwise empty dict
+        return feature.definitions if feature.definitions else {}
+
+    def get_field_attribute(
+        self, config_name: str, field_name: str, attribute: str
+    ) -> dict[str, Any]:
+        """
+        Extract a specific attribute from field definitions.
+
+        This is useful for exploring nested attributes in condition definitions,
+        such as media composition, temperature parameters, or growth phases.
+
+        :param config_name: Configuration name
+        :param field_name: Field with definitions (e.g., 'condition')
+        :param attribute: Attribute to extract (e.g., 'media', 'temperature_celsius')
+        :return: Dict mapping field values to their attribute specifications.
+            Returns 'unspecified' if attribute doesn't exist for a value.
+
+        Example:
+            >>> card = DataCard('BrentLab/harbison_2004')
+            >>> media = card.get_field_attribute('harbison_2004', 'condition', 'media')
+            >>> print(media['YPD'])
+            {'name': 'YPD', 'carbon_source': [...], 'nitrogen_source': [...]}
+
+        """
+        # Get all field definitions
+        definitions = self.get_field_definitions(config_name, field_name)
+
+        # Extract attribute for each definition
+        result = {}
+        for field_value, definition in definitions.items():
+            if attribute in definition:
+                result[field_value] = definition[attribute]
+            else:
+                result[field_value] = "unspecified"
+
+        return result
+
+    def list_experimental_condition_fields(self, config_name: str) -> list[str]:
+        """
+        List all fields with role=experimental_condition in a config.
+
+        These are fields that contain per-sample experimental condition variation.
+        They represent the field-level (third level) of the experimental conditions
+        hierarchy.
+
+        Fields with this role typically have `definitions` that map each value to
+        its detailed experimental specification. Use `get_field_definitions()` to
+        access these definitions.
+
+        :param config_name: Configuration name
+        :return: List of field names with experimental_condition role
+        :raises DataCardError: If config not found
+
+        Example:
+            >>> # Find all condition fields
+            >>> cond_fields = card.list_experimental_condition_fields('config_name')
+            >>> # ['condition', 'treatment', 'time_point']
+            >>>
+            >>> # Then get definitions for each
+            >>> for field in cond_fields:
+            ...     defs = card.get_field_definitions('config_name', field)
+            ...     print(f"{field}: {len(defs)} levels")
+
+        """
+        config = self.get_config(config_name)
+        if not config:
+            raise DataCardError(f"Configuration '{config_name}' not found")
+
+        return [
+            f.name
+            for f in config.dataset_info.features
+            if f.role == "experimental_condition"
+        ]
 
     def summary(self) -> str:
         """Get a human-readable summary of the dataset."""

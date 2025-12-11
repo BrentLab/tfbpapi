@@ -615,3 +615,161 @@ class TestDataCard:
 
         # Should return empty set on error
         assert values == set()
+
+    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    def test_get_field_attribute(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+    ):
+        """Test extracting specific attributes from field definitions."""
+        # Create sample card data with condition definitions
+        card_data = {
+            "configs": [
+                {
+                    "config_name": "test_config",
+                    "description": "Test configuration",
+                    "dataset_type": "annotated_features",
+                    "data_files": [{"split": "train", "path": "test.parquet"}],
+                    "dataset_info": {
+                        "features": [
+                            {
+                                "name": "condition",
+                                "dtype": "string",
+                                "description": "Experimental condition",
+                                "role": "experimental_condition",
+                                "definitions": {
+                                    "YPD": {
+                                        "media": {
+                                            "name": "YPD",
+                                            "carbon_source": [
+                                                {
+                                                    "compound": "D-glucose",
+                                                    "concentration_percent": 2,
+                                                }
+                                            ],
+                                            "nitrogen_source": [
+                                                {
+                                                    "compound": "yeast_extract",
+                                                    "concentration_percent": 1,
+                                                },
+                                                {
+                                                    "compound": "peptone",
+                                                    "concentration_percent": 2,
+                                                },
+                                            ],
+                                        },
+                                        "temperature_celsius": 30,
+                                    },
+                                    "HEAT": {
+                                        "media": {
+                                            "name": "YPD",
+                                            "carbon_source": [
+                                                {
+                                                    "compound": "D-glucose",
+                                                    "concentration_percent": 2,
+                                                }
+                                            ],
+                                        },
+                                        "temperature_celsius": 37,
+                                    },
+                                    "SM": {
+                                        "media": {
+                                            "name": "synthetic_complete",
+                                            "carbon_source": "unspecified",
+                                            "nitrogen_source": "unspecified",
+                                        }
+                                    },
+                                },
+                            }
+                        ]
+                    },
+                }
+            ]
+        }
+
+        mock_card_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_card_fetcher_instance
+        mock_card_fetcher_instance.fetch.return_value = card_data
+
+        datacard = DataCard(test_repo_id)
+
+        # Test extracting media attribute
+        media_specs = datacard.get_field_attribute(
+            "test_config", "condition", "media"
+        )
+
+        assert "YPD" in media_specs
+        assert "HEAT" in media_specs
+        assert "SM" in media_specs
+
+        # Check YPD media specification
+        assert media_specs["YPD"]["name"] == "YPD"
+        assert len(media_specs["YPD"]["carbon_source"]) == 1
+        assert media_specs["YPD"]["carbon_source"][0]["compound"] == "D-glucose"
+        assert len(media_specs["YPD"]["nitrogen_source"]) == 2
+
+        # Check HEAT media specification
+        assert media_specs["HEAT"]["name"] == "YPD"
+        assert len(media_specs["HEAT"]["carbon_source"]) == 1
+
+        # Check SM media specification
+        assert media_specs["SM"]["name"] == "synthetic_complete"
+        assert media_specs["SM"]["carbon_source"] == "unspecified"
+
+        # Test extracting temperature attribute
+        temp_specs = datacard.get_field_attribute(
+            "test_config", "condition", "temperature_celsius"
+        )
+
+        assert temp_specs["YPD"] == 30
+        assert temp_specs["HEAT"] == 37
+        assert temp_specs["SM"] == "unspecified"  # SM doesn't have temperature
+
+    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    def test_get_field_attribute_invalid_config(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+        minimal_dataset_card_data,
+    ):
+        """Test get_field_attribute with invalid config name."""
+        mock_card_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_card_fetcher_instance
+        mock_card_fetcher_instance.fetch.return_value = minimal_dataset_card_data
+
+        datacard = DataCard(test_repo_id)
+
+        with pytest.raises(DataCardError, match="Configuration 'invalid' not found"):
+            datacard.get_field_attribute("invalid", "condition", "media")
+
+    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    def test_get_field_attribute_invalid_field(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+        minimal_dataset_card_data,
+    ):
+        """Test get_field_attribute with invalid field name."""
+        mock_card_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_card_fetcher_instance
+        mock_card_fetcher_instance.fetch.return_value = minimal_dataset_card_data
+
+        datacard = DataCard(test_repo_id)
+
+        with pytest.raises(
+            DataCardError, match="Field 'invalid_field' not found in config"
+        ):
+            datacard.get_field_attribute("test_config", "invalid_field", "media")
