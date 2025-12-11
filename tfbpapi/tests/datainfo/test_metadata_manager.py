@@ -4,7 +4,6 @@ import pandas as pd
 import pytest
 
 from tfbpapi.datainfo import DataCard, MetadataManager
-from tfbpapi.datainfo.models import FieldRole
 
 
 class TestMetadataManagerBasic:
@@ -68,52 +67,23 @@ class TestMetadataManagerHelpers:
         assert "/" not in view_name
         assert "-" not in view_name
 
-    def test_format_compound_simple(self):
-        """Test formatting compound as simple string."""
-        mgr = MetadataManager()
-        result = mgr._format_compound("carbon_source", "D-glucose")
-        assert result == "carbon_source:D-glucose"
-
-    def test_format_compound_with_percent(self):
-        """Test formatting compound with concentration percent."""
-        mgr = MetadataManager()
-        compound = {"name": "D-glucose", "concentration_percent": 2.0}
-        result = mgr._format_compound("carbon_source", compound)
-        assert result == "carbon_source:D-glucose@2.0%"
-
-    def test_format_compound_with_grams(self):
-        """Test formatting compound with g/L concentration."""
-        mgr = MetadataManager()
-        compound = {"name": "ammonium_sulfate", "concentration_g_per_l": 5.0}
-        result = mgr._format_compound("nitrogen_source", compound)
-        assert result == "nitrogen_source:ammonium_sulfate@5.0g/L"
-
     def test_flatten_condition_definition_empty(self):
         """Test flattening empty definition."""
         mgr = MetadataManager()
         result = mgr._flatten_condition_definition({})
-        assert result["growth_media"] == "unspecified"
-        assert result["components"] == ""
+        assert isinstance(result, dict)
+        assert len(result) == 0
 
     def test_flatten_condition_definition_with_media(self):
-        """Test flattening definition with media."""
+        """Test flattening definition with media name."""
         mgr = MetadataManager()
         definition = {
-            "environmental_conditions": {
-                "media": {
-                    "name": "YPD",
-                    "carbon_source": [
-                        {"name": "D-glucose", "concentration_percent": 2.0}
-                    ],
-                    "nitrogen_source": ["yeast_extract", "peptone"],
-                }
+            "media": {
+                "name": "YPD",
             }
         }
         result = mgr._flatten_condition_definition(definition)
         assert result["growth_media"] == "YPD"
-        assert "carbon_source:D-glucose@2.0%" in result["components"]
-        assert "nitrogen_source:yeast_extract" in result["components"]
-        assert "nitrogen_source:peptone" in result["components"]
 
 
 class TestComponentSeparators:
@@ -138,7 +108,6 @@ class TestThreeLevelConditionHierarchy:
 
         # Create a simple mock object with no conditions
         class MockExpConditions:
-            environmental_conditions = None
             strain_background = None
 
         result = mgr._flatten_experimental_conditions(MockExpConditions())
@@ -149,18 +118,8 @@ class TestThreeLevelConditionHierarchy:
         """Test flattening conditions with temperature."""
         mgr = MetadataManager()
 
-        class MockEnv:
-            temperature_celsius = 30
-            cultivation_method = None
-            media = None
-            growth_phase = None
-            chemical_treatments = None
-            drug_treatments = None
-            heat_treatment = None
-            induction = None
-
         class MockExpConditions:
-            environmental_conditions = MockEnv()
+            temperature_celsius = 30
             strain_background = None
 
         result = mgr._flatten_experimental_conditions(MockExpConditions())
@@ -170,18 +129,9 @@ class TestThreeLevelConditionHierarchy:
         """Test flattening conditions with cultivation method."""
         mgr = MetadataManager()
 
-        class MockEnv:
+        class MockExpConditions:
             temperature_celsius = None
             cultivation_method = "chemostat"
-            media = None
-            growth_phase = None
-            chemical_treatments = None
-            drug_treatments = None
-            heat_treatment = None
-            induction = None
-
-        class MockExpConditions:
-            environmental_conditions = MockEnv()
             strain_background = None
 
         result = mgr._flatten_experimental_conditions(MockExpConditions())
@@ -191,47 +141,21 @@ class TestThreeLevelConditionHierarchy:
         """Test flattening conditions with media information."""
         mgr = MetadataManager()
 
-        class MockCompound:
-            compound = "D-glucose"
-            concentration_percent = 1.0
-
-            def model_dump(self):
-                return {
-                    "name": self.compound,
-                    "concentration_percent": self.concentration_percent,
-                }
-
         class MockMedia:
             name = "minimal"
-            carbon_source = [MockCompound()]
-            nitrogen_source = None
-            phosphate_source = None
-            additives = None
-
-        class MockEnv:
-            temperature_celsius = None
-            cultivation_method = None
-            media = MockMedia()
-            growth_phase = None
-            chemical_treatments = None
-            drug_treatments = None
-            heat_treatment = None
-            induction = None
 
         class MockExpConditions:
-            environmental_conditions = MockEnv()
+            media = MockMedia()
             strain_background = None
 
         result = mgr._flatten_experimental_conditions(MockExpConditions())
         assert result["growth_media"] == "minimal"
-        assert "carbon_source:D-glucose@1.0%" in result["components"]
 
     def test_flatten_experimental_conditions_with_strain_background(self):
         """Test flattening conditions with strain background."""
         mgr = MetadataManager()
 
         class MockExpConditions:
-            environmental_conditions = None
             strain_background = "BY4741"
 
         result = mgr._flatten_experimental_conditions(MockExpConditions())

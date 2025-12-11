@@ -28,18 +28,17 @@ pretty_name: Barkai ChEC-seq Compendium
 size_categories:
   - 100M<n<1B
 experimental_conditions:
-  environmental_conditions:
-    temperature_celsius: 30
-    cultivation_method: liquid_culture
-    growth_phase_at_harvest:
-      od600: 4.0
-      stage: overnight_stationary_phase
-    media:
-      name: synthetic_complete_dextrose
-      carbon_source:
-        - compound: D-dextrose
-          concentration_percent: 2.0
-      nitrogen_source: []
+  temperature_celsius: 30
+  cultivation_method: liquid_culture
+  growth_phase_at_harvest:
+    od600: 4.0
+    stage: overnight_stationary_phase
+  media:
+    name: synthetic_complete_dextrose
+    carbon_source:
+      - compound: D-dextrose
+        concentration_percent: 2.0
+    nitrogen_source: []
   strain_background: BY4741
 configs:
 - config_name: genomic_coverage
@@ -297,18 +296,17 @@ configs:
       description: Average log2 fold change across dye orientations
       role: quantitative_measure
   experimental_conditions:
-    environmental_conditions:
-      media:
-        name: selective_medium
-        carbon_source:
-          - compound: D-raffinose
-            concentration_percent: 2
-        nitrogen_source: []
-      induction:
-        inducer:
-          compound: D-galactose
+    media:
+      name: selective_medium
+      carbon_source:
+        - compound: D-raffinose
           concentration_percent: 2
-        duration_hours: 3
+      nitrogen_source: []
+    induction:
+      inducer:
+        compound: D-galactose
+        concentration_percent: 2
+      duration_hours: 3
 """
 
 KEMMEREN_2014 = """
@@ -321,23 +319,22 @@ tags:
 - transcription
 pretty_name: "Kemmeren, 2014 Overexpression"
 experimental_conditions:
-  environmental_conditions:
-    temperature_celsius: 30
-    cultivation_method: plate
-    growth_phase_at_harvest:
-      phase: early_mid_log
-      od600: 0.6
-      od600_tolerance: 0.1
-    media:
-      name: synthetic_complete
-      carbon_source:
-        - compound: D-glucose
-          concentration_percent: 2
-      nitrogen_source:
-        - compound: yeast_nitrogen_base
-          concentration_percent: 0.671
-          specifications:
-            - without_amino_acids
+  temperature_celsius: 30
+  cultivation_method: plate
+  growth_phase_at_harvest:
+    phase: early_mid_log
+    od600: 0.6
+    od600_tolerance: 0.1
+  media:
+    name: synthetic_complete
+    carbon_source:
+      - compound: D-glucose
+        concentration_percent: 2
+    nitrogen_source:
+      - compound: yeast_nitrogen_base
+        concentration_percent: 0.671
+        specifications:
+          - without_amino_acids
 configs:
 - config_name: kemmeren_2014
   description: Transcriptional regulator overexpression perturbation data
@@ -533,17 +530,17 @@ def test_hughes_2006_induction():
     data = yaml.safe_load(HUGHES_2006)
     card = DatasetCard(**data)
 
-    # Check experimental conditions
-    assert card.configs[0].experimental_conditions is not None
-    exp_conds = card.configs[0].experimental_conditions
-    assert exp_conds.environmental_conditions is not None
-    env_conds = exp_conds.environmental_conditions
+    # Check experimental conditions (stored as dict in model_extra)
+    assert card.configs[0].model_extra is not None
+    assert "experimental_conditions" in card.configs[0].model_extra
+    exp_conds = card.configs[0].model_extra["experimental_conditions"]
 
     # Check induction field
-    assert env_conds.induction is not None
-    assert env_conds.induction.inducer is not None
-    assert env_conds.induction.inducer.compound == "D-galactose"
-    assert env_conds.induction.duration_hours == 3
+    assert "induction" in exp_conds
+    induction = exp_conds["induction"]
+    assert "inducer" in induction
+    assert induction["inducer"]["compound"] == "D-galactose"
+    assert induction["duration_hours"] == 3
 
 
 def test_kemmeren_2014_growth_phase():
@@ -551,17 +548,16 @@ def test_kemmeren_2014_growth_phase():
     data = yaml.safe_load(KEMMEREN_2014)
     card = DatasetCard(**data)
 
-    # Check growth phase
-    exp_conds = card.experimental_conditions
-    assert exp_conds is not None
-    assert exp_conds.environmental_conditions is not None
-    env_conds = exp_conds.environmental_conditions
+    # Check growth phase (stored as dict in model_extra)
+    assert card.model_extra is not None
+    assert "experimental_conditions" in card.model_extra
+    exp_conds = card.model_extra["experimental_conditions"]
 
-    assert env_conds.growth_phase_at_harvest is not None
-    growth_phase = env_conds.growth_phase_at_harvest
-    assert growth_phase.phase == "early_mid_log"
-    assert growth_phase.od600 == 0.6
-    assert growth_phase.od600_tolerance == 0.1
+    assert "growth_phase_at_harvest" in exp_conds
+    growth_phase = exp_conds["growth_phase_at_harvest"]
+    assert growth_phase["phase"] == "early_mid_log"
+    assert growth_phase["od600"] == 0.6
+    assert growth_phase["od600_tolerance"] == 0.1
 
 
 def test_hu_2007_strain_background_in_definitions():
@@ -585,8 +581,8 @@ def test_hu_2007_strain_background_in_definitions():
 
 
 def test_field_role_validation():
-    """Test that FieldRole enum validation works correctly."""
-    # This should parse successfully with valid roles
+    """Test that role field accepts any string value."""
+    # This should parse successfully with any role string
     data = yaml.safe_load(CALLINGCARDS)
     card = DatasetCard(**data)
 
@@ -596,10 +592,9 @@ def test_field_role_validation():
         f for f in config.dataset_info.features if f.name == "regulator_locus_tag"
     )
 
-    # Verify role is a FieldRole enum
-    from tfbpapi.datainfo.models import FieldRole
-
-    assert regulator_feature.role == FieldRole.REGULATOR_IDENTIFIER
+    # Verify role is a string (not an enum)
+    assert regulator_feature.role == "regulator_identifier"
+    assert isinstance(regulator_feature.role, str)
 
 
 def test_concentration_fields():
@@ -607,20 +602,27 @@ def test_concentration_fields():
     data = yaml.safe_load(KEMMEREN_2014)
     card = DatasetCard(**data)
 
-    # Check media compounds
-    env_conds = card.experimental_conditions.environmental_conditions
-    assert env_conds.media is not None
+    # Check media compounds (stored as dict in model_extra)
+    assert card.model_extra is not None
+    assert "experimental_conditions" in card.model_extra
+    exp_conds = card.model_extra["experimental_conditions"]
+    assert "media" in exp_conds
+    media = exp_conds["media"]
 
     # Check carbon source
-    assert len(env_conds.media.carbon_source) > 0
-    carbon = env_conds.media.carbon_source[0]
-    assert carbon.concentration_percent is not None
+    assert "carbon_source" in media
+    carbon_sources = media["carbon_source"]
+    assert len(carbon_sources) > 0
+    carbon = carbon_sources[0]
+    assert carbon["concentration_percent"] is not None
 
     # Check nitrogen source with specifications
-    assert len(env_conds.media.nitrogen_source) > 0
-    nitrogen = env_conds.media.nitrogen_source[0]
-    assert nitrogen.specifications is not None
-    assert "without_amino_acids" in nitrogen.specifications
+    assert "nitrogen_source" in media
+    nitrogen_sources = media["nitrogen_source"]
+    assert len(nitrogen_sources) > 0
+    nitrogen = nitrogen_sources[0]
+    assert nitrogen["specifications"] is not None
+    assert "without_amino_acids" in nitrogen["specifications"]
 
 
 def test_extra_fields_do_not_raise_errors():
@@ -650,10 +652,13 @@ def test_empty_nitrogen_source_list():
     data = yaml.safe_load(BARKAI_COMPENDIUM)
     card = DatasetCard(**data)
 
-    # Check that nitrogen_source is an empty list
-    env_conds = card.experimental_conditions.environmental_conditions
-    assert env_conds.media is not None
-    assert env_conds.media.nitrogen_source == []
+    # Check that nitrogen_source is an empty list (stored as dict in model_extra)
+    assert card.model_extra is not None
+    assert "experimental_conditions" in card.model_extra
+    exp_conds = card.model_extra["experimental_conditions"]
+    assert "media" in exp_conds
+    media = exp_conds["media"]
+    assert media["nitrogen_source"] == []
 
 
 def test_media_additives():
@@ -683,14 +688,18 @@ def test_strain_background_formats():
     # String format
     data1 = yaml.safe_load(BARKAI_COMPENDIUM)
     card1 = DatasetCard(**data1)
-    assert card1.experimental_conditions is not None
-    assert card1.experimental_conditions.strain_background == "BY4741"
+    assert card1.model_extra is not None
+    assert "experimental_conditions" in card1.model_extra
+    exp_conds1 = card1.model_extra["experimental_conditions"]
+    assert exp_conds1["strain_background"] == "BY4741"
 
     # String format in rossi
     data2 = yaml.safe_load(ROSSI_2021)
     card2 = DatasetCard(**data2)
-    assert card2.experimental_conditions is not None
-    assert card2.experimental_conditions.strain_background == "W303"
+    assert card2.model_extra is not None
+    assert "experimental_conditions" in card2.model_extra
+    exp_conds2 = card2.model_extra["experimental_conditions"]
+    assert exp_conds2["strain_background"] == "W303"
 
 
 if __name__ == "__main__":
