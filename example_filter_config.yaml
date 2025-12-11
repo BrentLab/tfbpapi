@@ -1,0 +1,88 @@
+# Example filter configuration for DatasetFilterResolver
+#
+# This file demonstrates how to specify filters and dataset-specific
+# property mappings for heterogeneous datasets.
+#
+# Configuration supports two formats:
+# 1. Legacy format: Direct mappings at repo level (backward compatible)
+# 2. Hierarchical format: Repo-level + dataset-specific mappings
+#
+# Usage:
+#   from tfbpapi.datainfo.filter_resolver import DatasetFilterResolver
+#   resolver = DatasetFilterResolver("example_filter_config.yaml")
+#   results = resolver.resolve_filters([("BrentLab/harbison_2004", "harbison_2004")])
+
+# Filters specify acceptable values for each property
+# Multiple values = OR logic (match any)
+# Multiple properties = AND logic (match all)
+filters:
+  carbon_source:
+    - "D-glucose"
+    - "D-galactose"
+    - "D-raffinose"
+
+  temperature_celsius:
+    - 30
+    - 37
+
+# Dataset mappings specify where to find each property in each dataset's DataCard
+# The 'path' uses dot notation to navigate nested structures
+# For field-level definitions, use 'field' to specify which field contains the property
+dataset_mappings:
+  # FIELD-LEVEL FORMAT
+  # For datasets where properties are in field definitions (e.g., condition field)
+  "BrentLab/harbison_2004":
+    datasets:
+      harbison_2004:
+        carbon_source:
+          field: condition  # Look in the 'condition' field's definitions
+          path: "media.carbon_source"
+        temperature_celsius:
+          field: condition
+          path: "temperature_celsius"
+
+  # REPO-LEVEL FORMAT
+  # For datasets where properties are at repo/config level
+  "BrentLab/kemmeren_2014":
+    repo_level:
+      carbon_source:
+        path: "environmental_conditions.media.carbon_source"
+      temperature_celsius:
+        path: "environmental_conditions.temperature_celsius"
+
+  # NEW HIERARCHICAL FORMAT
+  # Supports repo-level mappings that apply to all datasets
+  # and dataset-specific overrides
+  "BrentLab/example_multi_dataset_repo":
+    # Repo-level mappings apply to all datasets in this repository
+    repo_level:
+      carbon_source:
+        path: "environmental_conditions.media.carbon_source"
+      temperature_celsius:
+        path: "environmental_conditions.temperature_celsius"
+
+    # Dataset-specific mappings override repo-level for particular datasets
+    datasets:
+      dataset1:
+        # This dataset has field-level definitions
+        # Override to look in 'condition' field instead of repo level
+        carbon_source:
+          field: condition
+          path: "media.carbon_source"
+        temperature_celsius:
+          field: condition
+          path: "temperature_celsius"
+
+      dataset2:
+        # Inherits repo-level mappings (no field specification)
+        # Can add dataset-specific properties
+        growth_phase:
+          path: "growth_conditions.phase"
+
+      dataset3:
+        # Mixed: some properties in 'treatment' field, some at repo level
+        carbon_source:
+          field: treatment
+          path: "media.carbon"
+        temperature_celsius:
+          path: "temp"  # Direct repo/config level property

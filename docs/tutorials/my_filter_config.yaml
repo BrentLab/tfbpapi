@@ -1,0 +1,24 @@
+dataset_mappings:
+  BrentLab/harbison_2004:
+    datasets:
+      harbison_2004:
+        carbon_source:
+          field: condition
+          path: media.carbon_source
+        temperature_celsius:
+          field: condition
+          path: temperature_celsius
+  BrentLab/kemmeren_2014:
+    repo_level:
+      carbon_source:
+        path: environmental_conditions.media.carbon_source
+      temperature_celsius:
+        path: environmental_conditions.temperature_celsius
+filters:
+  carbon_source:
+  - D-glucose
+  - D-galactose
+  - D-raffinose
+  temperature_celsius:
+  - 30
+  - 37
