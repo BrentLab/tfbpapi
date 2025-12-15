@@ -37,6 +37,7 @@ mkdocs-jupyter = "^0.25.1"
 mkdocstrings = {extras = ["python"], version = "^0.30.0"}
 matplotlib = "^3.10.6"
 seaborn = "^0.13.2"
+types-pyyaml = "^6.0.12.20250915"
 
 
 [tool.pytest.ini_options]

@@ -31,6 +31,7 @@ Example Usage:
     ...     repos=[("BrentLab/harbison_2004", "harbison_2004")],
     ...     mode="conditions"
     ... )
+
 """
 
 from __future__ import annotations
@@ -39,7 +40,7 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 from tfbpapi.datainfo import DataCard
 from tfbpapi.errors import DataCardError
@@ -51,12 +52,11 @@ def get_nested_value(data: dict, path: str) -> Any:
     Navigate nested dict using dot notation.
 
     Handles missing intermediate keys gracefully by returning None.
-    If the full path is not found, tries removing common prefixes
-    like 'environmental_conditions' to handle different nesting levels.
 
     :param data: Dictionary to navigate
-    :param path: Dot-separated path (e.g., "environmental_conditions.media.name")
+    :param path: Dot-separated path (e.g., "media.carbon_source")
     :return: Value at path or None if not found
+
     """
     if not isinstance(data, dict):
         return None
@@ -64,34 +64,8 @@ def get_nested_value(data: dict, path: str) -> Any:
     keys = path.split(".")
     current = data
 
-    # Try the full path first
     for key in keys:
         if not isinstance(current, dict) or key not in current:
-            # Full path failed, try fallback paths
-            fallback_paths = []
-
-            # If path starts with environmental_conditions, try without it
-            if keys[0] == "environmental_conditions" and len(keys) > 1:
-                fallback_paths.append(".".join(keys[1:]))
-
-            # Try each fallback
-            for fallback_path in fallback_paths:
-                fallback_keys = fallback_path.split(".")
-                fallback_current = data
-                fallback_success = True
-
-                for fallback_key in fallback_keys:
-                    if (
-                        not isinstance(fallback_current, dict)
-                        or fallback_key not in fallback_current
-                    ):
-                        fallback_success = False
-                        break
-                    fallback_current = fallback_current[fallback_key]
-
-                if fallback_success:
-                    return fallback_current
-
             return None
         current = current[key]
 
@@ -109,6 +83,7 @@ def extract_compound_names(value: Any) -> list[str]:
 
     :param value: Value to extract from
     :return: List of compound names
+
     """
     if value is None or value == "unspecified":
         return []
@@ -136,23 +111,62 @@ class DatasetFilterResolver:
     1. Filter criteria (which values are acceptable for each property)
     2. Repository and dataset-specific property paths (where to find each property)
 
-    Configuration structure supports:
-    - Repo-level mappings: Apply to all datasets in a repo
-    - Dataset-level mappings: Override repo-level for specific datasets
+    Configuration structure:
+        filters:
+          property_name: [value1, value2]
 
-    Example:
-        dataset_mappings:
-          "BrentLab/my_repo":
-            repo_level:
+        BrentLab/repo_name:
+          # Repo-wide properties (apply to all datasets in this repository)
+          # Paths are relative to experimental_conditions at the repository level
+          property1:
+            path: media.name
+
+          # Dataset-specific section
+          dataset:
+            dataset_name:
+              # Dataset-specific properties (apply only to this dataset)
+              # Paths are relative to experimental_conditions at the config level
+              property2:
+                path: temperature_celsius
+
+              # Field-level properties (per-sample variation)
+              # Paths are relative to field definitions (NOT experimental_conditions)
+              property3:
+                field: condition
+                path: media.carbon_source
+
+    Path Resolution:
+      - Repo-wide & dataset-specific: Paths automatically
+        prepended with "experimental_conditions."
+        Example: path "media.name" resolves to experimental_conditions.media.name
+
+      - Field-level: Paths used directly on field definitions (no prepending)
+        Example: field "condition", path "media.carbon_source"
+                 looks in condition field's definitions for media.carbon_source
+
+    Examples:
+        # Repo-wide property (applies to all datasets in BrentLab/kemmeren_2014)
+        filters:
+          temperature_celsius: [30]
+
+        BrentLab/kemmeren_2014:
+          temperature_celsius:
+            path: temperature_celsius
+
+        # Dataset-specific property (applies only to kemmeren_2014 dataset)
+        BrentLab/kemmeren_2014:
+          dataset:
+            kemmeren_2014:
               carbon_source:
-                path: environmental_conditions.media.carbon_source
-            datasets:
-              dataset1:
-                temperature_celsius:
-                  path: custom.temp.path
-              dataset2:
-                temperature_celsius:
-                  path: other.temp.path
+                path: media.carbon_source
+
+        # Field-level property (per-sample variation via condition field)
+        BrentLab/harbison_2004:
+          dataset:
+            harbison_2004:
+              carbon_source:
+                field: condition
+                path: media.carbon_source
 
     It then resolves filters across datasets with three output modes:
     - conditions: Just which field values match (no data retrieval)
@@ -163,6 +177,7 @@ class DatasetFilterResolver:
         config: Loaded configuration dict
         filters: Filter criteria from config
         mappings: Repository/dataset-specific property paths
+
     """
 
     def __init__(self, config_path: Path | str):
@@ -170,10 +185,12 @@ class DatasetFilterResolver:
         Initialize resolver with external configuration.
 
         :param config_path: Path to YAML configuration file
+
         """
         self.config = self._load_config(Path(config_path))
         self.filters = self.config.get("filters", {})
-        self.mappings = self.config.get("dataset_mappings", {})
+        # Extract mappings: all keys except 'filters' are repository IDs
+        self.mappings = {k: v for k, v in self.config.items() if k != "filters"}
 
     def _load_config(self, config_path: Path) -> dict:
         """
@@ -183,6 +200,7 @@ class DatasetFilterResolver:
         :return: Configuration dict
         :raises FileNotFoundError: If config file doesn't exist
         :raises yaml.YAMLError: If config is invalid YAML
+
         """
         if not config_path.exists():
             raise FileNotFoundError(f"Configuration file not found: {config_path}")
@@ -199,55 +217,54 @@ class DatasetFilterResolver:
         """
         Get property mappings for a specific repo/dataset combination.
 
-        Merges repo-level and dataset-level mappings, with dataset-level taking precedence.
+        Merges repo-wide and dataset-specific mappings,
+        with dataset-specific taking precedence.
 
-        Supports configuration formats:
-        1. Field-specific path (for field-level definitions):
-           carbon_source:
-             field: condition
-             path: media.carbon_source
+        Configuration format:
+            BrentLab/repo_name:
+              # Repo-wide properties (apply to all datasets)
+              property1:
+                path: path.in.experimental_conditions
 
-        2. Direct path (for repo/config level):
-           carbon_source:
-             path: environmental_conditions.media.carbon_source
+              # Dataset-specific section
+              dataset:
+                dataset_name:
+                  property2:
+                    field: field_name  # For field-level definitions
+                    path: path.within.field
 
-        3. Hierarchical with repo_level and datasets:
-           repo_level:
+        Examples:
+          1. Field-specific path (for field-level definitions):
              carbon_source:
-               path: ...
-           datasets:
-             dataset1:
-               carbon_source:
-                 field: condition
-                 path: ...
+               field: condition
+               path: media.carbon_source
+
+          2. Repo-level path (for experimental_conditions):
+             temperature:
+               path: temperature_celsius
 
         :param repo_id: Repository ID
         :param config_name: Dataset/config name
         :return: Merged property mappings dict
+
         """
         if repo_id not in self.mappings:
             return {}
 
         repo_config = self.mappings[repo_id]
+        mappings = {}
 
-        # Check if this is the new hierarchical format
-        if "repo_level" in repo_config or "datasets" in repo_config:
-            # New format: merge repo_level and dataset-specific
-            mappings = {}
+        # Add repo-wide properties (all keys except 'dataset')
+        for key, value in repo_config.items():
+            if key != "dataset":
+                mappings[key] = value
 
-            # Start with repo-level mappings (apply to all datasets)
-            if "repo_level" in repo_config:
-                mappings.update(repo_config["repo_level"])
+        # Override with dataset-specific properties
+        if "dataset" in repo_config:
+            if config_name in repo_config["dataset"]:
+                mappings.update(repo_config["dataset"][config_name])
 
-            # Override with dataset-specific mappings
-            if "datasets" in repo_config and config_name in repo_config["datasets"]:
-                mappings.update(repo_config["datasets"][config_name])
-
-            return mappings
-        else:
-            # Legacy format: direct property mappings
-            # This assumes the config at repo level applies to all datasets
-            return repo_config
+        return mappings
 
     def resolve_filters(
         self,
@@ -263,10 +280,12 @@ class DatasetFilterResolver:
         :param token: Optional HuggingFace token for private repos
         :return: Dict mapping repo_id to results
         :raises ValueError: If mode is invalid
+
         """
         if mode not in ["conditions", "samples", "full_data"]:
             raise ValueError(
-                f"Invalid mode: {mode}. Must be 'conditions', 'samples', or 'full_data'"
+                f"Invalid mode: {mode}. Must be 'conditions', "
+                "'samples', or 'full_data'"
             )
 
         results = {}
@@ -341,6 +360,7 @@ class DatasetFilterResolver:
         :param config_name: Configuration name
         :param repo_id: Repository ID
         :return: (included, reason) tuple
+
         """
         # Get repo and config level conditions
         try:
@@ -359,11 +379,22 @@ class DatasetFilterResolver:
             if filter_prop not in property_mappings:
                 continue
 
+            mapping = property_mappings[filter_prop]
+
+            # Check if this is a field-level mapping
+            # (should not be checked at repo level)
+            if "field" in mapping:
+                # Skip field-level properties at repo/config level
+                continue
+
             # Get path for this property
-            path = property_mappings[filter_prop]["path"]
+            path = mapping["path"]
+
+            # Prepend experimental_conditions for repo-level paths
+            full_path = f"experimental_conditions.{path}"
 
             # Try to get value at this path
-            value = get_nested_value(conditions, path)
+            value = get_nested_value(conditions, full_path)
 
             if value is None:
                 # Property not specified at repo/config level, skip
@@ -385,7 +416,8 @@ class DatasetFilterResolver:
             if not matches:
                 return (
                     False,
-                    f"{filter_prop}: found {actual_values}, wanted {acceptable_values}",
+                    f"{filter_prop}: found {actual_values}, "
+                    f"wanted {acceptable_values}",
                 )
 
         return True, ""
@@ -403,8 +435,9 @@ class DatasetFilterResolver:
         :param config_name: Configuration name
         :param repo_id: Repository ID
         :return: Dict mapping field names to lists of matching values
+
         """
-        matching = {}
+        matching: dict[str, list[str]] = {}
         property_mappings = self._get_property_mappings(repo_id, config_name)
 
         # Get config to find fields with role=experimental_condition
@@ -414,8 +447,8 @@ class DatasetFilterResolver:
 
         # Group property mappings by field (if field is specified)
         # field_mappings: {field_name: {prop: path, ...}}
-        field_mappings = {}
-        general_mappings = {}  # Properties without field specification
+        field_mappings: dict[str, dict[str, str]] = {}
+        general_mappings: dict[str, str] = {}  # Properties without field specification
 
         for prop, mapping in property_mappings.items():
             if "field" in mapping:
@@ -500,6 +533,7 @@ class DatasetFilterResolver:
         :param matching_field_values: Dict of field names to matching values
         :param token: Optional HuggingFace token
         :return: DataFrame with sample metadata
+
         """
         # Initialize query API
         api = HfQueryAPI(repo_id, token=token)
@@ -562,6 +596,7 @@ class DatasetFilterResolver:
         :param matching_field_values: Dict of field names to matching values
         :param token: Optional HuggingFace token
         :return: DataFrame with full data
+
         """
         # Initialize query API
         api = HfQueryAPI(repo_id, token=token)
@@ -598,4 +633,7 @@ class DatasetFilterResolver:
         """String representation."""
         n_filters = len(self.filters)
         n_datasets = len(self.mappings)
-        return f"DatasetFilterResolver({n_filters} filters, {n_datasets} datasets configured)"
+        return (
+            f"DatasetFilterResolver({n_filters} filters, "
+            f"{n_datasets} datasets configured)"
+        )

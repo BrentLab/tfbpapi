@@ -3,9 +3,7 @@
 # This file demonstrates how to specify filters and dataset-specific
 # property mappings for heterogeneous datasets.
 #
-# Configuration supports two formats:
-# 1. Legacy format: Direct mappings at repo level (backward compatible)
-# 2. Hierarchical format: Repo-level + dataset-specific mappings
+# New format: repositories as top-level keys (not nested under dataset_mappings)
 #
 # Usage:
 #   from tfbpapi.datainfo.filter_resolver import DatasetFilterResolver
@@ -19,70 +17,59 @@ filters:
   carbon_source:
     - "D-glucose"
     - "D-galactose"
-    - "D-raffinose"
 
   temperature_celsius:
     - 30
     - 37
 
-# Dataset mappings specify where to find each property in each dataset's DataCard
-# The 'path' uses dot notation to navigate nested structures
-# For field-level definitions, use 'field' to specify which field contains the property
-dataset_mappings:
-  # FIELD-LEVEL FORMAT
-  # For datasets where properties are in field definitions (e.g., condition field)
-  "BrentLab/harbison_2004":
-    datasets:
-      harbison_2004:
-        carbon_source:
-          field: condition  # Look in the 'condition' field's definitions
-          path: "media.carbon_source"
-        temperature_celsius:
-          field: condition
-          path: "temperature_celsius"
+# Repository configurations specify where to find each property
+# Top-level keys are repository IDs (e.g., "BrentLab/harbison_2004")
 
-  # REPO-LEVEL FORMAT
-  # For datasets where properties are at repo/config level
-  "BrentLab/kemmeren_2014":
-    repo_level:
+# FIELD-LEVEL EXAMPLE: Harbison 2004
+# Properties are in field definitions (condition field)
+BrentLab/harbison_2004:
+  dataset:
+    harbison_2004:
       carbon_source:
-        path: "environmental_conditions.media.carbon_source"
+        field: condition  # Look in the 'condition' field's definitions
+        path: media.carbon_source
       temperature_celsius:
-        path: "environmental_conditions.temperature_celsius"
+        field: condition
+        path: temperature_celsius
 
-  # NEW HIERARCHICAL FORMAT
-  # Supports repo-level mappings that apply to all datasets
-  # and dataset-specific overrides
-  "BrentLab/example_multi_dataset_repo":
-    # Repo-level mappings apply to all datasets in this repository
-    repo_level:
+# REPO-WIDE + DATASET-SPECIFIC EXAMPLE: Kemmeren 2014
+# temperature_celsius is repo-wide (applies to all datasets)
+# carbon_source is dataset-specific
+BrentLab/kemmeren_2014:
+  # Repo-wide property (applies to all datasets in this repository)
+  temperature_celsius:
+    path: temperature_celsius
+
+  # Dataset-specific properties
+  dataset:
+    kemmeren_2014:
       carbon_source:
-        path: "environmental_conditions.media.carbon_source"
-      temperature_celsius:
-        path: "environmental_conditions.temperature_celsius"
+        path: media.carbon_source
 
-    # Dataset-specific mappings override repo-level for particular datasets
-    datasets:
-      dataset1:
-        # This dataset has field-level definitions
-        # Override to look in 'condition' field instead of repo level
-        carbon_source:
-          field: condition
-          path: "media.carbon_source"
-        temperature_celsius:
-          field: condition
-          path: "temperature_celsius"
-
-      dataset2:
-        # Inherits repo-level mappings (no field specification)
-        # Can add dataset-specific properties
-        growth_phase:
-          path: "growth_conditions.phase"
-
-      dataset3:
-        # Mixed: some properties in 'treatment' field, some at repo level
-        carbon_source:
-          field: treatment
-          path: "media.carbon"
-        temperature_celsius:
-          path: "temp"  # Direct repo/config level property
+# CONFIGURATION STRUCTURE EXPLAINED:
+#
+# Repo-wide properties:
+#   - Properties directly under repository ID
+#   - Apply to ALL datasets in that repository
+#   - Path is relative to experimental_conditions
+#   - Example: temperature_celsius: path: temperature_celsius
+#              -> looks in experimental_conditions.temperature_celsius
+#
+# Dataset-specific properties:
+#   - Properties under dataset.{dataset_name}
+#   - Override repo-wide for that specific dataset
+#   - Can use 'field' to specify field-level definitions
+#   - Example with field: carbon_source: field: condition, path: media.carbon_source
+#                        -> looks in condition field definitions
+#   - Example without field: carbon_source: path: media.carbon_source
+#                          -> looks in experimental_conditions.media.carbon_source
+#
+# Property name aliasing:
+#   - The filter property name (e.g., "temperature") can differ from the datacard property name
+#   - Example: temperature: path: temperature_celsius
+#              Filter uses "temperature", datacard has "temperature_celsius"
