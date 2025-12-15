@@ -1,19 +1,22 @@
-filters:
-  carbon_source:
-    - "D-glucose"
-    - "D-galactose"
-
 BrentLab/harbison_2004:
   dataset:
     harbison_2004:
       carbon_source:
         field: condition
         path: media.carbon_source
-
+      temperature_celsius:
+        field: condition
+        path: temperature_celsius
 BrentLab/kemmeren_2014:
-  temperature:
-    path: temperature_celsius
   dataset:
     kemmeren_2014:
       carbon_source:
         path: media.carbon_source
+      temperature_celsius:
+        path: temperature_celsius
+filters:
+  carbon_source:
+  - D-glucose
+  - D-galactose
+  temperature_celsius:
+  - 30

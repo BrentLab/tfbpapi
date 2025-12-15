@@ -1,11 +1,7 @@
 """Tests for DatasetFilterResolver."""
 
-from pathlib import Path
-from tempfile import NamedTemporaryFile
-
 import pandas as pd
 import pytest
-import yaml
 
 from tfbpapi.datainfo.filter_resolver import (
     DatasetFilterResolver,
@@ -21,44 +17,64 @@ class TestHelperFunctions:
         """Test getting nested values with dot notation."""
         data = {
             "environmental_conditions": {
-                "media": {
-                    "name": "YPD",
-                    "carbon_source": [{"compound": "D-glucose"}]
-                },
-                "temperature_celsius": 30
+                "media": {"name": "YPD", "carbon_source": [{"compound": "D-glucose"}]},
+                "temperature_celsius": 30,
             }
         }
 
-        assert get_nested_value(data, "environmental_conditions.temperature_celsius") == 30
+        assert (
+            get_nested_value(data, "environmental_conditions.temperature_celsius") == 30
+        )
         assert get_nested_value(data, "environmental_conditions.media.name") == "YPD"
         assert get_nested_value(data, "nonexistent.path") is None
-        assert get_nested_value(data, "environmental_conditions.media.nonexistent") is None
+        assert (
+            get_nested_value(data, "environmental_conditions.media.nonexistent") is None
+        )
 
-    def test_get_nested_value_fallback(self):
-        """Test fallback path resolution for field-level definitions."""
-        # Field-level definition (no environmental_conditions wrapper)
+    def test_get_nested_value_no_fallback(self):
+        """Test that paths must be correct - no automatic fallback."""
+        # Field-level definition (no experimental_conditions wrapper)
         field_def = {
-            "media": {
-                "name": "YPD",
-                "carbon_source": [{"compound": "D-glucose"}]
-            },
-            "temperature_celsius": 30
+            "media": {"name": "YPD", "carbon_source": [{"compound": "D-glucose"}]},
+            "temperature_celsius": 30,
         }
 
-        # Path with environmental_conditions should fallback to path without it
-        assert get_nested_value(field_def, "environmental_conditions.media.name") == "YPD"
-        assert get_nested_value(field_def, "environmental_conditions.temperature_celsius") == 30
+        # Wrong path should return None (no fallback)
+        assert get_nested_value(field_def, "experimental_conditions.media.name") is None
+        assert (
+            get_nested_value(field_def, "experimental_conditions.temperature_celsius")
+            is None
+        )
 
-        # Direct path should still work
+        # Correct direct paths work
         assert get_nested_value(field_def, "media.name") == "YPD"
         assert get_nested_value(field_def, "temperature_celsius") == 30
+
+        # Repo-level definition (with experimental_conditions wrapper)
+        repo_def = {
+            "experimental_conditions": {
+                "media": {"name": "SC", "carbon_source": [{"compound": "D-glucose"}]},
+                "temperature_celsius": 30,
+            }
+        }
+
+        # Full path works
+        assert get_nested_value(repo_def, "experimental_conditions.media.name") == "SC"
+        assert (
+            get_nested_value(repo_def, "experimental_conditions.temperature_celsius")
+            == 30
+        )
+
+        # Shortened path does NOT work (no fallback)
+        assert get_nested_value(repo_def, "media.name") is None
+        assert get_nested_value(repo_def, "temperature_celsius") is None
 
     def test_extract_compound_names(self):
         """Test extracting compound names from various formats."""
         # List of dicts
         value1 = [
             {"compound": "D-glucose", "concentration_percent": 2},
-            {"compound": "D-galactose", "concentration_percent": 1}
+            {"compound": "D-galactose", "concentration_percent": 1},
         ]
         assert extract_compound_names(value1) == ["D-glucose", "D-galactose"]
 
@@ -78,42 +94,29 @@ class TestHelperFunctions:
 class TestDatasetFilterResolver:
     """Test DatasetFilterResolver class."""
 
-    @pytest.fixture
-    def simple_config(self):
-        """Create a simple test configuration."""
-        return {
+    def test_init(self, write_config):
+        """Test initialization."""
+        config = {
             "filters": {
                 "carbon_source": ["D-glucose", "D-galactose"],
-                "temperature_celsius": [30]
+                "temperature_celsius": [30],
             },
-            "dataset_mappings": {
-                "BrentLab/harbison_2004": {
-                    "datasets": {
-                        "harbison_2004": {
-                            "carbon_source": {
-                                "field": "condition",
-                                "path": "media.carbon_source"
-                            },
-                            "temperature_celsius": {
-                                "field": "condition",
-                                "path": "temperature_celsius"
-                            }
-                        }
+            "BrentLab/harbison_2004": {
+                "dataset": {
+                    "harbison_2004": {
+                        "carbon_source": {
+                            "field": "condition",
+                            "path": "media.carbon_source",
+                        },
+                        "temperature_celsius": {
+                            "field": "condition",
+                            "path": "temperature_celsius",
+                        },
                     }
                 }
-            }
+            },
         }
-
-    @pytest.fixture
-    def config_file(self, simple_config, tmp_path):
-        """Create a temporary config file."""
-        config_path = tmp_path / "test_config.yaml"
-        with open(config_path, 'w') as f:
-            yaml.dump(simple_config, f)
-        return config_path
-
-    def test_init(self, config_file):
-        """Test initialization."""
+        config_file = write_config(config)
         resolver = DatasetFilterResolver(config_file)
 
         assert len(resolver.filters) == 2
@@ -127,15 +130,35 @@ class TestDatasetFilterResolver:
         with pytest.raises(FileNotFoundError):
             DatasetFilterResolver("nonexistent.yaml")
 
-    def test_resolve_filters_mode_conditions(self, config_file):
+    def test_resolve_filters_mode_conditions(self, write_config):
         """Test resolve_filters in conditions mode."""
+        config = {
+            "filters": {
+                "carbon_source": ["D-glucose", "D-galactose"],
+                "temperature_celsius": [30],
+            },
+            "BrentLab/harbison_2004": {
+                "dataset": {
+                    "harbison_2004": {
+                        "carbon_source": {
+                            "field": "condition",
+                            "path": "media.carbon_source",
+                        },
+                        "temperature_celsius": {
+                            "field": "condition",
+                            "path": "temperature_celsius",
+                        },
+                    }
+                }
+            },
+        }
+        config_file = write_config(config)
         resolver = DatasetFilterResolver(config_file)
 
-        # This will actually try to load the DataCard, so it's more of an integration test
-        # For now, test the structure
+        # This will actually try to load the DataCard,
+        # so it's more of an integration test For now, test the structure
         results = resolver.resolve_filters(
-            repos=[("BrentLab/harbison_2004", "harbison_2004")],
-            mode="conditions"
+            repos=[("BrentLab/harbison_2004", "harbison_2004")], mode="conditions"
         )
 
         assert "BrentLab/harbison_2004" in results
@@ -148,18 +171,59 @@ class TestDatasetFilterResolver:
         if result["included"]:
             assert "matching_field_values" in result
 
-    def test_resolve_filters_invalid_mode(self, config_file):
+    def test_resolve_filters_invalid_mode(self, write_config):
         """Test resolve_filters with invalid mode."""
+        config = {
+            "filters": {
+                "carbon_source": ["D-glucose", "D-galactose"],
+                "temperature_celsius": [30],
+            },
+            "BrentLab/harbison_2004": {
+                "dataset": {
+                    "harbison_2004": {
+                        "carbon_source": {
+                            "field": "condition",
+                            "path": "media.carbon_source",
+                        },
+                        "temperature_celsius": {
+                            "field": "condition",
+                            "path": "temperature_celsius",
+                        },
+                    }
+                }
+            },
+        }
+        config_file = write_config(config)
         resolver = DatasetFilterResolver(config_file)
 
         with pytest.raises(ValueError, match="Invalid mode"):
             resolver.resolve_filters(
-                repos=[("BrentLab/harbison_2004", "harbison_2004")],
-                mode="invalid"
+                repos=[("BrentLab/harbison_2004", "harbison_2004")], mode="invalid"
             )
 
-    def test_repr(self, config_file):
+    def test_repr(self, write_config):
         """Test string representation."""
+        config = {
+            "filters": {
+                "carbon_source": ["D-glucose", "D-galactose"],
+                "temperature_celsius": [30],
+            },
+            "BrentLab/harbison_2004": {
+                "dataset": {
+                    "harbison_2004": {
+                        "carbon_source": {
+                            "field": "condition",
+                            "path": "media.carbon_source",
+                        },
+                        "temperature_celsius": {
+                            "field": "condition",
+                            "path": "temperature_celsius",
+                        },
+                    }
+                }
+            },
+        }
+        config_file = write_config(config)
         resolver = DatasetFilterResolver(config_file)
         repr_str = repr(resolver)
 
@@ -167,88 +231,29 @@ class TestDatasetFilterResolver:
         assert "2 filters" in repr_str
         assert "1 datasets" in repr_str
 
-    def test_hierarchical_config(self, tmp_path):
-        """Test hierarchical configuration with repo_level and dataset-specific mappings."""
-        config = {
-            "filters": {
-                "carbon_source": ["D-glucose"],
-                "temperature_celsius": [30]
-            },
-            "dataset_mappings": {
-                "BrentLab/test_repo": {
-                    "repo_level": {
-                        "carbon_source": {
-                            "path": "environmental_conditions.media.carbon_source"
-                        }
-                    },
-                    "datasets": {
-                        "dataset1": {
-                            "temperature_celsius": {
-                                "field": "condition",
-                            "path": "environmental_conditions.temperature_celsius"
-                            }
-                        },
-                        "dataset2": {
-                            "temperature_celsius": {
-                                "field": "condition",
-                            "path": "custom.temp.path"
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        config_path = tmp_path / "hierarchical_config.yaml"
-        with open(config_path, 'w') as f:
-            yaml.dump(config, f)
-
-        resolver = DatasetFilterResolver(config_path)
-
-        # Test property mapping resolution
-        mappings1 = resolver._get_property_mappings("BrentLab/test_repo", "dataset1")
-        assert "carbon_source" in mappings1  # From repo_level
-        assert "temperature_celsius" in mappings1  # From dataset-specific
-        assert mappings1["temperature_celsius"]["path"] == "environmental_conditions.temperature_celsius"
-
-        mappings2 = resolver._get_property_mappings("BrentLab/test_repo", "dataset2")
-        assert "carbon_source" in mappings2  # From repo_level
-        assert "temperature_celsius" in mappings2  # Overridden by dataset-specific
-        assert mappings2["temperature_celsius"]["path"] == "custom.temp.path"
-
 
 class TestRealDataCards:
     """Integration tests with real datacards."""
 
-    def test_harbison_2004_glucose_filter(self, tmp_path):
+    def test_harbison_2004_glucose_filter(self, harbison_2004_datacard, write_config):
         """Test filtering harbison_2004 for glucose samples."""
-        # Create config for glucose filtering
         config = {
-            "filters": {
-                "carbon_source": ["D-glucose"]
-            },
-            "dataset_mappings": {
-                "BrentLab/harbison_2004": {
-                    "datasets": {
-                        "harbison_2004": {
-                            "carbon_source": {
-                                "field": "condition",
-                            "path": "media.carbon_source"
-                            }
+            "filters": {"carbon_source": ["D-glucose"]},
+            "BrentLab/harbison_2004": {
+                "dataset": {
+                    "harbison_2004": {
+                        "carbon_source": {
+                            "field": "condition",
+                            "path": "media.carbon_source",
                         }
                     }
                 }
-            }
+            },
         }
-
-        config_path = tmp_path / "glucose_config.yaml"
-        with open(config_path, 'w') as f:
-            yaml.dump(config, f)
-
+        config_path = write_config(config)
         resolver = DatasetFilterResolver(config_path)
         results = resolver.resolve_filters(
-            repos=[("BrentLab/harbison_2004", "harbison_2004")],
-            mode="conditions"
+            repos=[("BrentLab/harbison_2004", "harbison_2004")], mode="conditions"
         )
 
         assert "BrentLab/harbison_2004" in results
@@ -264,38 +269,38 @@ class TestRealDataCards:
         if "condition" in result["matching_field_values"]:
             matching = result["matching_field_values"]["condition"]
             # YPD, HEAT, H2O2Hi, H2O2Lo, Acid, Alpha, BUT14, BUT90 all have D-glucose
-            expected_glucose_conditions = ["YPD", "HEAT", "H2O2Hi", "H2O2Lo", "Acid", "Alpha", "BUT14", "BUT90"]
+            expected_glucose_conditions = [
+                "YPD",
+                "HEAT",
+                "H2O2Hi",
+                "H2O2Lo",
+                "Acid",
+                "Alpha",
+                "BUT14",
+                "BUT90",
+            ]
             for cond in expected_glucose_conditions:
                 assert cond in matching, f"{cond} should be in matching conditions"
 
-    def test_harbison_2004_galactose_filter(self, tmp_path):
+    def test_harbison_2004_galactose_filter(self, harbison_2004_datacard, write_config):
         """Test filtering harbison_2004 for galactose samples."""
         config = {
-            "filters": {
-                "carbon_source": ["D-galactose"]
-            },
-            "dataset_mappings": {
-                "BrentLab/harbison_2004": {
-                    "datasets": {
-                        "harbison_2004": {
-                            "carbon_source": {
-                                "field": "condition",
-                            "path": "media.carbon_source"
-                            }
+            "filters": {"carbon_source": ["D-galactose"]},
+            "BrentLab/harbison_2004": {
+                "dataset": {
+                    "harbison_2004": {
+                        "carbon_source": {
+                            "field": "condition",
+                            "path": "media.carbon_source",
                         }
                     }
                 }
-            }
+            },
         }
-
-        config_path = tmp_path / "galactose_config.yaml"
-        with open(config_path, 'w') as f:
-            yaml.dump(config, f)
-
+        config_path = write_config(config)
         resolver = DatasetFilterResolver(config_path)
         results = resolver.resolve_filters(
-            repos=[("BrentLab/harbison_2004", "harbison_2004")],
-            mode="conditions"
+            repos=[("BrentLab/harbison_2004", "harbison_2004")], mode="conditions"
         )
 
         result = results["BrentLab/harbison_2004"]
@@ -306,34 +311,25 @@ class TestRealDataCards:
             matching = result["matching_field_values"]["condition"]
             assert "GAL" in matching
 
-    def test_harbison_2004_samples_mode(self, tmp_path):
+    def test_harbison_2004_samples_mode(self, harbison_2004_datacard, write_config):
         """Test retrieving sample-level metadata."""
         config = {
-            "filters": {
-                "carbon_source": ["D-glucose"]
-            },
-            "dataset_mappings": {
-                "BrentLab/harbison_2004": {
-                    "datasets": {
-                        "harbison_2004": {
-                            "carbon_source": {
-                                "field": "condition",
-                            "path": "media.carbon_source"
-                            }
+            "filters": {"carbon_source": ["D-glucose"]},
+            "BrentLab/harbison_2004": {
+                "dataset": {
+                    "harbison_2004": {
+                        "carbon_source": {
+                            "field": "condition",
+                            "path": "media.carbon_source",
                         }
                     }
                 }
-            }
+            },
         }
-
-        config_path = tmp_path / "samples_config.yaml"
-        with open(config_path, 'w') as f:
-            yaml.dump(config, f)
-
+        config_path = write_config(config)
         resolver = DatasetFilterResolver(config_path)
         results = resolver.resolve_filters(
-            repos=[("BrentLab/harbison_2004", "harbison_2004")],
-            mode="samples"
+            repos=[("BrentLab/harbison_2004", "harbison_2004")], mode="samples"
         )
 
         result = results["BrentLab/harbison_2004"]
@@ -345,34 +341,25 @@ class TestRealDataCards:
         assert isinstance(df, pd.DataFrame)
         assert len(df) > 0  # Should have some samples
 
-    def test_harbison_2004_full_data_mode(self, tmp_path):
+    def test_harbison_2004_full_data_mode(self, harbison_2004_datacard, write_config):
         """Test retrieving full data."""
         config = {
-            "filters": {
-                "carbon_source": ["D-glucose"]
-            },
-            "dataset_mappings": {
-                "BrentLab/harbison_2004": {
-                    "datasets": {
-                        "harbison_2004": {
-                            "carbon_source": {
-                                "field": "condition",
-                            "path": "media.carbon_source"
-                            }
+            "filters": {"carbon_source": ["D-glucose"]},
+            "BrentLab/harbison_2004": {
+                "dataset": {
+                    "harbison_2004": {
+                        "carbon_source": {
+                            "field": "condition",
+                            "path": "media.carbon_source",
                         }
                     }
                 }
-            }
+            },
         }
-
-        config_path = tmp_path / "full_data_config.yaml"
-        with open(config_path, 'w') as f:
-            yaml.dump(config, f)
-
+        config_path = write_config(config)
         resolver = DatasetFilterResolver(config_path)
         results = resolver.resolve_filters(
-            repos=[("BrentLab/harbison_2004", "harbison_2004")],
-            mode="full_data"
+            repos=[("BrentLab/harbison_2004", "harbison_2004")], mode="full_data"
         )
 
         result = results["BrentLab/harbison_2004"]
@@ -383,3 +370,125 @@ class TestRealDataCards:
         df = result["data"]
         assert isinstance(df, pd.DataFrame)
         assert len(df) > 0  # Should have data rows
+
+    def test_hackett_2020_glucose_filter(self, hackett_2020_datacard, write_config):
+        """Test filtering hackett_2020 for glucose samples."""
+        config = {
+            "filters": {"carbon_source": ["D-glucose"]},
+            "BrentLab/hackett_2020": {
+                "dataset": {
+                    "hackett_2020": {"carbon_source": {"path": "media.carbon_source"}}
+                }
+            },
+        }
+        config_path = write_config(config)
+        resolver = DatasetFilterResolver(config_path)
+        results = resolver.resolve_filters(
+            repos=[("BrentLab/hackett_2020", "hackett_2020")], mode="conditions"
+        )
+
+        assert "BrentLab/hackett_2020" in results
+        result = results["BrentLab/hackett_2020"]
+
+        # Should be included (hackett_2020 has D-glucose at repo level)
+        assert result["included"] is True
+
+    def test_kemmeren_2014_glucose_filter(self, kemmeren_2014_datacard, write_config):
+        """Test filtering kemmeren_2014 for glucose samples."""
+        config = {
+            "filters": {"carbon_source": ["D-glucose"]},
+            "BrentLab/kemmeren_2014": {
+                "dataset": {
+                    "kemmeren_2014": {"carbon_source": {"path": "media.carbon_source"}}
+                }
+            },
+        }
+        config_path = write_config(config)
+        resolver = DatasetFilterResolver(config_path)
+        results = resolver.resolve_filters(
+            repos=[("BrentLab/kemmeren_2014", "kemmeren_2014")], mode="conditions"
+        )
+
+        assert "BrentLab/kemmeren_2014" in results
+        result = results["BrentLab/kemmeren_2014"]
+
+        # Should be included (kemmeren_2014 has D-glucose at repo level)
+        assert result["included"] is True
+
+    def test_kemmeren_2014_temperature_filter(
+        self, kemmeren_2014_datacard, write_config
+    ):
+        """Test filtering kemmeren_2014 for temperature."""
+        config = {
+            "filters": {"temperature_celsius": [30]},
+            "BrentLab/kemmeren_2014": {
+                "dataset": {
+                    "kemmeren_2014": {
+                        "temperature_celsius": {"path": "temperature_celsius"}
+                    }
+                }
+            },
+        }
+        config_path = write_config(config)
+        resolver = DatasetFilterResolver(config_path)
+        results = resolver.resolve_filters(
+            repos=[("BrentLab/kemmeren_2014", "kemmeren_2014")], mode="conditions"
+        )
+
+        assert "BrentLab/kemmeren_2014" in results
+        result = results["BrentLab/kemmeren_2014"]
+
+        # Should be included (kemmeren_2014 has temperature_celsius: 30 at repo level)
+        assert result["included"] is True
+
+    def test_multi_repo_glucose_filter(
+        self,
+        harbison_2004_datacard,
+        hackett_2020_datacard,
+        kemmeren_2014_datacard,
+        write_config,
+    ):
+        """Test filtering D-glucose across multiple repos."""
+        config = {
+            "filters": {"carbon_source": ["D-glucose"]},
+            "BrentLab/harbison_2004": {
+                "dataset": {
+                    "harbison_2004": {
+                        "carbon_source": {
+                            "field": "condition",
+                            "path": "media.carbon_source",
+                        }
+                    }
+                }
+            },
+            "BrentLab/hackett_2020": {
+                "dataset": {
+                    "hackett_2020": {"carbon_source": {"path": "media.carbon_source"}}
+                }
+            },
+            "BrentLab/kemmeren_2014": {
+                "dataset": {
+                    "kemmeren_2014": {"carbon_source": {"path": "media.carbon_source"}}
+                }
+            },
+        }
+        config_path = write_config(config)
+        resolver = DatasetFilterResolver(config_path)
+        results = resolver.resolve_filters(
+            repos=[
+                ("BrentLab/harbison_2004", "harbison_2004"),
+                ("BrentLab/hackett_2020", "hackett_2020"),
+                ("BrentLab/kemmeren_2014", "kemmeren_2014"),
+            ],
+            mode="conditions",
+        )
+
+        # All three repos should be included
+        assert "BrentLab/harbison_2004" in results
+        assert results["BrentLab/harbison_2004"]["included"] is True
+
+        assert "BrentLab/hackett_2020" in results
+        assert results["BrentLab/hackett_2020"]["included"] is True
+
+        assert "BrentLab/kemmeren_2014" in results
+        assert results["BrentLab/kemmeren_2014"]["included"] is True

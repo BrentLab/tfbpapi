@@ -71,12 +71,14 @@ class MetadataManager:
 
         :param cache_dir: Optional directory for caching metadata views
         :param cache: Whether to enable persistent caching (not yet implemented)
-        :param duckdb_conn: Optional DuckDB connection to use. If None, creates new
-            in-memory connection. Pass a shared connection to work with views created
-            by HfQueryAPI or other tools.
+        :param duckdb_conn: Optional DuckDB connection to use. If None, creates new in-
+            memory connection. Pass a shared connection to work with views created by
+            HfQueryAPI or other tools.
 
         """
-        self._conn = duckdb_conn if duckdb_conn is not None else duckdb.connect(":memory:")
+        self._conn = (
+            duckdb_conn if duckdb_conn is not None else duckdb.connect(":memory:")
+        )
         self._cache_dir = cache_dir
         self._cache_enabled = cache
         self._registered_datasets: dict[str, Any] = {}
@@ -91,7 +93,8 @@ class MetadataManager:
 
         :param repo_id: Repository ID (e.g., "BrentLab/harbison_2004")
         :param config_name: Configuration name (e.g., "harbison_2004")
-        :return: Sanitized view name (e.g., "BrentLab_harbison_2004_harbison_2004_metadata")
+        :return: Sanitized view name
+          (e.g., "BrentLab_harbison_2004_harbison_2004_metadata")
 
         Example:
             >>> mgr = MetadataManager()
@@ -126,7 +129,7 @@ class MetadataManager:
             {'growth_media': 'YPD', 'temperature_celsius': 30}
 
         """
-        result = {}
+        result: dict[str, Any] = {}
         if not definition:
             return result
 
@@ -164,7 +167,7 @@ class MetadataManager:
             {'temperature_celsius': 30, 'strain_background': 'BY4741'}
 
         """
-        result = {}
+        result: dict[str, Any] = {}
         if exp_conds is None:
             return result
 
@@ -211,7 +214,8 @@ class MetadataManager:
         :param base_view: Name of existing DuckDB view (created by HfCacheManager)
         :param view_name: Name for the new metadata view
         :param include_fields: List of field names to select from base view
-        :param constant_columns: Optional dict of {column_name: value} to add as constants
+        :param constant_columns: Optional dict of {column_name: value}
+            to add as constants
         :return: Name of created view
 
         Example:
