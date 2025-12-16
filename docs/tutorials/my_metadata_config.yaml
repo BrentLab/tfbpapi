@@ -1,25 +1,31 @@
 BrentLab/harbison_2004:
+  nitrogen_source:
+    path: media.nitrogen_source.name
   dataset:
     harbison_2004:
+      phosphate_source:
+        path: media.phosphate_source.compound
       carbon_source:
         field: condition
-        path: media.carbon_source
+        path: media.carbon_source.compound
       temperature_celsius:
         field: condition
         path: temperature_celsius
+        
 BrentLab/kemmeren_2014:
   dataset:
     kemmeren_2014:
       carbon_source:
-        path: media.carbon_source
+        path: media.carbon_source.compound
       temperature_celsius:
         path: temperature_celsius
+
 factor_aliases:
   carbon_source:
     galactose:
     - D-galactose
+    # should not have to include the actual name of the column -- that can be inferred
     - Galactose
-    - galactose
     glucose:
     - D-glucose
     - dextrose
@@ -27,9 +33,7 @@ factor_aliases:
     raffinose:
     - D-raffinose
     - raffinose
-  temperature_celsius:
-    heat_shock:
-    - 37
-    - 39
-    standard:
-    - 30
+
+description:
+  carbon_source:
+  media: 
