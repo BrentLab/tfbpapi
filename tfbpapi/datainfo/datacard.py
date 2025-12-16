@@ -796,6 +796,96 @@ class DataCard:
             if f.role == "experimental_condition"
         ]
 
+    def summarize_field_levels(
+        self,
+        config_name: str,
+        field_name: str,
+        properties: list[str] | None = None,
+        max_levels: int | None = None,
+    ) -> str:
+        """
+        Get a human-readable summary of field levels and their key properties.
+
+        Provides a formatted summary showing each level (value) and selected properties
+        from its definition. Useful for quickly exploring experimental condition
+        structures without writing loops.
+
+        :param config_name: Configuration name
+        :param field_name: Field name to summarize
+        :param properties: Optional list of property paths to display (e.g., ["media.name", "temperature_celsius"]).
+                          If None, shows all top-level keys.
+        :param max_levels: Optional limit on number of levels to show
+        :return: Formatted string summary
+        :raises DataCardError: If config or field not found
+
+        Example:
+            >>> card = DataCard("BrentLab/harbison_2004")
+            >>> # Show summary with specific properties
+            >>> print(card.summarize_field_levels(
+            ...     "harbison_2004",
+            ...     "condition",
+            ...     properties=["media.carbon_source.compound", "temperature_celsius"]
+            ... ))
+            Field: condition
+            Levels: 14
+
+            YPD:
+              media.carbon_source.compound: ['D-glucose']
+              temperature_celsius: 30
+
+            GAL:
+              media.carbon_source.compound: ['D-galactose']
+              temperature_celsius: 30
+            ...
+
+        """
+        from tfbpapi.datainfo.metadata_builder import get_nested_value
+
+        # Get definitions
+        definitions = self.get_field_definitions(config_name, field_name)
+
+        if not definitions:
+            return f"Field '{field_name}' has no definitions"
+
+        lines = [
+            f"Field: {field_name}",
+            f"Levels: {len(definitions)}",
+            "",
+        ]
+
+        # Determine how many levels to show
+        levels_to_show = list(definitions.keys())
+        if max_levels:
+            levels_to_show = levels_to_show[:max_levels]
+
+        for level_name in levels_to_show:
+            definition = definitions[level_name]
+            lines.append(f"{level_name}:")
+
+            if properties:
+                # Show only specified properties
+                for prop_path in properties:
+                    value = get_nested_value(definition, prop_path)
+                    lines.append(f"  {prop_path}: {value}")
+            else:
+                # Show all top-level keys
+                if isinstance(definition, dict):
+                    for key in definition.keys():
+                        value = definition[key]
+                        # Truncate long values
+                        value_str = str(value)
+                        if len(value_str) > 80:
+                            value_str = value_str[:77] + "..."
+                        lines.append(f"  {key}: {value_str}")
+
+            lines.append("")
+
+        if max_levels and len(definitions) > max_levels:
+            remaining = len(definitions) - max_levels
+            lines.append(f"... and {remaining} more levels")
+
+        return "\n".join(lines)
+
     def summary(self) -> str:
         """Get a human-readable summary of the dataset."""
         card = self.dataset_card

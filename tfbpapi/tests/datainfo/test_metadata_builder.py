@@ -12,7 +12,6 @@ import yaml
 
 from tfbpapi.datainfo.metadata_builder import (
     MetadataBuilder,
-    extract_compound_names,
     get_nested_value,
     normalize_value,
 )
@@ -52,43 +51,87 @@ class TestGetNestedValue:
         assert get_nested_value(None, "path") is None
 
 
-class TestExtractCompoundNames:
-    """Test extract_compound_names function."""
+class TestGetNestedValueListExtraction:
+    """Test get_nested_value list extraction functionality."""
 
-    def test_list_of_dicts(self):
-        """Test extracting from list of dicts with compound field."""
-        value = [
-            {"compound": "D-glucose", "concentration_percent": 2},
-            {"compound": "D-galactose", "concentration_percent": 1},
-        ]
-        assert extract_compound_names(value) == ["D-glucose", "D-galactose"]
+    def test_extract_from_list_of_dicts(self):
+        """Test extracting property from list of dicts."""
+        data = {
+            "media": {
+                "carbon_source": [
+                    {"compound": "D-glucose", "concentration_percent": 2},
+                    {"compound": "D-galactose", "concentration_percent": 1},
+                ]
+            }
+        }
+        result = get_nested_value(data, "media.carbon_source.compound")
+        assert result == ["D-glucose", "D-galactose"]
 
-    def test_string_value(self):
-        """Test extracting from simple string."""
-        assert extract_compound_names("D-glucose") == ["D-glucose"]
+    def test_extract_concentration_from_list(self):
+        """Test extracting numeric property from list of dicts."""
+        data = {
+            "media": {
+                "carbon_source": [
+                    {"compound": "D-glucose", "concentration_percent": 2},
+                    {"compound": "D-galactose", "concentration_percent": 1},
+                ]
+            }
+        }
+        result = get_nested_value(data, "media.carbon_source.concentration_percent")
+        assert result == [2, 1]
 
-    def test_none_value(self):
-        """Test that None returns empty list."""
-        assert extract_compound_names(None) == []
-
-    def test_unspecified_value(self):
-        """Test that 'unspecified' returns empty list."""
-        assert extract_compound_names("unspecified") == []
-
-    def test_list_of_strings(self):
-        """Test extracting from list of strings."""
-        assert extract_compound_names(["glucose", "galactose"]) == [
-            "glucose",
-            "galactose",
-        ]
-
-    def test_mixed_list(self):
-        """Test extracting from mixed list."""
-        value = [
+    def test_get_list_itself(self):
+        """Test getting the list without extracting a property."""
+        data = {
+            "media": {
+                "carbon_source": [
+                    {"compound": "D-glucose"},
+                    {"compound": "D-galactose"},
+                ]
+            }
+        }
+        result = get_nested_value(data, "media.carbon_source")
+        expected = [
             {"compound": "D-glucose"},
-            "maltose",
+            {"compound": "D-galactose"},
         ]
-        assert extract_compound_names(value) == ["D-glucose", "maltose"]
+        assert result == expected
+
+    def test_extract_from_single_item_list(self):
+        """Test extracting from list with single item."""
+        data = {
+            "media": {
+                "carbon_source": [{"compound": "D-glucose"}]
+            }
+        }
+        result = get_nested_value(data, "media.carbon_source.compound")
+        assert result == ["D-glucose"]
+
+    def test_extract_missing_property_from_list(self):
+        """Test extracting non-existent property from list items."""
+        data = {
+            "media": {
+                "carbon_source": [
+                    {"compound": "D-glucose"},
+                    {"compound": "D-galactose"},
+                ]
+            }
+        }
+        result = get_nested_value(data, "media.carbon_source.missing_key")
+        assert result is None
+
+    def test_nested_list_extraction(self):
+        """Test extracting from nested structures with lists."""
+        data = {
+            "level1": {
+                "level2": [
+                    {"level3": {"value": "a"}},
+                    {"level3": {"value": "b"}},
+                ]
+            }
+        }
+        result = get_nested_value(data, "level1.level2.level3.value")
+        assert result == ["a", "b"]
 
 
 class TestNormalizeValue:

@@ -51,13 +51,33 @@ from tfbpapi.HfQueryAPI import HfQueryAPI
 
 def get_nested_value(data: dict, path: str) -> Any:
     """
-    Navigate nested dict using dot notation.
+    Navigate nested dict/list using dot notation.
 
     Handles missing intermediate keys gracefully by returning None.
+    Supports extracting properties from lists of dicts.
 
     :param data: Dictionary to navigate
-    :param path: Dot-separated path (e.g., "media.carbon_source")
+    :param path: Dot-separated path (e.g., "media.carbon_source.compound")
     :return: Value at path or None if not found
+
+    Examples:
+        # Simple nested dict
+        get_nested_value({"media": {"name": "YPD"}}, "media.name")
+        -> "YPD"
+
+        # List of dicts - extract property from each item
+        get_nested_value(
+            {"media": {"carbon_source": [{"compound": "glucose"}, {"compound": "galactose"}]}},
+            "media.carbon_source.compound"
+        )
+        -> ["glucose", "galactose"]
+
+        # List of dicts - get the list itself
+        get_nested_value(
+            {"media": {"carbon_source": [{"compound": "glucose"}]}},
+            "media.carbon_source"
+        )
+        -> [{"compound": "glucose"}]
 
     """
     if not isinstance(data, dict):
@@ -66,43 +86,29 @@ def get_nested_value(data: dict, path: str) -> Any:
     keys = path.split(".")
     current = data
 
-    for key in keys:
-        if not isinstance(current, dict) or key not in current:
+    for i, key in enumerate(keys):
+        if isinstance(current, dict):
+            if key not in current:
+                return None
+            current = current[key]
+        elif isinstance(current, list):
+            # If current is a list and we have more keys, extract property from each item
+            if i < len(keys):
+                # Extract the remaining path from each list item
+                remaining_path = ".".join(keys[i:])
+                results = []
+                for item in current:
+                    if isinstance(item, dict):
+                        val = get_nested_value(item, remaining_path)
+                        if val is not None:
+                            results.append(val)
+                return results if results else None
+        else:
             return None
-        current = current[key]
 
     return current
 
 
-def extract_compound_names(value: Any) -> list[str]:
-    """
-    Extract compound names from various representations.
-
-    Handles:
-    - List of dicts: [{"compound": "D-glucose", ...}] -> ["D-glucose"]
-    - String: "D-glucose" -> ["D-glucose"]
-    - None or "unspecified" -> []
-
-    :param value: Value to extract from
-    :return: List of compound names
-
-    """
-    if value is None or value == "unspecified":
-        return []
-
-    if isinstance(value, str):
-        return [value]
-
-    if isinstance(value, list):
-        compounds = []
-        for item in value:
-            if isinstance(item, dict) and "compound" in item:
-                compounds.append(item["compound"])
-            elif isinstance(item, str):
-                compounds.append(item)
-        return compounds
-
-    return []
 
 
 def normalize_value(actual_value: Any, aliases: dict[str, list[Any]] | None) -> str:
@@ -381,11 +387,8 @@ class MetadataBuilder:
             if value is None:
                 continue
 
-            # Extract compound names if needed
-            if isinstance(value, list) and value and isinstance(value[0], dict):
-                actual_values = extract_compound_names(value)
-            else:
-                actual_values = [value] if not isinstance(value, list) else value
+            # Ensure value is a list for consistent processing
+            actual_values = [value] if not isinstance(value, list) else value
 
             # Normalize using aliases (if configured)
             aliases = self.factor_aliases.get(prop_name)
@@ -442,13 +445,8 @@ class MetadataBuilder:
                     if value is None:
                         continue
 
-                    # Extract compound names if needed
-                    if isinstance(value, list) and value and isinstance(value[0], dict):
-                        actual_values = extract_compound_names(value)
-                    else:
-                        actual_values = (
-                            [value] if not isinstance(value, list) else value
-                        )
+                    # Ensure value is a list for consistent processing
+                    actual_values = [value] if not isinstance(value, list) else value
 
                     # Normalize using aliases (if configured)
                     aliases = self.factor_aliases.get(prop_name)
@@ -471,39 +469,106 @@ class MetadataBuilder:
         Get sample-level metadata (Mode 1).
 
         Returns one row per sample_id with metadata columns. Includes ALL samples (no
-        filtering).
+        filtering). Selects base metadata_fields columns plus adds extracted columns
+        from field-level property mappings.
 
         :param repo_id: Repository ID
         :param config_name: Configuration name
-        :param metadata: Extracted metadata dict
+        :param metadata: Extracted metadata dict with field_values
         :param token: Optional HuggingFace token
-        :return: DataFrame with sample metadata
+        :return: DataFrame with sample metadata including extracted columns
 
         """
-        # Initialize query API
-        api = HfQueryAPI(repo_id, token=token)
-
-        # Query for all samples (no WHERE clause filtering)
-        sql = f"""
-            SELECT DISTINCT *
-            FROM {config_name}
-        """
-
         try:
+            # Load DataCard to get metadata_fields
+            card = DataCard(repo_id, token=token)
+            config = card.get_config(config_name)
+
+            # Initialize query API
+            api = HfQueryAPI(repo_id, token=token)
+
+            # Determine which columns to select
+            if config and hasattr(config, 'metadata_fields') and config.metadata_fields:
+                # Select only metadata fields
+                columns = ", ".join(config.metadata_fields)
+                # Add sample_id if not already in metadata_fields
+                if "sample_id" not in config.metadata_fields:
+                    columns = f"sample_id, {columns}"
+                sql = f"""
+                    SELECT DISTINCT {columns}
+                    FROM {config_name}
+                """
+            else:
+                # No metadata_fields specified, select all
+                sql = f"""
+                    SELECT DISTINCT *
+                    FROM {config_name}
+                """
+
             df = api.query(sql, config_name)
 
             # For sample-level, we want one row per sample_id
             if "sample_id" in df.columns:
                 df_samples = df.groupby("sample_id").first().reset_index()
-                return df_samples
             else:
                 # No sample_id column, return distinct rows
-                return df
+                df_samples = df
+
+            # Add extracted columns from field-level metadata
+            if "field_values" in metadata:
+                df_samples = self._add_extracted_columns(df_samples, metadata["field_values"])
+
+            return df_samples
 
         except Exception as e:
             return pd.DataFrame(
                 {"error": [str(e)], "note": ["Failed to retrieve sample metadata"]}
             )
+
+    def _add_extracted_columns(
+        self,
+        df: pd.DataFrame,
+        field_values: dict[str, dict[str, Any]]
+    ) -> pd.DataFrame:
+        """
+        Add columns extracted from field-level property mappings.
+
+        For each field that has property mappings, creates new columns by looking up
+        the field value in field_values and extracting the mapped properties.
+
+        :param df: DataFrame with base metadata
+        :param field_values: Dict mapping field values to their extracted properties
+        :return: DataFrame with additional extracted columns
+
+        """
+        # Group properties by source field
+        # field_values is like: {"YPD": {"growth_media": ["YPD"], "carbon_source": ["glucose"]}}
+
+        # We need to determine which field each row's value comes from
+        # For harbison_2004, the field is "condition"
+
+        # Find fields that have definitions (these are the ones we can map)
+        for field_value, properties in field_values.items():
+            # Each property becomes a new column
+            for prop_name, prop_values in properties.items():
+                # Initialize column if it doesn't exist
+                if prop_name not in df.columns:
+                    df[prop_name] = None
+
+                # For each row where the field matches this field_value, set the property
+                # We need to find which column contains field_value
+                for col in df.columns:
+                    if col in [prop_name, "sample_id"]:
+                        continue
+                    # Check if this column contains field_value
+                    mask = df[col] == field_value
+                    if mask.any():
+                        # Set the property value for matching rows
+                        # Take first value from list (normalized values are lists)
+                        value = prop_values[0] if prop_values else None
+                        df.loc[mask, prop_name] = value
+
+        return df
 
     def _get_full_data(
         self,
@@ -516,13 +581,16 @@ class MetadataBuilder:
         Get full data with all measurements (Mode 2).
 
         Returns many rows per sample_id (one per measured feature/target). Includes ALL
-        data (no filtering).
+        data (no filtering) and ALL columns (both metadata and measurements).
+
+        Unlike samples mode which respects metadata_fields, this mode returns the complete
+        dataset including quantitative measurements.
 
         :param repo_id: Repository ID
         :param config_name: Configuration name
         :param metadata: Extracted metadata dict
         :param token: Optional HuggingFace token
-        :return: DataFrame with full data
+        :return: DataFrame with full data (all columns)
 
         """
         # Initialize query API
