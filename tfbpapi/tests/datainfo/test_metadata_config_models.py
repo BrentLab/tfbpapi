@@ -1,0 +1,386 @@
+"""
+Tests for metadata configuration Pydantic models.
+
+Tests validation, error messages, and config loading for MetadataBuilder.
+
+"""
+
+from pathlib import Path
+
+import pytest
+import yaml
+from pydantic import ValidationError
+
+from tfbpapi.datainfo.metadata_config_models import (
+    MetadataConfig,
+    PropertyMapping,
+    RepositoryConfig,
+)
+
+
+class TestPropertyMapping:
+    """Tests for PropertyMapping model."""
+
+    def test_valid_field_level_mapping(self):
+        """Test valid field-level property mapping."""
+        mapping = PropertyMapping(field="condition", path="media.carbon_source")
+        assert mapping.field == "condition"
+        assert mapping.path == "media.carbon_source"
+
+    def test_valid_repo_level_mapping(self):
+        """Test valid repo-level property mapping (no field)."""
+        mapping = PropertyMapping(path="temperature_celsius")
+        assert mapping.field is None
+        assert mapping.path == "temperature_celsius"
+
+    def test_invalid_empty_path(self):
+        """Test that empty path is rejected."""
+        with pytest.raises(ValidationError) as exc_info:
+            PropertyMapping(path="")
+        # Pydantic catches this with min_length=1 before our custom validator
+        assert "at least 1 character" in str(exc_info.value)
+
+    def test_invalid_whitespace_path(self):
+        """Test that whitespace-only path is rejected."""
+        with pytest.raises(ValidationError) as exc_info:
+            PropertyMapping(path="   ")
+        assert "path cannot be empty" in str(exc_info.value)
+
+    def test_invalid_empty_field(self):
+        """Test that empty field string is rejected."""
+        with pytest.raises(ValidationError) as exc_info:
+            PropertyMapping(field="", path="media.carbon_source")
+        assert "field cannot be empty" in str(exc_info.value)
+
+    def test_path_whitespace_stripped(self):
+        """Test that path whitespace is stripped."""
+        mapping = PropertyMapping(path="  media.carbon_source  ")
+        assert mapping.path == "media.carbon_source"
+
+
+class TestRepositoryConfig:
+    """Tests for RepositoryConfig model."""
+
+    def test_valid_repo_config_with_datasets(self):
+        """Test valid repository config with dataset section."""
+        config_data = {
+            "temperature_celsius": {"path": "temperature_celsius"},
+            "dataset": {
+                "dataset1": {
+                    "carbon_source": {
+                        "field": "condition",
+                        "path": "media.carbon_source",
+                    }
+                }
+            },
+        }
+        config = RepositoryConfig.model_validate(config_data)
+        assert config.dataset is not None
+        assert "dataset1" in config.dataset
+
+    def test_valid_repo_config_no_datasets(self):
+        """Test valid repository config without dataset section."""
+        config_data = {"temperature_celsius": {"path": "temperature_celsius"}}
+        config = RepositoryConfig.model_validate(config_data)
+        assert config.dataset is None
+
+    def test_invalid_dataset_not_dict(self):
+        """Test that dataset section must be a dict."""
+        config_data = {"dataset": "not a dict"}
+        with pytest.raises(ValidationError) as exc_info:
+            RepositoryConfig.model_validate(config_data)
+        assert "'dataset' key must contain a dict" in str(exc_info.value)
+
+    def test_invalid_property_missing_path(self):
+        """Test that properties must have 'path' field."""
+        config_data = {
+            "dataset": {"dataset1": {"carbon_source": {"field": "condition"}}}
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            RepositoryConfig.model_validate(config_data)
+        # Pydantic's Field required error comes before our custom validation
+        assert "Field required" in str(
+            exc_info.value
+        ) or "missing required 'path' field" in str(exc_info.value)
+
+    def test_invalid_repo_wide_property_missing_path(self):
+        """Test that repo-wide properties must have 'path' field."""
+        config_data = {"temperature_celsius": {"field": "something"}}
+        with pytest.raises(ValidationError) as exc_info:
+            RepositoryConfig.model_validate(config_data)
+        # Pydantic's Field required error comes before our custom validation
+        assert "Field required" in str(
+            exc_info.value
+        ) or "missing required 'path' field" in str(exc_info.value)
+
+
+class TestMetadataConfig:
+    """Tests for MetadataConfig model."""
+
+    def test_valid_config_with_aliases(self, tmp_path):
+        """Test valid config with factor aliases."""
+        config_data = {
+            "factor_aliases": {
+                "carbon_source": {
+                    "glucose": ["D-glucose", "dextrose"],
+                    "galactose": ["D-galactose", "Galactose"],
+                }
+            },
+            "BrentLab/test": {
+                "dataset": {"test": {"carbon_source": {"path": "media.carbon_source"}}}
+            },
+        }
+
+        config_path = tmp_path / "config.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        config = MetadataConfig.from_yaml(config_path)
+        assert "carbon_source" in config.factor_aliases
+        assert "glucose" in config.factor_aliases["carbon_source"]
+        assert config.factor_aliases["carbon_source"]["glucose"] == [
+            "D-glucose",
+            "dextrose",
+        ]
+
+    def test_valid_config_without_aliases(self, tmp_path):
+        """Test that factor_aliases is optional."""
+        config_data = {
+            "BrentLab/test": {
+                "dataset": {"test": {"carbon_source": {"path": "media.carbon_source"}}}
+            }
+        }
+
+        config_path = tmp_path / "config.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        config = MetadataConfig.from_yaml(config_path)
+        assert config.factor_aliases == {}
+
+    def test_valid_config_empty_aliases(self, tmp_path):
+        """Test that empty factor_aliases dict is allowed."""
+        config_data = {
+            "factor_aliases": {},
+            "BrentLab/test": {
+                "dataset": {"test": {"carbon_source": {"path": "media.carbon_source"}}}
+            },
+        }
+
+        config_path = tmp_path / "config.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        config = MetadataConfig.from_yaml(config_path)
+        assert config.factor_aliases == {}
+
+    def test_invalid_alias_not_dict(self):
+        """Test that property aliases must be a dict."""
+        config_data = {
+            "factor_aliases": {
+                "carbon_source": ["D-glucose"]  # Should be dict, not list
+            },
+            "BrentLab/test": {"dataset": {"test": {"prop": {"path": "path"}}}},
+        }
+
+        with pytest.raises(ValidationError) as exc_info:
+            MetadataConfig.model_validate(config_data)
+        # Pydantic catches this with type validation before our custom validator
+        assert "valid dictionary" in str(exc_info.value) or "must be a dict" in str(
+            exc_info.value
+        )
+
+    def test_invalid_alias_value_not_list(self):
+        """Test that alias values must be lists."""
+        config_data = {
+            "factor_aliases": {
+                "carbon_source": {"glucose": "D-glucose"}  # Should be list, not string
+            },
+            "BrentLab/test": {"dataset": {"test": {"prop": {"path": "path"}}}},
+        }
+
+        with pytest.raises(ValidationError) as exc_info:
+            MetadataConfig.model_validate(config_data)
+        # Pydantic catches this with type validation before our custom validator
+        assert "valid list" in str(exc_info.value) or "must map to a list" in str(
+            exc_info.value
+        )
+
+    def test_invalid_alias_empty_list(self):
+        """Test that alias value lists cannot be empty."""
+        config_data = {
+            "factor_aliases": {"carbon_source": {"glucose": []}},
+            "BrentLab/test": {"dataset": {"test": {"prop": {"path": "path"}}}},
+        }
+
+        with pytest.raises(ValidationError) as exc_info:
+            MetadataConfig.model_validate(config_data)
+        assert "cannot have empty value list" in str(exc_info.value)
+
+    def test_aliases_allow_numeric_values(self):
+        """Test that aliases can map to numeric values."""
+        config_data = {
+            "factor_aliases": {
+                "temperature_celsius": {
+                    "thirty": [30, "30"],  # Integer and string
+                    "thirty_seven": [37, 37.0],  # Integer and float
+                }
+            },
+            "BrentLab/test": {
+                "dataset": {"test": {"temperature": {"path": "temperature_celsius"}}}
+            },
+        }
+
+        config = MetadataConfig.model_validate(config_data)
+        assert config.factor_aliases["temperature_celsius"]["thirty"] == [30, "30"]
+        assert config.factor_aliases["temperature_celsius"]["thirty_seven"] == [
+            37,
+            37.0,
+        ]
+
+    def test_invalid_no_repositories(self):
+        """Test that at least one repository is required."""
+        config_data = {"factor_aliases": {"carbon_source": {"glucose": ["D-glucose"]}}}
+        with pytest.raises(ValidationError) as exc_info:
+            MetadataConfig.model_validate(config_data)
+        assert "at least one repository configuration" in str(exc_info.value)
+
+    def test_get_repository_config(self, tmp_path):
+        """Test get_repository_config method."""
+        config_data = {
+            "factor_aliases": {"carbon_source": {"glucose": ["D-glucose"]}},
+            "BrentLab/harbison_2004": {
+                "dataset": {
+                    "harbison_2004": {
+                        "carbon_source": {
+                            "field": "condition",
+                            "path": "media.carbon_source",
+                        }
+                    }
+                }
+            },
+        }
+
+        config_path = tmp_path / "config.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        config = MetadataConfig.from_yaml(config_path)
+        repo_config = config.get_repository_config("BrentLab/harbison_2004")
+        assert repo_config is not None
+        assert isinstance(repo_config, RepositoryConfig)
+        assert repo_config.dataset is not None
+        assert "harbison_2004" in repo_config.dataset
+
+        # Non-existent repo
+        assert config.get_repository_config("BrentLab/nonexistent") is None
+
+    def test_get_property_mappings(self, tmp_path):
+        """Test get_property_mappings method."""
+        config_data = {
+            "factor_aliases": {
+                "carbon_source": {"glucose": ["D-glucose"]},
+                "temperature": {"thirty": [30]},
+            },
+            "BrentLab/kemmeren_2014": {
+                "temperature": {"path": "temperature_celsius"},  # Repo-wide
+                "dataset": {
+                    "kemmeren_2014": {"carbon_source": {"path": "media.carbon_source"}}
+                },
+            },
+        }
+
+        config_path = tmp_path / "config.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        config = MetadataConfig.from_yaml(config_path)
+        mappings = config.get_property_mappings(
+            "BrentLab/kemmeren_2014", "kemmeren_2014"
+        )
+
+        # Should have both repo-wide and dataset-specific
+        assert "temperature" in mappings
+        assert "carbon_source" in mappings
+        # Mappings are PropertyMapping objects, not dicts
+        assert isinstance(mappings["temperature"], PropertyMapping)
+        assert mappings["temperature"].path == "temperature_celsius"
+        assert mappings["carbon_source"].path == "media.carbon_source"
+
+    def test_dataset_specific_overrides_repo_wide(self, tmp_path):
+        """Test that dataset-specific mappings override repo-wide."""
+        config_data = {
+            "BrentLab/test": {
+                "carbon_source": {"path": "repo.level.path"},  # Repo-wide
+                "dataset": {
+                    "test_dataset": {
+                        "carbon_source": {"path": "dataset.level.path"}  # Override
+                    }
+                },
+            },
+        }
+
+        config_path = tmp_path / "config.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        config = MetadataConfig.from_yaml(config_path)
+        mappings = config.get_property_mappings("BrentLab/test", "test_dataset")
+
+        # Dataset-specific should win
+        assert mappings["carbon_source"].path == "dataset.level.path"
+
+    def test_file_not_found(self):
+        """Test that FileNotFoundError is raised for missing file."""
+        with pytest.raises(FileNotFoundError):
+            MetadataConfig.from_yaml("/nonexistent/path/config.yaml")
+
+    def test_invalid_yaml_structure(self, tmp_path):
+        """Test that non-dict YAML is rejected."""
+        config_path = tmp_path / "config.yaml"
+        with open(config_path, "w") as f:
+            f.write("- not\\n- a\\n- dict\\n")
+
+        with pytest.raises(ValueError) as exc_info:
+            MetadataConfig.from_yaml(config_path)
+        assert "Configuration must be a YAML dict" in str(exc_info.value)
+
+    def test_nested_alias_property_names(self, tmp_path):
+        """Test that alias property names can use dot notation."""
+        config_data = {
+            "factor_aliases": {
+                "carbon_source": {"glucose": ["D-glucose"]},
+                "carbon_source.concentration_percent": {"two_percent": [2]},
+                "carbon_source.specifications": {"no_aa": ["without_amino_acids"]},
+            },
+            "BrentLab/test": {
+                "dataset": {
+                    "test": {
+                        "carbon_source": {
+                            "field": "condition",
+                            "path": "media.carbon_source",
+                        }
+                    }
+                }
+            },
+        }
+
+        config_path = tmp_path / "config.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config_data, f)
+
+        config = MetadataConfig.from_yaml(config_path)
+
+        # All alias properties should be preserved
+        assert "carbon_source" in config.factor_aliases
+        assert "carbon_source.concentration_percent" in config.factor_aliases
+        assert "carbon_source.specifications" in config.factor_aliases
+
+        # Values should be correct
+        assert config.factor_aliases["carbon_source"]["glucose"] == ["D-glucose"]
+        assert config.factor_aliases["carbon_source.concentration_percent"][
+            "two_percent"
+        ] == [2]
+        assert config.factor_aliases["carbon_source.specifications"]["no_aa"] == [
+            "without_amino_acids"
+        ]
