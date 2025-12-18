@@ -8,7 +8,7 @@ These tests validate the minimal, flexible models that parse HuggingFace dataset
 import pytest
 from pydantic import ValidationError
 
-from tfbpapi.datainfo.models import (
+from tfbpapi.models import (
     DataFileInfo,
     DatasetCard,
     DatasetConfig,

@@ -149,20 +149,23 @@ extra_css:
 nav:
   - Home: index.md
   - Tutorials:
-    - "DataCard: Exploring Datasets": tutorials/datacard_tutorial.ipynb
-    - "Cache Management": tutorials/cache_manager_tutorial.ipynb
-    - "Querying the Datasets": tutorials/hfqueryapi_tutorial.ipynb
-    - "Rank Response Analysis": tutorials/rank_response_tutorial.ipynb
+    - "Getting Started":
+      - "DataCard: Exploring Datasets": tutorials/datacard_tutorial.ipynb
+      - "Cache Management": tutorials/cache_manager_tutorial.ipynb
+    - "Querying Data":
+      - "VirtualDB: Unified Cross-Dataset Queries": tutorials/virtual_db_tutorial.ipynb
+  - Concepts:
+    - "Virtual Database Design": virtual_database_concepts.md
   - API Reference:
-    - Core Components:
-      - HfQueryAPI: HfQueryAPI.md
-      - HfRankResponse: HfRankResponse.md
-      - IncrementalAnalysisDB: IncrementalAnalysisDB.md
-    - Cache Management:
-      - HfCacheManager: HfCacheManager.md
-    - Dataset Information:
-      - DataInfo Package: datainfo.md
+    - Core:
+      - VirtualDB: virtual_db.md
+      - DataCard: datacard.md
+      - HfCacheManager: hf_cache_manager.md
+    - Models and Configuration:
+      - Pydantic Models: models.md
+      - Fetchers: fetchers.md
     - Error Handling:
       - Custom Exceptions: errors.md
   - HuggingFace Configuration:
     - HuggingFace Dataset Card Format: huggingface_datacard.md
+    - BrentLab Collection: brentlab_yeastresources_collection.md

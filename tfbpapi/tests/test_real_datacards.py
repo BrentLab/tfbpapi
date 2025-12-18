@@ -11,7 +11,7 @@ import warnings
 import pytest
 import yaml
 
-from tfbpapi.datainfo.models import DatasetCard
+from tfbpapi.models import DatasetCard
 
 # Real datacard YAML strings from the collection
 BARKAI_COMPENDIUM = """

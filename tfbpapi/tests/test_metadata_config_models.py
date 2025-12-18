@@ -11,7 +11,7 @@ import pytest
 import yaml
 from pydantic import ValidationError
 
-from tfbpapi.datainfo.metadata_config_models import (
+from tfbpapi.models import (
     MetadataConfig,
     PropertyMapping,
     RepositoryConfig,
@@ -37,8 +37,7 @@ class TestPropertyMapping:
         """Test that empty path is rejected."""
         with pytest.raises(ValidationError) as exc_info:
             PropertyMapping(path="")
-        # Pydantic catches this with min_length=1 before our custom validator
-        assert "at least 1 character" in str(exc_info.value)
+        assert "path cannot be empty" in str(exc_info.value)
 
     def test_invalid_whitespace_path(self):
         """Test that whitespace-only path is rejected."""
@@ -56,6 +55,18 @@ class TestPropertyMapping:
         """Test that path whitespace is stripped."""
         mapping = PropertyMapping(path="  media.carbon_source  ")
         assert mapping.path == "media.carbon_source"
+
+    def test_valid_field_only_mapping(self):
+        """Test valid field-only mapping (column alias)."""
+        mapping = PropertyMapping(field="condition")
+        assert mapping.field == "condition"
+        assert mapping.path is None
+
+    def test_invalid_neither_field_nor_path(self):
+        """Test that at least one of field or path is required."""
+        with pytest.raises(ValidationError) as exc_info:
+            PropertyMapping()
+        assert "At least one of 'field' or 'path' must be specified" in str(exc_info.value)
 
 
 class TestRepositoryConfig:
@@ -91,27 +102,24 @@ class TestRepositoryConfig:
             RepositoryConfig.model_validate(config_data)
         assert "'dataset' key must contain a dict" in str(exc_info.value)
 
-    def test_invalid_property_missing_path(self):
-        """Test that properties must have 'path' field."""
+    def test_valid_field_only_property(self):
+        """Test that field-only properties are valid (column aliases)."""
         config_data = {
             "dataset": {"dataset1": {"carbon_source": {"field": "condition"}}}
         }
-        with pytest.raises(ValidationError) as exc_info:
-            RepositoryConfig.model_validate(config_data)
-        # Pydantic's Field required error comes before our custom validation
-        assert "Field required" in str(
-            exc_info.value
-        ) or "missing required 'path' field" in str(exc_info.value)
+        config = RepositoryConfig.model_validate(config_data)
+        assert config.dataset is not None
+        assert "dataset1" in config.dataset
+        assert config.dataset["dataset1"]["carbon_source"].field == "condition"
+        assert config.dataset["dataset1"]["carbon_source"].path is None
 
-    def test_invalid_repo_wide_property_missing_path(self):
-        """Test that repo-wide properties must have 'path' field."""
-        config_data = {"temperature_celsius": {"field": "something"}}
-        with pytest.raises(ValidationError) as exc_info:
-            RepositoryConfig.model_validate(config_data)
-        # Pydantic's Field required error comes before our custom validation
-        assert "Field required" in str(
-            exc_info.value
-        ) or "missing required 'path' field" in str(exc_info.value)
+    def test_valid_repo_wide_field_only_property(self):
+        """Test that repo-wide field-only properties are valid."""
+        config_data = {"environmental_condition": {"field": "condition"}}
+        config = RepositoryConfig.model_validate(config_data)
+        assert "environmental_condition" in config.properties
+        assert config.properties["environmental_condition"].field == "condition"
+        assert config.properties["environmental_condition"].path is None
 
 
 class TestMetadataConfig:
@@ -126,8 +134,10 @@ class TestMetadataConfig:
                     "galactose": ["D-galactose", "Galactose"],
                 }
             },
-            "BrentLab/test": {
-                "dataset": {"test": {"carbon_source": {"path": "media.carbon_source"}}}
+            "repositories": {
+                "BrentLab/test": {
+                    "dataset": {"test": {"carbon_source": {"path": "media.carbon_source"}}}
+                }
             },
         }
 
@@ -146,8 +156,10 @@ class TestMetadataConfig:
     def test_valid_config_without_aliases(self, tmp_path):
         """Test that factor_aliases is optional."""
         config_data = {
-            "BrentLab/test": {
-                "dataset": {"test": {"carbon_source": {"path": "media.carbon_source"}}}
+            "repositories": {
+                "BrentLab/test": {
+                    "dataset": {"test": {"carbon_source": {"path": "media.carbon_source"}}}
+                }
             }
         }
 
@@ -162,8 +174,10 @@ class TestMetadataConfig:
         """Test that empty factor_aliases dict is allowed."""
         config_data = {
             "factor_aliases": {},
-            "BrentLab/test": {
-                "dataset": {"test": {"carbon_source": {"path": "media.carbon_source"}}}
+            "repositories": {
+                "BrentLab/test": {
+                    "dataset": {"test": {"carbon_source": {"path": "media.carbon_source"}}}
+                }
             },
         }
 
@@ -180,7 +194,9 @@ class TestMetadataConfig:
             "factor_aliases": {
                 "carbon_source": ["D-glucose"]  # Should be dict, not list
             },
-            "BrentLab/test": {"dataset": {"test": {"prop": {"path": "path"}}}},
+            "repositories": {
+                "BrentLab/test": {"dataset": {"test": {"prop": {"path": "path"}}}}
+            },
         }
 
         with pytest.raises(ValidationError) as exc_info:
@@ -196,7 +212,9 @@ class TestMetadataConfig:
             "factor_aliases": {
                 "carbon_source": {"glucose": "D-glucose"}  # Should be list, not string
             },
-            "BrentLab/test": {"dataset": {"test": {"prop": {"path": "path"}}}},
+            "repositories": {
+                "BrentLab/test": {"dataset": {"test": {"prop": {"path": "path"}}}}
+            },
         }
 
         with pytest.raises(ValidationError) as exc_info:
@@ -210,7 +228,9 @@ class TestMetadataConfig:
         """Test that alias value lists cannot be empty."""
         config_data = {
             "factor_aliases": {"carbon_source": {"glucose": []}},
-            "BrentLab/test": {"dataset": {"test": {"prop": {"path": "path"}}}},
+            "repositories": {
+                "BrentLab/test": {"dataset": {"test": {"prop": {"path": "path"}}}}
+            },
         }
 
         with pytest.raises(ValidationError) as exc_info:
@@ -226,8 +246,10 @@ class TestMetadataConfig:
                     "thirty_seven": [37, 37.0],  # Integer and float
                 }
             },
-            "BrentLab/test": {
-                "dataset": {"test": {"temperature": {"path": "temperature_celsius"}}}
+            "repositories": {
+                "BrentLab/test": {
+                    "dataset": {"test": {"temperature": {"path": "temperature_celsius"}}}
+                }
             },
         }
 
@@ -243,18 +265,20 @@ class TestMetadataConfig:
         config_data = {"factor_aliases": {"carbon_source": {"glucose": ["D-glucose"]}}}
         with pytest.raises(ValidationError) as exc_info:
             MetadataConfig.model_validate(config_data)
-        assert "at least one repository configuration" in str(exc_info.value)
+        assert "at least one repository" in str(exc_info.value)
 
     def test_get_repository_config(self, tmp_path):
         """Test get_repository_config method."""
         config_data = {
             "factor_aliases": {"carbon_source": {"glucose": ["D-glucose"]}},
-            "BrentLab/harbison_2004": {
-                "dataset": {
-                    "harbison_2004": {
-                        "carbon_source": {
-                            "field": "condition",
-                            "path": "media.carbon_source",
+            "repositories": {
+                "BrentLab/harbison_2004": {
+                    "dataset": {
+                        "harbison_2004": {
+                            "carbon_source": {
+                                "field": "condition",
+                                "path": "media.carbon_source",
+                            }
                         }
                     }
                 }
@@ -282,11 +306,13 @@ class TestMetadataConfig:
                 "carbon_source": {"glucose": ["D-glucose"]},
                 "temperature": {"thirty": [30]},
             },
-            "BrentLab/kemmeren_2014": {
-                "temperature": {"path": "temperature_celsius"},  # Repo-wide
-                "dataset": {
-                    "kemmeren_2014": {"carbon_source": {"path": "media.carbon_source"}}
-                },
+            "repositories": {
+                "BrentLab/kemmeren_2014": {
+                    "temperature": {"path": "temperature_celsius"},  # Repo-wide
+                    "dataset": {
+                        "kemmeren_2014": {"carbon_source": {"path": "media.carbon_source"}}
+                    },
+                }
             },
         }
 
@@ -310,13 +336,15 @@ class TestMetadataConfig:
     def test_dataset_specific_overrides_repo_wide(self, tmp_path):
         """Test that dataset-specific mappings override repo-wide."""
         config_data = {
-            "BrentLab/test": {
-                "carbon_source": {"path": "repo.level.path"},  # Repo-wide
-                "dataset": {
-                    "test_dataset": {
-                        "carbon_source": {"path": "dataset.level.path"}  # Override
-                    }
-                },
+            "repositories": {
+                "BrentLab/test": {
+                    "carbon_source": {"path": "repo.level.path"},  # Repo-wide
+                    "dataset": {
+                        "test_dataset": {
+                            "carbon_source": {"path": "dataset.level.path"}  # Override
+                        }
+                    },
+                }
             },
         }
 
@@ -353,12 +381,14 @@ class TestMetadataConfig:
                 "carbon_source.concentration_percent": {"two_percent": [2]},
                 "carbon_source.specifications": {"no_aa": ["without_amino_acids"]},
             },
-            "BrentLab/test": {
-                "dataset": {
-                    "test": {
-                        "carbon_source": {
-                            "field": "condition",
-                            "path": "media.carbon_source",
+            "repositories": {
+                "BrentLab/test": {
+                    "dataset": {
+                        "test": {
+                            "carbon_source": {
+                                "field": "condition",
+                                "path": "media.carbon_source",
+                            }
                         }
                     }
                 }

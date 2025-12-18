@@ -7,8 +7,8 @@ from unittest.mock import Mock, patch
 import duckdb
 import pytest
 
-from tfbpapi.datainfo.models import DatasetType
-from tfbpapi.HfCacheManager import HfCacheManager
+from tfbpapi.hf_cache_manager import HfCacheManager
+from tfbpapi.models import DatasetType
 
 
 class TestHfCacheManagerInit:
@@ -20,7 +20,7 @@ class TestHfCacheManagerInit:
         repo_id = "test/repo"
 
         with patch(
-            "tfbpapi.HfCacheManager.DataCard.__init__", return_value=None
+            "tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None
         ) as mock_datacard_init:
             cache_manager = HfCacheManager(repo_id, conn)
             # Manually set the properties that would normally
@@ -43,7 +43,7 @@ class TestHfCacheManagerInit:
         logger = logging.getLogger("test_logger")
 
         with patch(
-            "tfbpapi.HfCacheManager.DataCard.__init__", return_value=None
+            "tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None
         ) as mock_datacard_init:
             cache_manager = HfCacheManager(repo_id, conn, token=token, logger=logger)
             # Manually set the properties that would
@@ -69,7 +69,7 @@ class TestHfCacheManagerDatacard:
         token = "test_token"
 
         with patch(
-            "tfbpapi.HfCacheManager.DataCard.__init__", return_value=None
+            "tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None
         ) as mock_datacard_init:
             cache_manager = HfCacheManager(repo_id, conn, token=token)
 
@@ -78,13 +78,12 @@ class TestHfCacheManagerDatacard:
 
             # Should have DataCard methods available (they exist on the class)
             assert hasattr(cache_manager, "get_config")
-            assert hasattr(cache_manager, "get_configs_by_type")
 
 
 class TestHfCacheManagerDuckDBOperations:
     """Test DuckDB operations that are still part of HfCacheManager."""
 
-    @patch("tfbpapi.HfCacheManager.DataCard.__init__", return_value=None)
+    @patch("tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None)
     def test_create_duckdb_table_from_files_single_file(
         self, mock_datacard_init, tmpdir
     ):
@@ -106,7 +105,7 @@ class TestHfCacheManagerDuckDBOperations:
         assert "CREATE OR REPLACE VIEW test_table" in sql_call
         assert str(parquet_file) in sql_call
 
-    @patch("tfbpapi.HfCacheManager.DataCard.__init__", return_value=None)
+    @patch("tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None)
     def test_create_duckdb_table_from_files_multiple_files(
         self, mock_datacard_init, tmpdir
     ):
@@ -137,7 +136,7 @@ class TestHfCacheManagerCacheManagement:
 
     def setup_method(self):
         """Set up test fixtures."""
-        with patch("tfbpapi.HfCacheManager.DataCard.__init__", return_value=None):
+        with patch("tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None):
             self.conn = duckdb.connect(":memory:")
             self.repo_id = "test/repo"
             self.cache_manager = HfCacheManager(self.repo_id, self.conn)
@@ -160,7 +159,7 @@ class TestHfCacheManagerCacheManagement:
         assert self.cache_manager._format_bytes(1024**3) == "1.0GB"
         assert self.cache_manager._format_bytes(1024**4) == "1.0TB"
 
-    @patch("tfbpapi.HfCacheManager.scan_cache_dir")
+    @patch("tfbpapi.hf_cache_manager.scan_cache_dir")
     def test_clean_cache_by_age(self, mock_scan_cache_dir):
         """Test age-based cache cleaning."""
         # Setup mock cache info
@@ -184,7 +183,7 @@ class TestHfCacheManagerCacheManagement:
         assert result == mock_delete_strategy
         mock_cache_info.delete_revisions.assert_called_once_with("abc123")
 
-    @patch("tfbpapi.HfCacheManager.scan_cache_dir")
+    @patch("tfbpapi.hf_cache_manager.scan_cache_dir")
     def test_clean_cache_by_age_no_old_revisions(self, mock_scan_cache_dir):
         """Test age-based cleaning when no old revisions exist."""
         mock_cache_info = Mock()
@@ -208,7 +207,7 @@ class TestHfCacheManagerCacheManagement:
         assert result == mock_delete_strategy
         mock_cache_info.delete_revisions.assert_called_once_with()
 
-    @patch("tfbpapi.HfCacheManager.scan_cache_dir")
+    @patch("tfbpapi.hf_cache_manager.scan_cache_dir")
     def test_clean_cache_by_size(self, mock_scan_cache_dir):
         """Test size-based cache cleaning."""
         # Setup mock cache info
@@ -238,7 +237,7 @@ class TestHfCacheManagerCacheManagement:
         assert result == mock_delete_strategy
         mock_cache_info.delete_revisions.assert_called_once()
 
-    @patch("tfbpapi.HfCacheManager.scan_cache_dir")
+    @patch("tfbpapi.hf_cache_manager.scan_cache_dir")
     def test_clean_cache_by_size_already_under_target(self, mock_scan_cache_dir):
         """Test size-based cleaning when already under target."""
         mock_cache_info = Mock()
@@ -258,7 +257,7 @@ class TestHfCacheManagerCacheManagement:
 
         assert result == mock_delete_strategy
 
-    @patch("tfbpapi.HfCacheManager.scan_cache_dir")
+    @patch("tfbpapi.hf_cache_manager.scan_cache_dir")
     def test_clean_unused_revisions(self, mock_scan_cache_dir):
         """Test cleaning unused revisions."""
         # Setup mock with multiple revisions
@@ -292,7 +291,7 @@ class TestHfCacheManagerCacheManagement:
         # Should delete oldest revision (ghi789)
         mock_cache_info.delete_revisions.assert_called_once_with("ghi789")
 
-    @patch("tfbpapi.HfCacheManager.scan_cache_dir")
+    @patch("tfbpapi.hf_cache_manager.scan_cache_dir")
     def test_auto_clean_cache(self, mock_scan_cache_dir):
         """Test automated cache cleaning."""
         mock_cache_info = Mock()
@@ -336,7 +335,7 @@ class TestHfCacheManagerErrorHandling:
 
     def setup_method(self):
         """Set up test fixtures."""
-        with patch("tfbpapi.HfCacheManager.DataCard.__init__", return_value=None):
+        with patch("tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None):
             self.conn = duckdb.connect(":memory:")
             self.repo_id = "test/repo"
             self.cache_manager = HfCacheManager(self.repo_id, self.conn)
@@ -346,7 +345,7 @@ class TestHfCacheManagerErrorHandling:
         with pytest.raises(ValueError):
             self.cache_manager._parse_size_string("invalid")
 
-    @patch("tfbpapi.HfCacheManager.scan_cache_dir")
+    @patch("tfbpapi.hf_cache_manager.scan_cache_dir")
     def test_clean_cache_invalid_strategy(self, mock_scan_cache_dir):
         """Test error handling for invalid cleanup strategy."""
         mock_cache_info = Mock()
@@ -367,7 +366,7 @@ class TestHfCacheManagerIntegration:
 
     def setup_method(self):
         """Set up test fixtures."""
-        with patch("tfbpapi.HfCacheManager.DataCard.__init__", return_value=None):
+        with patch("tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None):
             self.conn = duckdb.connect(":memory:")
             self.repo_id = "test/repo"
             self.cache_manager = HfCacheManager(self.repo_id, self.conn)
