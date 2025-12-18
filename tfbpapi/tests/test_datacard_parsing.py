@@ -2,8 +2,8 @@
 
 import yaml
 
-from tfbpapi.datainfo.models import DatasetCard
-from tfbpapi.tests.datainfo.example_datacards import (
+from tfbpapi.models import DatasetCard
+from tfbpapi.tests.example_datacards import (
     EXAMPLE_1_SIMPLE_TOPLEVEL,
     EXAMPLE_2_COMPLEX_FIELD_DEFINITIONS,
     EXAMPLE_3_PARTITIONED_WITH_METADATA,

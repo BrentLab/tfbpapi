@@ -7,7 +7,7 @@ import duckdb
 from huggingface_hub import scan_cache_dir, try_to_load_from_cache
 from huggingface_hub.utils import DeleteCacheStrategy
 
-from .datainfo.datacard import DataCard
+from tfbpapi.datacard import DataCard
 
 
 class HfCacheManager(DataCard):
@@ -518,3 +518,67 @@ class HfCacheManager(DataCard):
                 return f"{size:.1f}{unit}"
             size /= 1024.0
         return f"{size:.1f}TB"
+
+    def query(
+        self, sql: str, config_name: str, refresh_cache: bool = False
+    ) -> Any:
+        """
+        Execute SQL query against a specific dataset configuration.
+
+        Loads the specified configuration and executes the SQL query.
+        Automatically replaces the config name in the SQL with the actual
+        table name for user convenience.
+
+        :param sql: SQL query to execute
+        :param config_name: Configuration name to query (table will be loaded
+            if needed)
+        :param refresh_cache: If True, force refresh from remote instead of
+            using cache
+        :return: DataFrame with query results
+        :raises ValueError: If config_name not found or query fails
+
+        Example:
+            mgr = HfCacheManager("BrentLab/harbison_2004", duckdb.connect())
+            df = mgr.query(
+                "SELECT DISTINCT sample_id FROM harbison_2004",
+                "harbison_2004"
+            )
+        """
+        # Validate config exists
+        if config_name not in [c.config_name for c in self.configs]:
+            available_configs = [c.config_name for c in self.configs]
+            raise ValueError(
+                f"Config '{config_name}' not found. "
+                f"Available configs: {available_configs}"
+            )
+
+        # Load the configuration data
+        config = self.get_config(config_name)
+        if not config:
+            raise ValueError(f"Could not retrieve config '{config_name}'")
+
+        config_result = self._get_metadata_for_config(
+            config, force_refresh=refresh_cache
+        )
+        if not config_result.get("success", False):
+            raise ValueError(
+                f"Failed to load data for config '{config_name}': "
+                f"{config_result.get('message', 'Unknown error')}"
+            )
+
+        table_name = config_result.get("table_name")
+        if not table_name:
+            raise ValueError(f"No table available for config '{config_name}'")
+
+        # Replace config name with actual table name in SQL for user convenience
+        modified_sql = sql.replace(config_name, table_name)
+
+        # Execute query
+        try:
+            result = self.duckdb_conn.execute(modified_sql).fetchdf()
+            self.logger.debug(f"Query executed successfully on {config_name}")
+            return result
+        except Exception as e:
+            self.logger.error(f"Query execution failed: {e}")
+            self.logger.error(f"SQL: {modified_sql}")
+            raise ValueError(f"Query execution failed: {e}") from e

@@ -24,17 +24,17 @@ This is a Python package for interfacing with a collection of datasets hosted on
 
 ### Core Components
 
-- **HfQueryAPI** (`tfbpapi/HfQueryAPI.py`): Main interface for querying HF datasets with intelligent downloading and SQL querying capabilities. Supports automatic dataset size detection, selective downloading, and DuckDB-based querying.
+- **VirtualDB** (`tfbpapi/virtual_db.py`): Primary API for unified cross-dataset queries. Provides standardized query interface across heterogeneous datasets with varying experimental condition structures through external YAML configuration.
 
-- **HfCacheManager** (`tfbpapi/HfCacheManager.py`): Manages HF cache with cleanup and size management features. Provides automatic cache cleanup based on age and size thresholds.
+- **DataCard** (`tfbpapi/datacard.py`): Interface for exploring HuggingFace dataset metadata without loading actual data. Enables dataset structure discovery, experimental condition exploration, and query planning.
 
-- **HfRankResponse** (`tfbpapi/HfRankResponse.py`): Response handling for HF-based ranking operations. Computes and analyzes "rank response" - the cumulative number of responsive targets binned by binding rank scores.
+- **HfCacheManager** (`tfbpapi/hf_cache_manager.py`): Manages HuggingFace cache with intelligent downloading, DuckDB-based SQL querying, and automatic cleanup based on age/size thresholds.
 
-- **IncrementalAnalysisDB** (`tfbpapi/IncrementalAnalysisDB.py`): Database management for incremental analysis workflows with shared result storage.
+### Supporting Components
 
-### Dataset Information Management
+- **Models** (`tfbpapi/models.py`): Pydantic models for dataset cards, configurations, features, and VirtualDB configuration (MetadataConfig, PropertyMapping, RepositoryConfig).
 
-- **datainfo package** (`tfbpapi/datainfo/`): Comprehensive dataset exploration and metadata management for HuggingFace datasets. Provides the `DataCard` class for exploring dataset structure, configurations, and relationships without loading actual data. Includes Pydantic models for validation and fetchers for HuggingFace Hub integration.
+- **Fetchers** (`tfbpapi/fetchers.py`): Low-level components for retrieving data from HuggingFace Hub (HfDataCardFetcher, HfRepoStructureFetcher, HfSizeInfoFetcher).
 
 ### Data Types
 
@@ -49,7 +49,7 @@ Data is stored in Apache Parquet format, either as single files or parquet datas
 
 ### Error Handling
 
-- **errors.py** (`tfbpapi/errors.py`): Custom exception classes for dataset management including `DatasetError`, `RepoTooLargeError`, `DataCardParsingError`, `HfDataFetchError`, and more.
+- **errors.py** (`tfbpapi/errors.py`): Custom exception classes for dataset management including `HfDataFetchError`, `DataCardError`, and `DataCardValidationError`.
 
 ## Configuration
 

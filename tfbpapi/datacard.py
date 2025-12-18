@@ -21,9 +21,9 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from ..errors import DataCardError, DataCardValidationError, HfDataFetchError
-from .fetchers import HfDataCardFetcher, HfRepoStructureFetcher, HfSizeInfoFetcher
-from .models import (
+from tfbpapi.errors import DataCardError, DataCardValidationError, HfDataFetchError
+from tfbpapi.fetchers import HfDataCardFetcher, HfRepoStructureFetcher, HfSizeInfoFetcher
+from tfbpapi.models import (
     DatasetCard,
     DatasetConfig,
     DatasetType,
@@ -159,49 +159,6 @@ class DataCard:
         """Get a specific configuration by name."""
         return self.dataset_card.get_config_by_name(config_name)
 
-    def get_configs_by_type(
-        self, dataset_type: DatasetType | str
-    ) -> list[DatasetConfig]:
-        """Get configurations by dataset type."""
-        if isinstance(dataset_type, str):
-            dataset_type = DatasetType(dataset_type)
-        return self.dataset_card.get_configs_by_type(dataset_type)
-
-    def get_card_metadata(self) -> dict[str, Any]:
-        """
-        Get all top-level metadata fields from the dataset card.
-
-        Returns all fields stored in model_extra (e.g., license, tags, pretty_name,
-        etc.) as a dict. This gives direct access to the raw YAML structure at the card
-        level.
-
-        :return: Dict of all extra metadata fields
-
-        """
-        if self.dataset_card.model_extra:
-            return dict(self.dataset_card.model_extra)
-        return {}
-
-    def get_config_metadata(self, config_name: str) -> dict[str, Any]:
-        """
-        Get all extra metadata fields from a specific config.
-
-        Returns all fields stored in the config's model_extra (e.g.,
-        experimental_conditions, custom fields, etc.) as a dict.
-
-        :param config_name: Configuration name
-        :return: Dict of all extra metadata fields for this config
-        :raises DataCardError: If config not found
-
-        """
-        config = self.get_config(config_name)
-        if not config:
-            raise DataCardError(f"Configuration '{config_name}' not found")
-
-        if config.model_extra:
-            return dict(config.model_extra)
-        return {}
-
     def get_features(self, config_name: str) -> list[FeatureInfo]:
         """
         Get all feature definitions for a configuration.
@@ -258,75 +215,6 @@ class DataCard:
             return {role: by_role.get(role, [])}
 
         return by_role
-
-    def get_field_values(self, config_name: str, field_name: str) -> set[str]:
-        """
-        Get all unique values for a specific field in a configuration.
-
-        :param config_name: Configuration name
-        :param field_name: Field name to extract values from
-        :return: Set of unique values
-        :raises DataCardError: If config or field not found
-
-        """
-        config = self.get_config(config_name)
-        if not config:
-            raise DataCardError(f"Configuration '{config_name}' not found")
-
-        # Check if field exists in the config
-        field_names = [f.name for f in config.dataset_info.features]
-        if field_name not in field_names:
-            raise DataCardError(
-                f"Field '{field_name}' not found in config '{config_name}'"
-            )
-
-        return self._extract_field_values(config, field_name)
-
-    def _extract_field_values(self, config: DatasetConfig, field_name: str) -> set[str]:
-        """Extract unique values for a field from partition structure only."""
-        values = set()
-
-        # Check cache first
-        cache_key = f"{config.config_name}:{field_name}"
-        if cache_key in self._metadata_cache:
-            cached_metadata = self._metadata_cache[cache_key]
-            for meta in cached_metadata:
-                if meta.field_name == field_name:
-                    values.update(meta.values)
-                    return values
-
-        try:
-            # For partitioned datasets, extract from file structure
-            if (
-                config.dataset_info.partitioning
-                and config.dataset_info.partitioning.enabled
-            ):
-                partition_values = self._extract_partition_values(config, field_name)
-                if partition_values:
-                    values.update(partition_values)
-                    # Cache the result
-                    self._metadata_cache[cache_key] = [
-                        ExtractedMetadata(
-                            config_name=config.config_name,
-                            field_name=field_name,
-                            values=values,
-                            extraction_method="partition_structure",
-                        )
-                    ]
-                    return values
-
-            # For non-partitioned fields, we can no longer query parquet files
-            self.logger.debug(
-                f"Cannot extract values for {field_name} in {config.config_name}: "
-                "field is not partitioned and parquet querying is not supported"
-            )
-
-        except Exception as e:
-            self.logger.warning(f"Failed to extract values for {field_name}: {e}")
-            # Return empty set on failure instead of raising
-            # This maintains backward compatibility
-
-        return values
 
     def _extract_partition_values(
         self, config: DatasetConfig, field_name: str
@@ -423,67 +311,6 @@ class DataCard:
             "has_default_config": self.dataset_card.get_default_config() is not None,
         }
 
-    def explore_config(
-        self, config_name: str, include_extra: bool = True
-    ) -> dict[str, Any]:
-        """
-        Get detailed information about a specific configuration.
-
-        Returns a comprehensive dict with config structure including features, data
-        files, partitioning, and optionally all extra metadata fields.
-
-        :param config_name: Configuration name
-        :param include_extra: If True, include all fields from model_extra
-        :return: Dict with config details
-        :raises DataCardError: If config not found
-
-        """
-        config = self.get_config(config_name)
-        if not config:
-            raise DataCardError(f"Configuration '{config_name}' not found")
-
-        info: dict[str, Any] = {
-            "config_name": config.config_name,
-            "description": config.description,
-            "dataset_type": config.dataset_type.value,
-            "is_default": config.default,
-            "num_features": len(config.dataset_info.features),
-            "features": [
-                {
-                    "name": f.name,
-                    "dtype": f.dtype,
-                    "description": f.description,
-                    "role": f.role,
-                    "has_definitions": f.definitions is not None,
-                }
-                for f in config.dataset_info.features
-            ],
-            "data_files": [
-                {"split": df.split, "path": df.path} for df in config.data_files
-            ],
-        }
-
-        # Add partitioning info if present
-        if config.dataset_info.partitioning:
-            info["partitioning"] = {
-                "enabled": config.dataset_info.partitioning.enabled,
-                "partition_by": config.dataset_info.partitioning.partition_by,
-                "path_template": config.dataset_info.partitioning.path_template,
-            }
-
-        # Add metadata-specific fields
-        if config.applies_to:
-            info["applies_to"] = config.applies_to
-
-        if config.metadata_fields:
-            info["metadata_fields"] = config.metadata_fields
-
-        # Add all extra fields from model_extra
-        if include_extra and config.model_extra:
-            info["extra_fields"] = dict(config.model_extra)
-
-        return info
-
     def extract_metadata_schema(self, config_name: str) -> dict[str, Any]:
         """
         Extract complete metadata schema for planning metadata table structure.
@@ -564,52 +391,6 @@ class DataCard:
                 schema["config_level_conditions"] = config_level
 
         return schema
-
-    def get_condition_levels(
-        self, config_name: str, field_name: str
-    ) -> dict[str, Any] | list[str]:
-        """
-        Get factor levels for an experimental condition field.
-
-        Returns definitions if available (structured dict with descriptions), otherwise
-        queries distinct values from the parquet file.
-
-        :param config_name: Configuration name
-        :param field_name: Experimental condition field name
-        :return: Dict of definitions if available, otherwise list of distinct values
-        :raises DataCardError: If config or field not found, or field is not an
-            experimental condition
-
-        """
-        config = self.get_config(config_name)
-        if not config:
-            raise DataCardError(f"Configuration '{config_name}' not found")
-
-        # Find the feature and verify it's an experimental condition
-        feature = None
-        for f in config.dataset_info.features:
-            if f.name == field_name:
-                feature = f
-                break
-
-        if not feature:
-            raise DataCardError(
-                f"Field '{field_name}' not found in config '{config_name}'"
-            )
-
-        if feature.role != "experimental_condition":
-            raise DataCardError(
-                f"Field '{field_name}' is not an experimental condition "
-                f"(role={feature.role})"
-            )
-
-        # If field has definitions, return those
-        if feature.definitions:
-            return feature.definitions
-
-        # Otherwise, query distinct values from parquet file
-        values = self.get_field_values(config_name, field_name)
-        return sorted(list(values))
 
     def get_experimental_conditions(
         self, config_name: str | None = None
@@ -723,168 +504,6 @@ class DataCard:
 
         # Return definitions if present, otherwise empty dict
         return feature.definitions if feature.definitions else {}
-
-    def get_field_attribute(
-        self, config_name: str, field_name: str, attribute: str
-    ) -> dict[str, Any]:
-        """
-        Extract a specific attribute from field definitions.
-
-        This is useful for exploring nested attributes in condition definitions,
-        such as media composition, temperature parameters, or growth phases.
-
-        :param config_name: Configuration name
-        :param field_name: Field with definitions (e.g., 'condition')
-        :param attribute: Attribute to extract (e.g., 'media', 'temperature_celsius')
-        :return: Dict mapping field values to their attribute specifications.
-            Returns 'unspecified' if attribute doesn't exist for a value.
-
-        Example:
-            >>> card = DataCard('BrentLab/harbison_2004')
-            >>> media = card.get_field_attribute('harbison_2004', 'condition', 'media')
-            >>> print(media['YPD'])
-            {'name': 'YPD', 'carbon_source': [...], 'nitrogen_source': [...]}
-
-        """
-        # Get all field definitions
-        definitions = self.get_field_definitions(config_name, field_name)
-
-        # Extract attribute for each definition
-        result = {}
-        for field_value, definition in definitions.items():
-            if attribute in definition:
-                result[field_value] = definition[attribute]
-            else:
-                result[field_value] = "unspecified"
-
-        return result
-
-    def list_experimental_condition_fields(self, config_name: str) -> list[str]:
-        """
-        List all fields with role=experimental_condition in a config.
-
-        These are fields that contain per-sample experimental condition variation.
-        They represent the field-level (third level) of the experimental conditions
-        hierarchy.
-
-        Fields with this role typically have `definitions` that map each value to
-        its detailed experimental specification. Use `get_field_definitions()` to
-        access these definitions.
-
-        :param config_name: Configuration name
-        :return: List of field names with experimental_condition role
-        :raises DataCardError: If config not found
-
-        Example:
-            >>> # Find all condition fields
-            >>> cond_fields = card.list_experimental_condition_fields('config_name')
-            >>> # ['condition', 'treatment', 'time_point']
-            >>>
-            >>> # Then get definitions for each
-            >>> for field in cond_fields:
-            ...     defs = card.get_field_definitions('config_name', field)
-            ...     print(f"{field}: {len(defs)} levels")
-
-        """
-        config = self.get_config(config_name)
-        if not config:
-            raise DataCardError(f"Configuration '{config_name}' not found")
-
-        return [
-            f.name
-            for f in config.dataset_info.features
-            if f.role == "experimental_condition"
-        ]
-
-    def summarize_field_levels(
-        self,
-        config_name: str,
-        field_name: str,
-        properties: list[str] | None = None,
-        max_levels: int | None = None,
-    ) -> str:
-        """
-        Get a human-readable summary of field levels and their key properties.
-
-        Provides a formatted summary showing each level (value) and selected properties
-        from its definition. Useful for quickly exploring experimental condition
-        structures without writing loops.
-
-        :param config_name: Configuration name
-        :param field_name: Field name to summarize
-        :param properties: Optional list of property paths to display (e.g., ["media.name", "temperature_celsius"]).
-                          If None, shows all top-level keys.
-        :param max_levels: Optional limit on number of levels to show
-        :return: Formatted string summary
-        :raises DataCardError: If config or field not found
-
-        Example:
-            >>> card = DataCard("BrentLab/harbison_2004")
-            >>> # Show summary with specific properties
-            >>> print(card.summarize_field_levels(
-            ...     "harbison_2004",
-            ...     "condition",
-            ...     properties=["media.carbon_source.compound", "temperature_celsius"]
-            ... ))
-            Field: condition
-            Levels: 14
-
-            YPD:
-              media.carbon_source.compound: ['D-glucose']
-              temperature_celsius: 30
-
-            GAL:
-              media.carbon_source.compound: ['D-galactose']
-              temperature_celsius: 30
-            ...
-
-        """
-        from tfbpapi.datainfo.metadata_builder import get_nested_value
-
-        # Get definitions
-        definitions = self.get_field_definitions(config_name, field_name)
-
-        if not definitions:
-            return f"Field '{field_name}' has no definitions"
-
-        lines = [
-            f"Field: {field_name}",
-            f"Levels: {len(definitions)}",
-            "",
-        ]
-
-        # Determine how many levels to show
-        levels_to_show = list(definitions.keys())
-        if max_levels:
-            levels_to_show = levels_to_show[:max_levels]
-
-        for level_name in levels_to_show:
-            definition = definitions[level_name]
-            lines.append(f"{level_name}:")
-
-            if properties:
-                # Show only specified properties
-                for prop_path in properties:
-                    value = get_nested_value(definition, prop_path)
-                    lines.append(f"  {prop_path}: {value}")
-            else:
-                # Show all top-level keys
-                if isinstance(definition, dict):
-                    for key in definition.keys():
-                        value = definition[key]
-                        # Truncate long values
-                        value_str = str(value)
-                        if len(value_str) > 80:
-                            value_str = value_str[:77] + "..."
-                        lines.append(f"  {key}: {value_str}")
-
-            lines.append("")
-
-        if max_levels and len(definitions) > max_levels:
-            remaining = len(definitions) - max_levels
-            lines.append(f"... and {remaining} more levels")
-
-        return "\n".join(lines)
 
     def summary(self) -> str:
         """Get a human-readable summary of the dataset."""

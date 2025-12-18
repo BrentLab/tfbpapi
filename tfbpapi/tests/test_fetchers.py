@@ -6,7 +6,7 @@ import pytest
 import requests
 from requests import HTTPError
 
-from tfbpapi.datainfo.fetchers import (
+from tfbpapi.fetchers import (
     HfDataCardFetcher,
     HfRepoStructureFetcher,
     HfSizeInfoFetcher,
@@ -34,7 +34,7 @@ class TestHfDataCardFetcher:
             fetcher = HfDataCardFetcher()
             assert fetcher.token == test_token
 
-    @patch("tfbpapi.datainfo.fetchers.DatasetCard")
+    @patch("tfbpapi.fetchers.DatasetCard")
     def test_fetch_success(
         self, mock_dataset_card, test_repo_id, sample_dataset_card_data
     ):
@@ -52,7 +52,7 @@ class TestHfDataCardFetcher:
             test_repo_id, repo_type="dataset", token="test_token"
         )
 
-    @patch("tfbpapi.datainfo.fetchers.DatasetCard")
+    @patch("tfbpapi.fetchers.DatasetCard")
     def test_fetch_no_data_section(self, mock_dataset_card, test_repo_id):
         """Test fetch when dataset card has no data section."""
         # Setup mock with no data
@@ -65,7 +65,7 @@ class TestHfDataCardFetcher:
 
         assert result == {}
 
-    @patch("tfbpapi.datainfo.fetchers.DatasetCard")
+    @patch("tfbpapi.fetchers.DatasetCard")
     def test_fetch_exception(self, mock_dataset_card, test_repo_id):
         """Test fetch when DatasetCard.load raises exception."""
         mock_dataset_card.load.side_effect = Exception("API Error")
@@ -77,7 +77,7 @@ class TestHfDataCardFetcher:
 
     def test_fetch_different_repo_types(self, sample_dataset_card_data):
         """Test fetch with different repository types."""
-        with patch("tfbpapi.datainfo.fetchers.DatasetCard") as mock_dataset_card:
+        with patch("tfbpapi.fetchers.DatasetCard") as mock_dataset_card:
             mock_card = Mock()
             mock_card.data.to_dict.return_value = sample_dataset_card_data
             mock_dataset_card.load.return_value = mock_card
@@ -122,7 +122,7 @@ class TestHfSizeInfoFetcher:
         assert headers["User-Agent"] == "TFBP-API/1.0"
         assert "Authorization" not in headers
 
-    @patch("tfbpapi.datainfo.fetchers.requests.get")
+    @patch("tfbpapi.fetchers.requests.get")
     def test_fetch_success(self, mock_get, test_repo_id, sample_size_info):
         """Test successful size info fetch."""
         # Setup mock response
@@ -142,7 +142,7 @@ class TestHfSizeInfoFetcher:
         assert call_args[1]["headers"]["Authorization"] == "Bearer test_token"
         assert call_args[1]["timeout"] == 30
 
-    @patch("tfbpapi.datainfo.fetchers.requests.get")
+    @patch("tfbpapi.fetchers.requests.get")
     def test_fetch_404_error(self, mock_get, test_repo_id):
         """Test fetch with 404 error."""
         # Setup mock 404 response
@@ -156,7 +156,7 @@ class TestHfSizeInfoFetcher:
         with pytest.raises(HfDataFetchError, match="Dataset .* not found"):
             fetcher.fetch(test_repo_id)
 
-    @patch("tfbpapi.datainfo.fetchers.requests.get")
+    @patch("tfbpapi.fetchers.requests.get")
     def test_fetch_403_error(self, mock_get, test_repo_id):
         """Test fetch with 403 error."""
         # Setup mock 403 response
@@ -172,7 +172,7 @@ class TestHfSizeInfoFetcher:
         ):
             fetcher.fetch(test_repo_id)
 
-    @patch("tfbpapi.datainfo.fetchers.requests.get")
+    @patch("tfbpapi.fetchers.requests.get")
     def test_fetch_other_http_error(self, mock_get, test_repo_id):
         """Test fetch with other HTTP error."""
         # Setup mock 500 response
@@ -186,7 +186,7 @@ class TestHfSizeInfoFetcher:
         with pytest.raises(HfDataFetchError, match="HTTP error fetching size"):
             fetcher.fetch(test_repo_id)
 
-    @patch("tfbpapi.datainfo.fetchers.requests.get")
+    @patch("tfbpapi.fetchers.requests.get")
     def test_fetch_request_exception(self, mock_get, test_repo_id):
         """Test fetch with request exception."""
         mock_get.side_effect = requests.RequestException("Network error")
@@ -196,7 +196,7 @@ class TestHfSizeInfoFetcher:
         with pytest.raises(HfDataFetchError, match="Request failed fetching size"):
             fetcher.fetch(test_repo_id)
 
-    @patch("tfbpapi.datainfo.fetchers.requests.get")
+    @patch("tfbpapi.fetchers.requests.get")
     def test_fetch_json_decode_error(self, mock_get, test_repo_id):
         """Test fetch with JSON decode error."""
         # Setup mock response with invalid JSON
@@ -219,7 +219,7 @@ class TestHfRepoStructureFetcher:
         assert fetcher.token == test_token
         assert fetcher._cached_structure == {}
 
-    @patch("tfbpapi.datainfo.fetchers.repo_info")
+    @patch("tfbpapi.fetchers.repo_info")
     def test_fetch_success(self, mock_repo_info, test_repo_id, sample_repo_structure):
         """Test successful repository structure fetch."""
         # Setup mock repo info
@@ -249,7 +249,7 @@ class TestHfRepoStructureFetcher:
             repo_id=test_repo_id, repo_type="dataset", token="test_token"
         )
 
-    @patch("tfbpapi.datainfo.fetchers.repo_info")
+    @patch("tfbpapi.fetchers.repo_info")
     def test_fetch_with_caching(self, mock_repo_info, test_repo_id):
         """Test fetch with caching behavior."""
         # Setup mock
@@ -273,7 +273,7 @@ class TestHfRepoStructureFetcher:
         result3 = fetcher.fetch(test_repo_id, force_refresh=True)
         assert mock_repo_info.call_count == 2
 
-    @patch("tfbpapi.datainfo.fetchers.repo_info")
+    @patch("tfbpapi.fetchers.repo_info")
     def test_fetch_siblings_none(self, mock_repo_info, test_repo_id):
         """Test fetch when siblings is None."""
         # Setup mock with None siblings
@@ -289,7 +289,7 @@ class TestHfRepoStructureFetcher:
         assert result["files"] == []
         assert result["partitions"] == {}
 
-    @patch("tfbpapi.datainfo.fetchers.repo_info")
+    @patch("tfbpapi.fetchers.repo_info")
     def test_fetch_exception(self, mock_repo_info, test_repo_id):
         """Test fetch when repo_info raises exception."""
         mock_repo_info.side_effect = Exception("API Error")
@@ -326,7 +326,7 @@ class TestHfRepoStructureFetcher:
         # partitions dict should remain unchanged
         assert len(partitions) == 2
 
-    @patch("tfbpapi.datainfo.fetchers.repo_info")
+    @patch("tfbpapi.fetchers.repo_info")
     def test_get_partition_values_success(self, mock_repo_info, test_repo_id):
         """Test getting partition values for a specific column."""
         # Setup mock with partitioned files
@@ -344,7 +344,7 @@ class TestHfRepoStructureFetcher:
 
         assert values == ["TF1", "TF2", "TF3"]  # Should be sorted
 
-    @patch("tfbpapi.datainfo.fetchers.repo_info")
+    @patch("tfbpapi.fetchers.repo_info")
     def test_get_partition_values_no_partitions(self, mock_repo_info, test_repo_id):
         """Test getting partition values when no partitions exist."""
         # Setup mock with no partitioned files
@@ -360,7 +360,7 @@ class TestHfRepoStructureFetcher:
 
         assert values == []
 
-    @patch("tfbpapi.datainfo.fetchers.repo_info")
+    @patch("tfbpapi.fetchers.repo_info")
     def test_get_dataset_files_all(self, mock_repo_info, test_repo_id):
         """Test getting all dataset files."""
         # Setup mock
@@ -384,7 +384,7 @@ class TestHfRepoStructureFetcher:
         assert files[1]["size"] == 2000
         assert files[1]["is_lfs"] is True
 
-    @patch("tfbpapi.datainfo.fetchers.repo_info")
+    @patch("tfbpapi.fetchers.repo_info")
     def test_get_dataset_files_with_pattern(self, mock_repo_info, test_repo_id):
         """Test getting dataset files with path pattern filter."""
         # Setup mock
