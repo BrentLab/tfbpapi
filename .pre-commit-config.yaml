@@ -1,4 +1,4 @@
-exclude: ^docs/|devcontainer.json|.*/snapshots/
+exclude: ^docs/|devcontainer.json|.*/snapshots/|mkdocs.yml
 default_stages: [commit]
 
 default_language_version:
@@ -62,6 +62,7 @@ repos:
     rev: v1.15.0
     hooks:
       - id: mypy
+        additional_dependencies: [types-requests]
 
   - repo: https://github.com/markdownlint/markdownlint
     rev: v0.12.0
