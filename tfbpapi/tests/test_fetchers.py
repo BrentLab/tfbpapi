@@ -270,6 +270,7 @@ class TestHfRepoStructureFetcher:
         assert result1 == result2
 
         # Force refresh should call API again
+        fetcher.fetch(test_repo_id, force_refresh=True)
         assert mock_repo_info.call_count == 2
 
     @patch("tfbpapi.fetchers.repo_info")
