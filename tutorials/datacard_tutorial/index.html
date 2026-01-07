@@ -21,19 +21,22 @@
         <link rel="next" href="../cache_manager_tutorial/">
       
       
+        
+      
+      
       <link rel="icon" href="../../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.19">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
     
     
       
-        <title>DataCard Tutorial: Exploring HuggingFace Genomics Datasets - tfbpapi</title>
+        <title>DataCard Tutorial: Exploring HuggingFace Dataset Metadata - tfbpapi</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.7e37652d.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -62,7 +65,6 @@
 
     
     
-    
   </head>
   
   
@@ -82,7 +84,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#datacard-tutorial-exploring-huggingface-genomics-datasets" class="md-skip">
+        <a href="#datacard-tutorial-exploring-huggingface-dataset-metadata" class="md-skip">
           Skip to content
         </a>
       
@@ -120,7 +122,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              DataCard Tutorial: Exploring HuggingFace Genomics Datasets
+              DataCard Tutorial: Exploring HuggingFace Dataset Metadata
             
           </span>
         </div>
@@ -210,7 +212,7 @@
         <a href="https://github.com/brentlab/tfbpapi" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
   </div>
   <div class="md-source__repository">
     brentlab/tfbpapi
@@ -260,12 +262,44 @@
   
     
     
+      
+  
+  
+  
+    
+  
+  
+    
+    
       <li class="md-tabs__item md-tabs__item--active">
         <a href="./" class="md-tabs__link">
           
   
   
   Tutorials
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../virtual_database_concepts/" class="md-tabs__link">
+          
+  
+  
+  Concepts
 
         </a>
       </li>
@@ -288,7 +322,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../HfQueryAPI/" class="md-tabs__link">
+        <a href="../../virtual_db/" class="md-tabs__link">
           
   
   
@@ -358,7 +392,7 @@
       <a href="https://github.com/brentlab/tfbpapi" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
   </div>
   <div class="md-source__repository">
     brentlab/tfbpapi
@@ -380,9 +414,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Home
+  
+
     
   </span>
+  
   
 
       </a>
@@ -423,9 +462,14 @@
   
   
   <span class="md-ellipsis">
+    
+  
     Tutorials
+  
+
     
   </span>
+  
   
 
             <span class="md-nav__icon md-icon"></span>
@@ -434,7 +478,68 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
-            Tutorials
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_1" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_1" id="__nav_2_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_1_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -459,9 +564,14 @@
   
   
   <span class="md-ellipsis">
-    DataCard Tutorial: Exploring HuggingFace Genomics Datasets
+    
+  
+    DataCard Tutorial: Exploring HuggingFace Dataset Metadata
+  
+
     
   </span>
+  
   
 
           <span class="md-nav__icon md-icon"></span>
@@ -472,9 +582,14 @@
   
   
   <span class="md-ellipsis">
-    DataCard Tutorial: Exploring HuggingFace Genomics Datasets
+    
+  
+    DataCard Tutorial: Exploring HuggingFace Dataset Metadata
+  
+
     
   </span>
+  
   
 
       </a>
@@ -497,9 +612,11 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-getting-started" class="md-nav__link">
+  <a href="#1-instantiating-a-datacard-object" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Getting Started
+      
+        1. Instantiating a DataCard Object
+      
     </span>
   </a>
   
@@ -508,7 +625,9 @@
         <li class="md-nav__item">
   <a href="#2-repository-overview" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Repository Overview
+      
+        2. Repository Overview
+      
     </span>
   </a>
   
@@ -517,17 +636,54 @@
         <li class="md-nav__item">
   <a href="#3-exploring-configurations" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Exploring Configurations
+      
+        3. Exploring Configurations
+      
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="3. Exploring Configurations">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-understanding-experimental-conditions-the-three-level-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Understanding Experimental Conditions: The Three-Level Hierarchy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Understanding Experimental Conditions: The Three-Level Hierarchy">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#understanding-dataset-types" class="md-nav__link">
+  <a href="#level-1-top-level-conditions" class="md-nav__link">
     <span class="md-ellipsis">
-      Understanding Dataset Types
+      
+        Level 1: Top-Level Conditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#level-2-config-level-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Level 2: Config-Level Conditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#level-3-field-level-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Level 3: Field-Level Conditions
+      
     </span>
   </a>
   
@@ -539,146 +695,24 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-understanding-data-relationships" class="md-nav__link">
+  <a href="#5-working-with-condition-definitions" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Understanding Data Relationships
+      
+        5. Working with Condition Definitions
+      
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-exploring-dataset-contents" class="md-nav__link">
+  <a href="#6-using-extract_metadata_schema-for-metadata-table-planning" class="md-nav__link">
     <span class="md-ellipsis">
-      5. Exploring Dataset Contents
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="5. Exploring Dataset Contents">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#extracting-field-values" class="md-nav__link">
-    <span class="md-ellipsis">
-      Extracting Field Values
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
-        <li class="md-nav__item">
-  <a href="#6-working-with-partitioned-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      6. Working with Partitioned Data
-    </span>
-  </a>
-  
-</li>
+        6. Using extract_metadata_schema for Metadata Table Planning
       
-        <li class="md-nav__item">
-  <a href="#7-understanding-data-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      7. Understanding Data Files
     </span>
   </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#8-practical-use-cases" class="md-nav__link">
-    <span class="md-ellipsis">
-      8. Practical Use Cases
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="8. Practical Use Cases">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#use-case-1-finding-datasets-with-specific-data-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      Use Case 1: Finding Datasets with Specific Data Types
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#use-case-2-understanding-data-schema-before-loading" class="md-nav__link">
-    <span class="md-ellipsis">
-      Use Case 2: Understanding Data Schema Before Loading
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#use-case-3-planning-efficient-data-access" class="md-nav__link">
-    <span class="md-ellipsis">
-      Use Case 3: Planning Efficient Data Access
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#9-error-handling-and-troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      9. Error Handling and Troubleshooting
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#10-summary-and-next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      10. Summary and Next Steps
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="10. Summary and Next Steps">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#key-takeaways" class="md-nav__link">
-    <span class="md-ellipsis">
-      Key Takeaways:
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      Next Steps:
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-integration-with-hfqueryapi" class="md-nav__link">
-    <span class="md-ellipsis">
-      Example Integration with HfQueryAPI:
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -703,12 +737,25 @@
   
   
   <span class="md-ellipsis">
+    
+  
     HfCacheManager Tutorial: Intelligent Cache Management for HuggingFace Datasets
+  
+
     
   </span>
   
+  
 
       </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -720,22 +767,56 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../hfqueryapi_tutorial/" class="md-nav__link">
+    
+    
+    
+    
+      
+      
         
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_2" id="__nav_2_2_label" tabindex="">
+            
   
   
   <span class="md-ellipsis">
-    HfQueryAPI Tutorial: Metadata-Driven Data Exploration
+    
+  
+    Querying Data
+  
+
     
   </span>
   
-
-      </a>
-    </li>
   
 
-              
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Querying Data
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
             
               
                 
@@ -744,17 +825,30 @@
   
   
     <li class="md-nav__item">
-      <a href="../rank_response_tutorial/" class="md-nav__link">
+      <a href="../virtual_db_tutorial/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    Rank-Response Analysis Tutorial
+    
+  
+    VirtualDB Tutorial: Unified Cross-Dataset Queries
+  
+
     
   </span>
   
+  
 
       </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -797,9 +891,14 @@
   
   
   <span class="md-ellipsis">
-    API Reference
+    
+  
+    Concepts
+  
+
     
   </span>
+  
   
 
             <span class="md-nav__icon md-icon"></span>
@@ -808,52 +907,11 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_3">
             <span class="md-nav__icon md-icon"></span>
-            API Reference
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_1" >
-        
-          
-          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
             
   
-  
-  <span class="md-ellipsis">
-    Core Components
-    
-  </span>
+    Concepts
   
 
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_1">
-            <span class="md-nav__icon md-icon"></span>
-            Core Components
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -864,299 +922,22 @@
   
   
     <li class="md-nav__item">
-      <a href="../../HfQueryAPI/" class="md-nav__link">
+      <a href="../../virtual_database_concepts/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
-    HfQueryAPI
+    
+  
+    Virtual Database Design
+  
+
     
   </span>
+  
   
 
       </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../HfRankResponse/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    HfRankResponse
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../IncrementalAnalysisDB/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    IncrementalAnalysisDB
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    Cache Management
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_2">
-            <span class="md-nav__icon md-icon"></span>
-            Cache Management
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../HfCacheManager/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    HfCacheManager
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    Dataset Information
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_3">
-            <span class="md-nav__icon md-icon"></span>
-            Dataset Information
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../datainfo/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    DataInfo Package
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_3_4" id="__nav_3_4_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    Error Handling
-    
-  </span>
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_3_4">
-            <span class="md-nav__icon md-icon"></span>
-            Error Handling
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../errors/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Custom Exceptions
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -1199,9 +980,14 @@
   
   
   <span class="md-ellipsis">
-    HuggingFace Configuration
+    
+  
+    API Reference
+  
+
     
   </span>
+  
   
 
             <span class="md-nav__icon md-icon"></span>
@@ -1210,7 +996,426 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
-            HuggingFace Configuration
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_1" id="__nav_4_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Core
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../virtual_db/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VirtualDB
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../datacard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    DataCard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../hf_cache_manager/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HfCacheManager
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models and Configuration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Models and Configuration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pydantic Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../fetchers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fetchers
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Error Handling
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Error Handling
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../errors/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Custom Exceptions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HuggingFace Configuration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    HuggingFace Configuration
+  
+
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -1226,9 +1431,42 @@
   
   
   <span class="md-ellipsis">
+    
+  
     HuggingFace Dataset Card Format
+  
+
     
   </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../brentlab_yeastresources_collection/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    BrentLab Collection
+  
+
+    
+  </span>
+  
   
 
       </a>
@@ -1273,9 +1511,11 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-getting-started" class="md-nav__link">
+  <a href="#1-instantiating-a-datacard-object" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Getting Started
+      
+        1. Instantiating a DataCard Object
+      
     </span>
   </a>
   
@@ -1284,7 +1524,9 @@
         <li class="md-nav__item">
   <a href="#2-repository-overview" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Repository Overview
+      
+        2. Repository Overview
+      
     </span>
   </a>
   
@@ -1293,17 +1535,54 @@
         <li class="md-nav__item">
   <a href="#3-exploring-configurations" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Exploring Configurations
+      
+        3. Exploring Configurations
+      
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="3. Exploring Configurations">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-understanding-experimental-conditions-the-three-level-hierarchy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Understanding Experimental Conditions: The Three-Level Hierarchy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Understanding Experimental Conditions: The Three-Level Hierarchy">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#understanding-dataset-types" class="md-nav__link">
+  <a href="#level-1-top-level-conditions" class="md-nav__link">
     <span class="md-ellipsis">
-      Understanding Dataset Types
+      
+        Level 1: Top-Level Conditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#level-2-config-level-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Level 2: Config-Level Conditions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#level-3-field-level-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Level 3: Field-Level Conditions
+      
     </span>
   </a>
   
@@ -1315,146 +1594,24 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-understanding-data-relationships" class="md-nav__link">
+  <a href="#5-working-with-condition-definitions" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Understanding Data Relationships
+      
+        5. Working with Condition Definitions
+      
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-exploring-dataset-contents" class="md-nav__link">
+  <a href="#6-using-extract_metadata_schema-for-metadata-table-planning" class="md-nav__link">
     <span class="md-ellipsis">
-      5. Exploring Dataset Contents
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="5. Exploring Dataset Contents">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#extracting-field-values" class="md-nav__link">
-    <span class="md-ellipsis">
-      Extracting Field Values
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
       
-        <li class="md-nav__item">
-  <a href="#6-working-with-partitioned-data" class="md-nav__link">
-    <span class="md-ellipsis">
-      6. Working with Partitioned Data
-    </span>
-  </a>
-  
-</li>
+        6. Using extract_metadata_schema for Metadata Table Planning
       
-        <li class="md-nav__item">
-  <a href="#7-understanding-data-files" class="md-nav__link">
-    <span class="md-ellipsis">
-      7. Understanding Data Files
     </span>
   </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#8-practical-use-cases" class="md-nav__link">
-    <span class="md-ellipsis">
-      8. Practical Use Cases
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="8. Practical Use Cases">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#use-case-1-finding-datasets-with-specific-data-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      Use Case 1: Finding Datasets with Specific Data Types
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#use-case-2-understanding-data-schema-before-loading" class="md-nav__link">
-    <span class="md-ellipsis">
-      Use Case 2: Understanding Data Schema Before Loading
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#use-case-3-planning-efficient-data-access" class="md-nav__link">
-    <span class="md-ellipsis">
-      Use Case 3: Planning Efficient Data Access
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#9-error-handling-and-troubleshooting" class="md-nav__link">
-    <span class="md-ellipsis">
-      9. Error Handling and Troubleshooting
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#10-summary-and-next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      10. Summary and Next Steps
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="10. Summary and Next Steps">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#key-takeaways" class="md-nav__link">
-    <span class="md-ellipsis">
-      Key Takeaways:
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#next-steps" class="md-nav__link">
-    <span class="md-ellipsis">
-      Next Steps:
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-integration-with-hfqueryapi" class="md-nav__link">
-    <span class="md-ellipsis">
-      Example Integration with HfQueryAPI:
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1468,6 +1625,81 @@
           
           
             <div class="md-content" data-md-component="content">
+              
+                
+
+
+
+  
+
+
+  <nav class="md-path" aria-label="Navigation" >
+    <ol class="md-path__list">
+      
+        
+  
+  
+    <li class="md-path__item">
+      <a href="../.." class="md-path__link">
+        
+  <span class="md-ellipsis">
+    Home
+  </span>
+
+      </a>
+    </li>
+  
+
+      
+      
+        
+  
+  
+    
+    
+      
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Tutorials
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+        
+  
+  
+    
+    
+      <li class="md-path__item">
+        <a href="./" class="md-path__link">
+          
+  <span class="md-ellipsis">
+    Getting Started
+  </span>
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ol>
+  </nav>
+
+              
               <article class="md-content__inner md-typeset">
                 
                   
@@ -1932,14 +2164,14 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="datacard-tutorial-exploring-huggingface-genomics-datasets">DataCard Tutorial: Exploring HuggingFace Genomics Datasets<a class="anchor-link" href="#datacard-tutorial-exploring-huggingface-genomics-datasets">¶</a></h1><p>The <code>DataCard</code> class provides an easy-to-use interface for exploring HuggingFace dataset metadata without loading the actual genomic data. This is particularly useful for:</p>
+<h1 id="datacard-tutorial-exploring-huggingface-dataset-metadata">DataCard Tutorial: Exploring HuggingFace Dataset Metadata<a class="anchor-link" href="#datacard-tutorial-exploring-huggingface-dataset-metadata">¶</a></h1><p>The <code>DataCard</code> class provides an interface for exploring HuggingFace dataset metadata without loading the actual genomic data. This is particularly useful for:</p>
 <ul>
 <li>Understanding dataset structure and available configurations</li>
-<li>Exploring experimental conditions and regulators</li>
+<li>Exploring experimental conditions at all hierarchy levels</li>
 <li>Discovering metadata relationships</li>
-<li>Planning data analysis workflows</li>
+<li>Planning data analysis workflows and metadata table creation</li>
 </ul>
-<p>In this tutorial, we'll explore the <strong>BrentLab/rossi_2021</strong> dataset, which contains ChIP-exo data for transcription factor binding in yeast.</p>
+<p>In this tutorial, we'll explore the <strong>BrentLab/harbison_2004</strong> dataset, which contains ChIP-chip data for transcription factor binding across 14 environmental conditions in yeast.</p>
 </div>
 </div>
 </div>
@@ -1950,7 +2182,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="1-getting-started">1. Getting Started<a class="anchor-link" href="#1-getting-started">¶</a></h2><p>First, let's import the DataCard class and initialize it with our target dataset.</p>
+<h2 id="1-instantiating-a-datacard-object">1. Instantiating a DataCard Object<a class="anchor-link" href="#1-instantiating-a-datacard-object">¶</a></h2>
 </div>
 </div>
 </div>
@@ -1960,7 +2192,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-1">
@@ -1973,19 +2205,15 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tfbpapi.datainfo</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataCard</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tfbpapi.datacard</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataCard</span>
 
-<span class="c1"># Initialize DataCard with the Rossi 2021 dataset</span>
-<span class="c1"># try this with mahendrawada_2025, which is more complex</span>
-<span class="n">card</span> <span class="o">=</span> <span class="n">DataCard</span><span class="p">(</span><span class="s1">'BrentLab/mahendrawada_2025'</span><span class="p">)</span>
+<span class="n">card</span> <span class="o">=</span> <span class="n">DataCard</span><span class="p">(</span><span class="s1">'BrentLab/harbison_2004'</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Repository: </span><span class="si">{</span><span class="n">card</span><span class="o">.</span><span class="n">repo_id</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">from tfbpapi.datainfo import DataCard
+<div class="clipboard-copy-txt" id="cell-1">from tfbpapi.datacard import DataCard
 
-# Initialize DataCard with the Rossi 2021 dataset
-# try this with mahendrawada_2025, which is more complex
-card = DataCard('BrentLab/mahendrawada_2025')
+card = DataCard('BrentLab/harbison_2004')
 
 print(f"Repository: {card.repo_id}")</div>
 </div>
@@ -1999,15 +2227,7 @@ print(f"Repository: {card.repo_id}")</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Repository: BrentLab/mahendrawada_2025
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>/home/chase/code/tfbp/tfbpapi/.venv/lib/python3.11/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
-  from .autonotebook import tqdm as notebook_tqdm
+<pre>Repository: BrentLab/harbison_2004
 </pre>
 </div>
 </div>
@@ -2031,7 +2251,7 @@ print(f"Repository: {card.repo_id}")</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-2">
@@ -2072,16 +2292,16 @@ for key, value in repo_info.items():
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Repository Information:
 ========================================
-repo_id             : BrentLab/mahendrawada_2025
-pretty_name         : Mahendrawada 2025 ChEC-seq and Nascent RNA-seq data
+repo_id             : BrentLab/harbison_2004
+pretty_name         : Harbison, 2004 ChIP-chip
 license             : mit
-tags                : ['biology', 'genomics', 'yeast', 'transcription-factors', 'gene-expression', 'binding', 'chec', 'perturbation', 'rnaseq', 'nascent rnaseq']
+tags                : ['genomics', 'yeast', 'transcription', 'binding']
 language            : ['en']
-size_categories     : ['100K&lt;n&lt;1M']
-num_configs         : 6
-dataset_types       : ['genomic_features', 'metadata', 'genome_map', 'annotated_features', 'annotated_features', 'annotated_features']
+size_categories     : ['1M&lt;n&lt;10M']
+num_configs         : 1
+dataset_types       : ['annotated_features']
 total_files         : 7
-last_modified       : 2025-09-17T19:07:50+00:00
+last_modified       : 2025-12-16T20:28:09+00:00
 has_default_config  : True
 </pre>
 </div>
@@ -2095,7 +2315,7 @@ has_default_config  : True
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-3">
@@ -2130,26 +2350,16 @@ print(card.summary())</div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
 <pre>Dataset Summary:
 ==================================================
-Dataset: Mahendrawada 2025 ChEC-seq and Nascent RNA-seq data
-Repository: BrentLab/mahendrawada_2025
+Dataset: Harbison, 2004 ChIP-chip
+Repository: BrentLab/harbison_2004
 License: mit
-Configurations: 6
-Dataset Types: genomic_features, metadata, genome_map, annotated_features, annotated_features, annotated_features
-Tags: biology, genomics, yeast, transcription-factors, gene-expression, binding, chec, perturbation, rnaseq, nascent rnaseq
+Configurations: 1
+Dataset Types: annotated_features
+Tags: genomics, yeast, transcription, binding
 
 Configurations:
-  - genomic_features: genomic_features
-    Comprehensive genomic features and regulatory characteristics for yeast genes
-  - mahendrawada_2025_metadata: metadata
-    Metadata for ChEC-seq experiments describing transcription factors and experimental conditions
-  - chec_seq_genome_map: genome_map
-    Raw ChEC-seq signal data partitioned by experiment accession showing genome-wide binding profiles
-  - mahendrawada_chec_seq: annotated_features (default)
-    ChEC-seq transcription factor binding data with peak scores (original authors' processed data)
-  - reprocessed_chec_seq: annotated_features
-    ChEC-seq transcription factor binding data reprocessed with updated peak calling methodology
-  - rna_seq: annotated_features
-    Nascent RNA-seq differential expression data following transcription factor depletion using 4TU metabolic labeling
+  - harbison_2004: annotated_features (default)
+    ChIP-chip transcription factor binding data with environmental conditions
 </pre>
 </div>
 </div>
@@ -2163,7 +2373,7 @@ Configurations:
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="3-exploring-configurations">3. Exploring Configurations<a class="anchor-link" href="#3-exploring-configurations">¶</a></h2><p>Datasets can have multiple configurations representing different types of data. Let's explore what's available in this dataset.</p>
+<h2 id="3-exploring-configurations">3. Exploring Configurations<a class="anchor-link" href="#3-exploring-configurations">¶</a></h2><p>Datasets can have multiple configurations representing different types of data.</p>
 </div>
 </div>
 </div>
@@ -2173,7 +2383,7 @@ Configurations:
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-4">
@@ -2218,45 +2428,15 @@ for config in card.configs:
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Number of configurations: 6
+<pre>Number of configurations: 1
 
 Configuration details:
 
-• genomic_features:
-  Type: genomic_features
-  Default: False
-  Description: Comprehensive genomic features and regulatory characteristics for yeast genes
-  Features: 24
-
-• mahendrawada_2025_metadata:
-  Type: metadata
-  Default: False
-  Description: Metadata for ChEC-seq experiments describing transcription factors and experimental conditions
-  Features: 7
-
-• chec_seq_genome_map:
-  Type: genome_map
-  Default: False
-  Description: Raw ChEC-seq signal data partitioned by experiment accession showing genome-wide binding profiles
-  Features: 3
-
-• mahendrawada_chec_seq:
+• harbison_2004:
   Type: annotated_features
   Default: True
-  Description: ChEC-seq transcription factor binding data with peak scores (original authors' processed data)
-  Features: 6
-
-• reprocessed_chec_seq:
-  Type: annotated_features
-  Default: False
-  Description: ChEC-seq transcription factor binding data reprocessed with updated peak calling methodology
-  Features: 6
-
-• rna_seq:
-  Type: annotated_features
-  Default: False
-  Description: Nascent RNA-seq differential expression data following transcription factor depletion using 4TU metabolic labeling
-  Features: 5
+  Description: ChIP-chip transcription factor binding data with environmental conditions
+  Features: 7
 </pre>
 </div>
 </div>
@@ -2270,12 +2450,24 @@ Configuration details:
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="understanding-dataset-types">Understanding Dataset Types<a class="anchor-link" href="#understanding-dataset-types">¶</a></h3><p>The Rossi 2021 dataset contains two types of configurations:</p>
-<ul>
-<li><strong><code>metadata</code></strong>: Experimental metadata describing each ChIP-exo sample</li>
-<li><strong><code>genome_map</code></strong>: Position-level ChIP-exo tag coverage data</li>
-</ul>
-<p>Let's explore each configuration in detail.</p>
+<h2 id="4-understanding-experimental-conditions-the-three-level-hierarchy">4. Understanding Experimental Conditions: The Three-Level Hierarchy<a class="anchor-link" href="#4-understanding-experimental-conditions-the-three-level-hierarchy">¶</a></h2><p>The tfbpapi system supports experimental conditions at three hierarchy levels:</p>
+<ol>
+<li><strong>Top-level (repo-wide)</strong>: Conditions common to all datasets/samples</li>
+<li><strong>Config-level</strong>: Conditions specific to a dataset configuration</li>
+<li><strong>Field-level</strong>: Conditions that vary per sample, defined in field definitions</li>
+</ol>
+<p>Let's explore each level for the Harbison 2004 dataset.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="level-1-top-level-conditions">Level 1: Top-Level Conditions<a class="anchor-link" href="#level-1-top-level-conditions">¶</a></h3><p>Top-level conditions apply to all experiments in the repository.</p>
 </div>
 </div>
 </div>
@@ -2285,7 +2477,7 @@ Configuration details:
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-5">
@@ -2298,33 +2490,31 @@ Configuration details:
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Explore the metadata configuration</span>
-<span class="n">metadata_info</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">explore_config</span><span class="p">(</span><span class="s1">'metadata'</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Get top-level experimental conditions</span>
+<span class="n">top_conditions</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get_experimental_conditions</span><span class="p">()</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Metadata Configuration Details:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Top-Level Experimental Conditions:"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Config name: </span><span class="si">{</span><span class="n">metadata_info</span><span class="p">[</span><span class="s1">'config_name'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Dataset type: </span><span class="si">{</span><span class="n">metadata_info</span><span class="p">[</span><span class="s1">'dataset_type'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Number of features: </span><span class="si">{</span><span class="n">metadata_info</span><span class="p">[</span><span class="s1">'num_features'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Default config: </span><span class="si">{</span><span class="n">metadata_info</span><span class="p">[</span><span class="s1">'is_default'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Features in metadata config:"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">metadata_info</span><span class="p">[</span><span class="s1">'features'</span><span class="p">]:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  • </span><span class="si">{</span><span class="n">feature</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">:</span><span class="s2">20</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">feature</span><span class="p">[</span><span class="s1">'dtype'</span><span class="p">]</span><span class="si">:</span><span class="s2">10</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">feature</span><span class="p">[</span><span class="s1">'description'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">top_conditions</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">top_conditions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"No top-level conditions defined for this repository"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"(All conditions are defined at config or field level)"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-5"># Explore the metadata configuration
-metadata_info = card.explore_config('metadata')
+<div class="clipboard-copy-txt" id="cell-5"># Get top-level experimental conditions
+top_conditions = card.get_experimental_conditions()
 
-print("Metadata Configuration Details:")
+print("Top-Level Experimental Conditions:")
 print("=" * 40)
-print(f"Config name: {metadata_info['config_name']}")
-print(f"Dataset type: {metadata_info['dataset_type']}")
-print(f"Number of features: {metadata_info['num_features']}")
-print(f"Default config: {metadata_info['is_default']}")
 
-print("\nFeatures in metadata config:")
-for feature in metadata_info['features']:
-    print(f"  • {feature['name']:20} ({feature['dtype']:10}): {feature['description']}")</div>
+if top_conditions:
+    for key, value in top_conditions.items():
+        print(f"{key}: {value}")
+else:
+    print("No top-level conditions defined for this repository")
+    print("(All conditions are defined at config or field level)")</div>
 </div>
 </div>
 </div>
@@ -2335,30 +2525,25 @@ for feature in metadata_info['features']:
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>
-<span class="ansi-red-fg">---------------------------------------------------------------------------</span>
-<span class="ansi-red-fg">DataCardError</span>                             Traceback (most recent call last)
-<span class="ansi-cyan-fg">Cell</span><span class="ansi-cyan-fg"> </span><span class="ansi-green-fg">In[5]</span><span class="ansi-green-fg">, line 2</span>
-<span class="ansi-green-fg">      1</span> <span style="color: rgb(95,135,135)"># Explore the metadata configuration</span>
-<span class="ansi-green-fg">----&gt; </span><span class="ansi-green-fg">2</span> metadata_info = <span class="ansi-yellow-bg">card</span><span class="ansi-yellow-bg">.</span><span class="ansi-yellow-bg">explore_config</span><span class="ansi-yellow-bg">(</span><span class="ansi-yellow-fg ansi-yellow-bg">'</span><span class="ansi-yellow-fg ansi-yellow-bg">metadata</span><span class="ansi-yellow-fg ansi-yellow-bg">'</span><span class="ansi-yellow-bg">)</span>
-<span class="ansi-green-fg">      4</span> <span style="color: rgb(0,135,0)">print</span>(<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">Metadata Configuration Details:</span><span class="ansi-yellow-fg">"</span>)
-<span class="ansi-green-fg">      5</span> <span style="color: rgb(0,135,0)">print</span>(<span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">=</span><span class="ansi-yellow-fg">"</span> * <span class="ansi-green-fg">40</span>)
-
-<span class="ansi-cyan-fg">File </span><span class="ansi-green-fg">~/code/tfbp/tfbpapi/tfbpapi/datainfo/datacard.py:291</span>, in <span class="ansi-cyan-fg">DataCard.explore_config</span><span class="ansi-blue-fg">(self, config_name)</span>
-<span class="ansi-green-fg">    289</span> config = <span style="color: rgb(0,135,0)">self</span>.get_config(config_name)
-<span class="ansi-green-fg">    290</span> <span class="ansi-bold" style="color: rgb(0,135,0)">if</span> <span class="ansi-bold" style="color: rgb(175,0,255)">not</span> config:
-<span class="ansi-green-fg">--&gt; </span><span class="ansi-green-fg">291</span>     <span class="ansi-bold" style="color: rgb(0,135,0)">raise</span> DataCardError(<span class="ansi-yellow-fg">f</span><span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">Configuration </span><span class="ansi-yellow-fg">'</span><span class="ansi-bold" style="color: rgb(175,95,135)">{</span>config_name<span class="ansi-bold" style="color: rgb(175,95,135)">}</span><span class="ansi-yellow-fg">'</span><span class="ansi-yellow-fg"> not found</span><span class="ansi-yellow-fg">"</span>)
-<span class="ansi-green-fg">    293</span> info: <span style="color: rgb(0,135,0)">dict</span>[<span style="color: rgb(0,135,0)">str</span>, Any] = {
-<span class="ansi-green-fg">    294</span>     <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">config_name</span><span class="ansi-yellow-fg">"</span>: config.config_name,
-<span class="ansi-green-fg">    295</span>     <span class="ansi-yellow-fg">"</span><span class="ansi-yellow-fg">description</span><span class="ansi-yellow-fg">"</span>: config.description,
-<span class="ansi-green-fg">   (...)</span><span class="ansi-green-fg">    305</span>     ],
-<span class="ansi-green-fg">    306</span> }
-<span class="ansi-green-fg">    308</span> <span style="color: rgb(95,135,135)"># Add partitioning info if present</span>
-
-<span class="ansi-red-fg">DataCardError</span>: Configuration 'metadata' not found</pre>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>Top-Level Experimental Conditions:
+========================================
+No top-level conditions defined for this repository
+(All conditions are defined at config or field level)
+</pre>
 </div>
 </div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="level-2-config-level-conditions">Level 2: Config-Level Conditions<a class="anchor-link" href="#level-2-config-level-conditions">¶</a></h3><p>Config-level conditions apply to all samples in a specific configuration.</p>
 </div>
 </div>
 </div>
@@ -2368,7 +2553,7 @@ for feature in metadata_info['features']:
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-6">
@@ -2381,47 +2566,31 @@ for feature in metadata_info['features']:
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Explore the genome_map configuration</span>
-<span class="n">genome_map_info</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">explore_config</span><span class="p">(</span><span class="s1">'genome_map'</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Get config-level conditions (merged with top-level)</span>
+<span class="n">config_conditions</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get_experimental_conditions</span><span class="p">(</span><span class="s1">'harbison_2004'</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Genome Map Configuration Details:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Config-Level Experimental Conditions:"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Config name: </span><span class="si">{</span><span class="n">genome_map_info</span><span class="p">[</span><span class="s1">'config_name'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Dataset type: </span><span class="si">{</span><span class="n">genome_map_info</span><span class="p">[</span><span class="s1">'dataset_type'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Number of features: </span><span class="si">{</span><span class="n">genome_map_info</span><span class="p">[</span><span class="s1">'num_features'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Features in genome_map config:"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">genome_map_info</span><span class="p">[</span><span class="s1">'features'</span><span class="p">]:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  • </span><span class="si">{</span><span class="n">feature</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span><span class="si">:</span><span class="s2">15</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">feature</span><span class="p">[</span><span class="s1">'dtype'</span><span class="p">]</span><span class="si">:</span><span class="s2">10</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">feature</span><span class="p">[</span><span class="s1">'description'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-<span class="c1"># Check if this config has partitioning</span>
-<span class="k">if</span> <span class="s1">'partitioning'</span> <span class="ow">in</span> <span class="n">genome_map_info</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Partitioning Information:"</span><span class="p">)</span>
-    <span class="n">partitioning</span> <span class="o">=</span> <span class="n">genome_map_info</span><span class="p">[</span><span class="s1">'partitioning'</span><span class="p">]</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Enabled: </span><span class="si">{</span><span class="n">partitioning</span><span class="p">[</span><span class="s1">'enabled'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Partition by: </span><span class="si">{</span><span class="n">partitioning</span><span class="p">[</span><span class="s1">'partition_by'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Path template: </span><span class="si">{</span><span class="n">partitioning</span><span class="p">[</span><span class="s1">'path_template'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">config_conditions</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">config_conditions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"No config-level conditions defined"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"(Conditions vary per sample at field level)"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-6"># Explore the genome_map configuration
-genome_map_info = card.explore_config('genome_map')
+<div class="clipboard-copy-txt" id="cell-6"># Get config-level conditions (merged with top-level)
+config_conditions = card.get_experimental_conditions('harbison_2004')
 
-print("Genome Map Configuration Details:")
+print("Config-Level Experimental Conditions:")
 print("=" * 40)
-print(f"Config name: {genome_map_info['config_name']}")
-print(f"Dataset type: {genome_map_info['dataset_type']}")
-print(f"Number of features: {genome_map_info['num_features']}")
 
-print("\nFeatures in genome_map config:")
-for feature in genome_map_info['features']:
-    print(f"  • {feature['name']:15} ({feature['dtype']:10}): {feature['description']}")
-
-# Check if this config has partitioning
-if 'partitioning' in genome_map_info:
-    print("\nPartitioning Information:")
-    partitioning = genome_map_info['partitioning']
-    print(f"  Enabled: {partitioning['enabled']}")
-    print(f"  Partition by: {partitioning['partition_by']}")
-    print(f"  Path template: {partitioning['path_template']}")</div>
+if config_conditions:
+    for key, value in config_conditions.items():
+        print(f"{key}: {value}")
+else:
+    print("No config-level conditions defined")
+    print("(Conditions vary per sample at field level)")</div>
 </div>
 </div>
 </div>
@@ -2433,21 +2602,10 @@ if 'partitioning' in genome_map_info:
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Genome Map Configuration Details:
+<pre>Config-Level Experimental Conditions:
 ========================================
-Config name: genome_map
-Dataset type: genome_map
-Number of features: 3
-
-Features in genome_map config:
-  • chr             (string    ): Chromosome name (e.g., chrI, chrII, etc.)
-  • pos             (int32     ): Genomic position of the 5' tag
-  • pileup          (int32     ): Depth of coverage (number of 5' tags) at this genomic position
-
-Partitioning Information:
-  Enabled: True
-  Partition by: ['run_accession']
-  Path template: genome_map/accession={run_accession}/*.parquet
+No config-level conditions defined
+(Conditions vary per sample at field level)
 </pre>
 </div>
 </div>
@@ -2461,7 +2619,7 @@ Partitioning Information:
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="4-understanding-data-relationships">4. Understanding Data Relationships<a class="anchor-link" href="#4-understanding-data-relationships">¶</a></h2><p>The DataCard can help you understand how different configurations relate to each other, particularly metadata relationships.</p>
+<h3 id="level-3-field-level-conditions">Level 3: Field-Level Conditions<a class="anchor-link" href="#level-3-field-level-conditions">¶</a></h3><p>Field-level conditions vary per sample and are defined in field definitions.</p>
 </div>
 </div>
 </div>
@@ -2471,7 +2629,7 @@ Partitioning Information:
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [20]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-7">
@@ -2484,35 +2642,29 @@ Partitioning Information:
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Explore metadata relationships</span>
-<span class="n">relationships</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get_metadata_relationships</span><span class="p">()</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Get definitions for the 'condition' field</span>
+<span class="c1"># This maps each condition value to its detailed specification</span>
+<span class="n">condition_defs</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get_field_definitions</span><span class="p">(</span><span class="s1">'harbison_2004'</span><span class="p">,</span> <span class="s1">'condition'</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">relationships</span><span class="p">)</span><span class="si">}</span><span class="s2"> metadata relationships:"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Relationship details:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Condition Field Definitions:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">condition_defs</span><span class="p">)</span><span class="si">}</span><span class="s2"> defined conditions:</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
 
-<span class="k">for</span> <span class="n">rel</span> <span class="ow">in</span> <span class="n">relationships</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  • </span><span class="si">{</span><span class="n">rel</span><span class="o">.</span><span class="n">data_config</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">rel</span><span class="o">.</span><span class="n">metadata_config</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    Type: </span><span class="si">{</span><span class="n">rel</span><span class="o">.</span><span class="n">relationship_type</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">rel</span><span class="o">.</span><span class="n">relationship_type</span> <span class="o">==</span> <span class="s2">"explicit"</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">"    (Metadata config explicitly specifies which data configs it applies to)"</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">rel</span><span class="o">.</span><span class="n">relationship_type</span> <span class="o">==</span> <span class="s2">"embedded"</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">"    (Metadata is embedded within the data config itself)"</span><span class="p">)</span>
+<span class="c1"># Show all condition names</span>
+<span class="k">for</span> <span class="n">cond_name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">condition_defs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  • </span><span class="si">{</span><span class="n">cond_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-7"># Explore metadata relationships
-relationships = card.get_metadata_relationships()
+<div class="clipboard-copy-txt" id="cell-7"># Get definitions for the 'condition' field
+# This maps each condition value to its detailed specification
+condition_defs = card.get_field_definitions('harbison_2004', 'condition')
 
-print(f"Found {len(relationships)} metadata relationships:")
-print("\nRelationship details:")
+print(f"Condition Field Definitions:")
+print("=" * 40)
+print(f"Found {len(condition_defs)} defined conditions:\n")
 
-for rel in relationships:
-    print(f"  • {rel.data_config} -&gt; {rel.metadata_config}")
-    print(f"    Type: {rel.relationship_type}")
-
-    if rel.relationship_type == "explicit":
-        print("    (Metadata config explicitly specifies which data configs it applies to)")
-    elif rel.relationship_type == "embedded":
-        print("    (Metadata is embedded within the data config itself)")</div>
+# Show all condition names
+for cond_name in sorted(condition_defs.keys()):
+    print(f"  • {cond_name}")</div>
 </div>
 </div>
 </div>
@@ -2524,26 +2676,27 @@ for rel in relationships:
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Found 1 metadata relationships:
+<pre>Condition Field Definitions:
+========================================
+Found 14 defined conditions:
 
-Relationship details:
-  • genome_map -&gt; metadata
-    Type: explicit
-    (Metadata config explicitly specifies which data configs it applies to)
+  • Acid
+  • Alpha
+  • BUT14
+  • BUT90
+  • GAL
+  • H2O2Hi
+  • H2O2Lo
+  • HEAT
+  • Pi-
+  • RAFF
+  • RAPA
+  • SM
+  • Thi-
+  • YPD
 </pre>
 </div>
 </div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="5-exploring-dataset-contents">5. Exploring Dataset Contents<a class="anchor-link" href="#5-exploring-dataset-contents">¶</a></h2><p>Now let's explore what experimental data is available in this dataset.</p>
 </div>
 </div>
 </div>
@@ -2553,7 +2706,7 @@ Relationship details:
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [21]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-8">
@@ -2566,37 +2719,25 @@ Relationship details:
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Get different config types</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">tfbpapi.datainfo.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetType</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Explore a specific condition in detail</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
 
-<span class="c1"># Find metadata configs</span>
-<span class="n">metadata_configs</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get_configs_by_type</span><span class="p">(</span><span class="n">DatasetType</span><span class="o">.</span><span class="n">METADATA</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Metadata configurations: </span><span class="si">{</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">config_name</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">metadata_configs</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="c1"># Let's look at the YPD baseline condition</span>
+<span class="n">ypd_def</span> <span class="o">=</span> <span class="n">condition_defs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'YPD'</span><span class="p">,</span> <span class="p">{})</span>
 
-<span class="c1"># Find data configs</span>
-<span class="n">data_configs</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get_configs_by_type</span><span class="p">(</span><span class="n">DatasetType</span><span class="o">.</span><span class="n">GENOME_MAP</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Data configurations: </span><span class="si">{</span><span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">config_name</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="n">data_configs</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-<span class="c1"># Get the default config</span>
-<span class="n">default_config</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">dataset_card</span><span class="o">.</span><span class="n">get_default_config</span><span class="p">()</span>
-<span class="k">if</span> <span class="n">default_config</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Default configuration: </span><span class="si">{</span><span class="n">default_config</span><span class="o">.</span><span class="n">config_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"YPD Condition Definition:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">ypd_def</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-8"># Get different config types
-from tfbpapi.datainfo.models import DatasetType
+<div class="clipboard-copy-txt" id="cell-8"># Explore a specific condition in detail
+import json
 
-# Find metadata configs
-metadata_configs = card.get_configs_by_type(DatasetType.METADATA)
-print(f"Metadata configurations: {[c.config_name for c in metadata_configs]}")
+# Let's look at the YPD baseline condition
+ypd_def = condition_defs.get('YPD', {})
 
-# Find data configs
-data_configs = card.get_configs_by_type(DatasetType.GENOME_MAP)
-print(f"Data configurations: {[c.config_name for c in data_configs]}")
-
-# Get the default config
-default_config = card.dataset_card.get_default_config()
-if default_config:
-    print(f"\nDefault configuration: {default_config.config_name}")</div>
+print("YPD Condition Definition:")
+print("=" * 40)
+print(json.dumps(ypd_def, indent=2))</div>
 </div>
 </div>
 </div>
@@ -2608,24 +2749,37 @@ if default_config:
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Metadata configurations: ['metadata']
-Data configurations: ['genome_map']
-
-Default configuration: metadata
+<pre>YPD Condition Definition:
+========================================
+{
+  "description": "Rich media baseline condition",
+  "temperature_celsius": 30,
+  "growth_phase_at_harvest": {
+    "od600": 0.8
+  },
+  "media": {
+    "name": "YPD",
+    "carbon_source": [
+      {
+        "compound": "D-glucose",
+        "concentration_percent": 2
+      }
+    ],
+    "nitrogen_source": [
+      {
+        "compound": "yeast_extract",
+        "concentration_percent": 1
+      },
+      {
+        "compound": "peptone",
+        "concentration_percent": 2
+      }
+    ]
+  }
+}
 </pre>
 </div>
 </div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="extracting-field-values">Extracting Field Values<a class="anchor-link" href="#extracting-field-values">¶</a></h3><p>For exploration purposes, we can extract unique values from specific fields. This is particularly useful for understanding what experimental conditions or regulators are available.</p>
 </div>
 </div>
 </div>
@@ -2635,7 +2789,7 @@ Default configuration: metadata
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [22]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-9">
@@ -2648,29 +2802,19 @@ Default configuration: metadata
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Try to extract run accession information</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">accessions</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get_field_values</span><span class="p">(</span><span class="s1">'metadata'</span><span class="p">,</span> <span class="s1">'run_accession'</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">accessions</span><span class="p">)</span><span class="si">}</span><span class="s2"> unique run accessions:"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">accessions</span><span class="p">:</span>
-        <span class="n">sample_accessions</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">accessions</span><span class="p">))[:</span><span class="mi">5</span><span class="p">]</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Sample accessions: </span><span class="si">{</span><span class="n">sample_accessions</span><span class="si">}</span><span class="s2">..."</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">"No accessions found (might require partition-based extraction)"</span><span class="p">)</span>
-<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Could not extract accession values: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Let's look at a treatment condition (HEAT shock)</span>
+<span class="n">heat_def</span> <span class="o">=</span> <span class="n">condition_defs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'HEAT'</span><span class="p">,</span> <span class="p">{})</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"HEAT Condition Definition:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">heat_def</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-9"># Try to extract run accession information
-try:
-    accessions = card.get_field_values('metadata', 'run_accession')
-    print(f"Found {len(accessions)} unique run accessions:")
-    if accessions:
-        sample_accessions = sorted(list(accessions))[:5]
-        print(f"Sample accessions: {sample_accessions}...")
-    else:
-        print("No accessions found (might require partition-based extraction)")
-except Exception as e:
-    print(f"Could not extract accession values: {e}")</div>
+<div class="clipboard-copy-txt" id="cell-9"># Let's look at a treatment condition (HEAT shock)
+heat_def = condition_defs.get('HEAT', {})
+
+print("HEAT Condition Definition:")
+print("=" * 40)
+print(json.dumps(heat_def, indent=2))</div>
 </div>
 </div>
 </div>
@@ -2682,8 +2826,36 @@ except Exception as e:
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Found 0 unique run accessions:
-No accessions found (might require partition-based extraction)
+<pre>HEAT Condition Definition:
+========================================
+{
+  "description": "Heat shock stress condition",
+  "initial_temperature_celsius": 30,
+  "temperature_shift_celsius": 37,
+  "temperature_shift_duration_minutes": 45,
+  "growth_phase_at_harvest": {
+    "od600": 0.5
+  },
+  "media": {
+    "name": "YPD",
+    "carbon_source": [
+      {
+        "compound": "D-glucose",
+        "concentration_percent": 2
+      }
+    ],
+    "nitrogen_source": [
+      {
+        "compound": "yeast_extract",
+        "concentration_percent": 1
+      },
+      {
+        "compound": "peptone",
+        "concentration_percent": 2
+      }
+    ]
+  }
+}
 </pre>
 </div>
 </div>
@@ -2697,7 +2869,7 @@ No accessions found (might require partition-based extraction)
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="6-working-with-partitioned-data">6. Working with Partitioned Data<a class="anchor-link" href="#6-working-with-partitioned-data">¶</a></h2><p>Many genomics datasets are partitioned for efficient storage and querying. Let's explore how partitioning works in this dataset.</p>
+<h2 id="5-working-with-condition-definitions">5. Working with Condition Definitions<a class="anchor-link" href="#5-working-with-condition-definitions">¶</a></h2><p>Now let's see how to extract specific information from condition definitions.</p>
 </div>
 </div>
 </div>
@@ -2707,7 +2879,7 @@ No accessions found (might require partition-based extraction)
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [23]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-10">
@@ -2720,43 +2892,27 @@ No accessions found (might require partition-based extraction)
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Check partitioning details for the genome_map config</span>
-<span class="n">genome_map_config</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">'genome_map'</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Extract growth media names for all conditions</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Growth Media Across Conditions:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
 
-<span class="k">if</span> <span class="n">genome_map_config</span> <span class="ow">and</span> <span class="n">genome_map_config</span><span class="o">.</span><span class="n">dataset_info</span><span class="o">.</span><span class="n">partitioning</span><span class="p">:</span>
-    <span class="n">part_info</span> <span class="o">=</span> <span class="n">genome_map_config</span><span class="o">.</span><span class="n">dataset_info</span><span class="o">.</span><span class="n">partitioning</span>
+<span class="k">for</span> <span class="n">cond_name</span><span class="p">,</span> <span class="n">cond_def</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">condition_defs</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+    <span class="c1"># Navigate the nested structure</span>
+    <span class="n">media</span> <span class="o">=</span> <span class="n">cond_def</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'media'</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">media_name</span> <span class="o">=</span> <span class="n">media</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'name'</span><span class="p">,</span> <span class="s1">'unspecified'</span><span class="p">)</span>
 
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Partitioning Details:"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">30</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Enabled: </span><span class="si">{</span><span class="n">part_info</span><span class="o">.</span><span class="n">enabled</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Partition columns: </span><span class="si">{</span><span class="n">part_info</span><span class="o">.</span><span class="n">partition_by</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Path template: </span><span class="si">{</span><span class="n">part_info</span><span class="o">.</span><span class="n">path_template</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">This means:"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"• The genome map data is split into separate files for each run_accession"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"• Files are organized as: genome_map/accession=</span><span class="si">{run_accession}</span><span class="s2">/*.parquet"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"• This allows efficient querying of specific experimental runs"</span><span class="p">)</span>
-<span class="k">else</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"No partitioning information found."</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">cond_name</span><span class="si">:</span><span class="s2">10</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">media_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-10"># Check partitioning details for the genome_map config
-genome_map_config = card.get_config('genome_map')
+<div class="clipboard-copy-txt" id="cell-10"># Extract growth media names for all conditions
+print("Growth Media Across Conditions:")
+print("=" * 40)
 
-if genome_map_config and genome_map_config.dataset_info.partitioning:
-    part_info = genome_map_config.dataset_info.partitioning
+for cond_name, cond_def in sorted(condition_defs.items()):
+    # Navigate the nested structure
+    media = cond_def.get('media', {})
+    media_name = media.get('name', 'unspecified')
 
-    print("Partitioning Details:")
-    print("=" * 30)
-    print(f"Enabled: {part_info.enabled}")
-    print(f"Partition columns: {part_info.partition_by}")
-    print(f"Path template: {part_info.path_template}")
-
-    print("\nThis means:")
-    print("• The genome map data is split into separate files for each run_accession")
-    print("• Files are organized as: genome_map/accession={run_accession}/*.parquet")
-    print("• This allows efficient querying of specific experimental runs")
-else:
-    print("No partitioning information found.")</div>
+    print(f"  {cond_name:10}: {media_name}")</div>
 </div>
 </div>
 </div>
@@ -2768,30 +2924,25 @@ else:
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Partitioning Details:
-==============================
-Enabled: True
-Partition columns: ['run_accession']
-Path template: genome_map/accession={run_accession}/*.parquet
-
-This means:
-• The genome map data is split into separate files for each run_accession
-• Files are organized as: genome_map/accession={run_accession}/*.parquet
-• This allows efficient querying of specific experimental runs
+<pre>Growth Media Across Conditions:
+========================================
+  Acid      : YPD
+  Alpha     : YPD
+  BUT14     : YPD
+  BUT90     : YPD
+  GAL       : yeast_extract_peptone
+  H2O2Hi    : YPD
+  H2O2Lo    : YPD
+  HEAT      : YPD
+  Pi-       : synthetic_complete_minus_phosphate
+  RAFF      : yeast_extract_peptone
+  RAPA      : YPD
+  SM        : synthetic_complete
+  Thi-      : synthetic_complete_minus_thiamine
+  YPD       : YPD
 </pre>
 </div>
 </div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="7-understanding-data-files">7. Understanding Data Files<a class="anchor-link" href="#7-understanding-data-files">¶</a></h2><p>Let's examine how the data files are organized within each configuration.</p>
 </div>
 </div>
 </div>
@@ -2801,7 +2952,7 @@ This means:
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [24]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-11">
@@ -2814,37 +2965,9 @@ This means:
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Examine data files for each configuration</span>
-<span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">card</span><span class="o">.</span><span class="n">configs</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Data files for '</span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">config_name</span><span class="si">}</span><span class="s2">' config:"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"-"</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">data_file</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">data_files</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  File </span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    Split: </span><span class="si">{</span><span class="n">data_file</span><span class="o">.</span><span class="n">split</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    Path: </span><span class="si">{</span><span class="n">data_file</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-        <span class="c1"># Explain path patterns</span>
-        <span class="k">if</span> <span class="s1">'*'</span> <span class="ow">in</span> <span class="n">data_file</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    - This is a glob pattern that matches multiple files"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s1">'='</span> <span class="ow">in</span> <span class="n">data_file</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    - This uses partitioned directory structure"</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">condition_defs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"YPD"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-11"># Examine data files for each configuration
-for config in card.configs:
-    print(f"\nData files for '{config.config_name}' config:")
-    print("-" * 40)
-
-    for i, data_file in enumerate(config.data_files):
-        print(f"  File {i+1}:")
-        print(f"    Split: {data_file.split}")
-        print(f"    Path: {data_file.path}")
-
-        # Explain path patterns
-        if '*' in data_file.path:
-            print(f"    - This is a glob pattern that matches multiple files")
-        if '=' in data_file.path:
-            print(f"    - This uses partitioned directory structure")</div>
+<div class="clipboard-copy-txt" id="cell-11">condition_defs.get("YPD")</div>
 </div>
 </div>
 </div>
@@ -2853,47 +2976,19 @@ for config in card.configs:
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>
-Data files for 'metadata' config:
-----------------------------------------
-  File 1:
-    Split: train
-    Path: rossi_2021_metadata.parquet
-
-Data files for 'genome_map' config:
-----------------------------------------
-  File 1:
-    Split: train
-    Path: genome_map/*/*.parquet
-    - This is a glob pattern that matches multiple files
-</pre>
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[24]:</div>
+<div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
+<pre>{'description': 'Rich media baseline condition',
+ 'temperature_celsius': 30,
+ 'growth_phase_at_harvest': {'od600': 0.8},
+ 'media': {'name': 'YPD',
+  'carbon_source': [{'compound': 'D-glucose', 'concentration_percent': 2}],
+  'nitrogen_source': [{'compound': 'yeast_extract',
+    'concentration_percent': 1},
+   {'compound': 'peptone', 'concentration_percent': 2}]}}</pre>
 </div>
 </div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="8-practical-use-cases">8. Practical Use Cases<a class="anchor-link" href="#8-practical-use-cases">¶</a></h2><p>Here are some common scenarios where DataCard is useful:</p>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="use-case-1-finding-datasets-with-specific-data-types">Use Case 1: Finding Datasets with Specific Data Types<a class="anchor-link" href="#use-case-1-finding-datasets-with-specific-data-types">¶</a></h3>
 </div>
 </div>
 </div>
@@ -2903,7 +2998,7 @@ Data files for 'genome_map' config:
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [25]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-12">
@@ -2916,21 +3011,39 @@ Data files for 'genome_map' config:
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Check what types of data are available</span>
-<span class="n">available_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">config</span><span class="o">.</span><span class="n">dataset_type</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">card</span><span class="o">.</span><span class="n">configs</span><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Available dataset types: </span><span class="si">{</span><span class="n">available_types</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Extract temperature conditions</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Temperature Across Conditions:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
 
-<span class="c1"># Check if this dataset has genome-wide binding data</span>
-<span class="n">has_genome_map</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">dataset_type</span> <span class="o">==</span> <span class="n">DatasetType</span><span class="o">.</span><span class="n">GENOME_MAP</span> <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">card</span><span class="o">.</span><span class="n">configs</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Has genome-wide binding data: </span><span class="si">{</span><span class="n">has_genome_map</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">cond_name</span><span class="p">,</span> <span class="n">cond_def</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">condition_defs</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+    <span class="n">env_conds</span> <span class="o">=</span> <span class="n">cond_def</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'environmental_conditions'</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">temp</span> <span class="o">=</span> <span class="n">env_conds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'temperature_celsius'</span><span class="p">,</span> <span class="s1">'not specified'</span><span class="p">)</span>
+
+    <span class="c1"># Also check for temperature shifts</span>
+    <span class="n">temp_shift</span> <span class="o">=</span> <span class="n">env_conds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'temperature_shift'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">temp_shift</span><span class="p">:</span>
+        <span class="n">from_temp</span> <span class="o">=</span> <span class="n">temp_shift</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'from_celsius'</span><span class="p">,</span> <span class="s1">'?'</span><span class="p">)</span>
+        <span class="n">to_temp</span> <span class="o">=</span> <span class="n">temp_shift</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'to_celsius'</span><span class="p">,</span> <span class="s1">'?'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">cond_name</span><span class="si">:</span><span class="s2">10</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">from_temp</span><span class="si">}</span><span class="s2">°C → </span><span class="si">{</span><span class="n">to_temp</span><span class="si">}</span><span class="s2">°C"</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">cond_name</span><span class="si">:</span><span class="s2">10</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">temp</span><span class="si">}</span><span class="s2">°C"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-12"># Check what types of data are available
-available_types = [config.dataset_type.value for config in card.configs]
-print(f"Available dataset types: {available_types}")
+<div class="clipboard-copy-txt" id="cell-12"># Extract temperature conditions
+print("Temperature Across Conditions:")
+print("=" * 40)
 
-# Check if this dataset has genome-wide binding data
-has_genome_map = any(config.dataset_type == DatasetType.GENOME_MAP for config in card.configs)
-print(f"\nHas genome-wide binding data: {has_genome_map}")</div>
+for cond_name, cond_def in sorted(condition_defs.items()):
+    env_conds = cond_def.get('environmental_conditions', {})
+    temp = env_conds.get('temperature_celsius', 'not specified')
+
+    # Also check for temperature shifts
+    temp_shift = env_conds.get('temperature_shift')
+    if temp_shift:
+        from_temp = temp_shift.get('from_celsius', '?')
+        to_temp = temp_shift.get('to_celsius', '?')
+        print(f"  {cond_name:10}: {from_temp}°C → {to_temp}°C")
+    else:
+        print(f"  {cond_name:10}: {temp}°C")</div>
 </div>
 </div>
 </div>
@@ -2942,9 +3055,22 @@ print(f"\nHas genome-wide binding data: {has_genome_map}")</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Available dataset types: ['metadata', 'genome_map']
-
-Has genome-wide binding data: True
+<pre>Temperature Across Conditions:
+========================================
+  Acid      : not specified°C
+  Alpha     : not specified°C
+  BUT14     : not specified°C
+  BUT90     : not specified°C
+  GAL       : not specified°C
+  H2O2Hi    : not specified°C
+  H2O2Lo    : not specified°C
+  HEAT      : not specified°C
+  Pi-       : not specified°C
+  RAFF      : not specified°C
+  RAPA      : not specified°C
+  SM        : not specified°C
+  Thi-      : not specified°C
+  YPD       : not specified°C
 </pre>
 </div>
 </div>
@@ -2958,7 +3084,7 @@ Has genome-wide binding data: True
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="use-case-2-understanding-data-schema-before-loading">Use Case 2: Understanding Data Schema Before Loading<a class="anchor-link" href="#use-case-2-understanding-data-schema-before-loading">¶</a></h3>
+<h2 id="6-using-extract_metadata_schema-for-metadata-table-planning">6. Using extract_metadata_schema for Metadata Table Planning<a class="anchor-link" href="#6-using-extract_metadata_schema-for-metadata-table-planning">¶</a></h2><p>The <code>extract_metadata_schema</code> method provides all condition information in one call, which is useful for planning metadata table creation.</p>
 </div>
 </div>
 </div>
@@ -2968,7 +3094,7 @@ Has genome-wide binding data: True
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [26]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-13">
@@ -2981,43 +3107,29 @@ Has genome-wide binding data: True
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Before loading large genome map data, understand its structure</span>
-<span class="n">genome_config</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">'genome_map'</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Extract complete metadata schema</span>
+<span class="n">schema</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">extract_metadata_schema</span><span class="p">(</span><span class="s1">'harbison_2004'</span><span class="p">)</span>
 
-<span class="k">if</span> <span class="n">genome_config</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Genome Map Data Schema:"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">30</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">genome_config</span><span class="o">.</span><span class="n">dataset_info</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Column: </span><span class="si">{</span><span class="n">feature</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Type: </span><span class="si">{</span><span class="n">feature</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  Description: </span><span class="si">{</span><span class="n">feature</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">()</span>
-
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"This tells us:"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"• 'chr' column contains chromosome names (string)"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"• 'pos' column contains genomic positions (int32)"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"• 'pileup' column contains tag counts (int32)"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"• Data represents 5' tag coverage from ChIP-exo experiments"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Metadata Schema Summary:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">40</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Regulator fields: </span><span class="si">{</span><span class="n">schema</span><span class="p">[</span><span class="s1">'regulator_fields'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Target fields: </span><span class="si">{</span><span class="n">schema</span><span class="p">[</span><span class="s1">'target_fields'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Condition fields: </span><span class="si">{</span><span class="n">schema</span><span class="p">[</span><span class="s1">'condition_fields'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Top-level conditions: </span><span class="si">{</span><span class="n">schema</span><span class="p">[</span><span class="s1">'top_level_conditions'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Config-level conditions: </span><span class="si">{</span><span class="n">schema</span><span class="p">[</span><span class="s1">'config_level_conditions'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Field definitions available for: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">schema</span><span class="p">[</span><span class="s1">'condition_definitions'</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-13"># Before loading large genome map data, understand its structure
-genome_config = card.get_config('genome_map')
+<div class="clipboard-copy-txt" id="cell-13"># Extract complete metadata schema
+schema = card.extract_metadata_schema('harbison_2004')
 
-if genome_config:
-    print("Genome Map Data Schema:")
-    print("=" * 30)
-
-    for feature in genome_config.dataset_info.features:
-        print(f"Column: {feature.name}")
-        print(f"  Type: {feature.dtype}")
-        print(f"  Description: {feature.description}")
-        print()
-
-    print("This tells us:")
-    print("• 'chr' column contains chromosome names (string)")
-    print("• 'pos' column contains genomic positions (int32)")
-    print("• 'pileup' column contains tag counts (int32)")
-    print("• Data represents 5' tag coverage from ChIP-exo experiments")</div>
+print("Metadata Schema Summary:")
+print("=" * 40)
+print(f"Regulator fields: {schema['regulator_fields']}")
+print(f"Target fields: {schema['target_fields']}")
+print(f"Condition fields: {schema['condition_fields']}")
+print(f"\nTop-level conditions: {schema['top_level_conditions']}")
+print(f"Config-level conditions: {schema['config_level_conditions']}")
+print(f"Field definitions available for: {list(schema['condition_definitions'].keys())}")</div>
 </div>
 </div>
 </div>
@@ -3029,231 +3141,18 @@ if genome_config:
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Genome Map Data Schema:
-==============================
-Column: chr
-  Type: string
-  Description: Chromosome name (e.g., chrI, chrII, etc.)
+<pre>Metadata Schema Summary:
+========================================
+Regulator fields: ['regulator_locus_tag', 'regulator_symbol']
+Target fields: ['target_locus_tag', 'target_symbol']
+Condition fields: ['condition']
 
-Column: pos
-  Type: int32
-  Description: Genomic position of the 5' tag
-
-Column: pileup
-  Type: int32
-  Description: Depth of coverage (number of 5' tags) at this genomic position
-
-This tells us:
-• 'chr' column contains chromosome names (string)
-• 'pos' column contains genomic positions (int32)
-• 'pileup' column contains tag counts (int32)
-• Data represents 5' tag coverage from ChIP-exo experiments
+Top-level conditions: None
+Config-level conditions: None
+Field definitions available for: ['condition']
 </pre>
 </div>
 </div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="use-case-3-planning-efficient-data-access">Use Case 3: Planning Efficient Data Access<a class="anchor-link" href="#use-case-3-planning-efficient-data-access">¶</a></h3>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-14">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Understanding partitioning helps plan efficient queries</span>
-<span class="k">if</span> <span class="n">genome_config</span> <span class="ow">and</span> <span class="n">genome_config</span><span class="o">.</span><span class="n">dataset_info</span><span class="o">.</span><span class="n">partitioning</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"Data Access Strategy:"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"="</span> <span class="o">*</span> <span class="mi">25</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"• Data is partitioned by 'run_accession'"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"• To load data for a specific experiment, filter by run_accession"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"• This avoids loading data from all experiments"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"• Path pattern: genome_map/accession=</span><span class="si">{run_accession}</span><span class="s2">/*.parquet"</span><span class="p">)</span>
-
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Example workflow:"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"1. Use metadata config to find interesting run_accessions"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"2. Load only genome_map data for those specific accessions"</span><span class="p">)</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s2">"3. Analyze position-level binding data for selected experiments"</span><span class="p">)</span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-14"># Understanding partitioning helps plan efficient queries
-if genome_config and genome_config.dataset_info.partitioning:
-    print("Data Access Strategy:")
-    print("=" * 25)
-    print("• Data is partitioned by 'run_accession'")
-    print("• To load data for a specific experiment, filter by run_accession")
-    print("• This avoids loading data from all experiments")
-    print("• Path pattern: genome_map/accession={run_accession}/*.parquet")
-
-    print("\nExample workflow:")
-    print("1. Use metadata config to find interesting run_accessions")
-    print("2. Load only genome_map data for those specific accessions")
-    print("3. Analyze position-level binding data for selected experiments")</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Data Access Strategy:
-=========================
-• Data is partitioned by 'run_accession'
-• To load data for a specific experiment, filter by run_accession
-• This avoids loading data from all experiments
-• Path pattern: genome_map/accession={run_accession}/*.parquet
-
-Example workflow:
-1. Use metadata config to find interesting run_accessions
-2. Load only genome_map data for those specific accessions
-3. Analyze position-level binding data for selected experiments
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="9-error-handling-and-troubleshooting">9. Error Handling and Troubleshooting<a class="anchor-link" href="#9-error-handling-and-troubleshooting">¶</a></h2><p>The DataCard class includes validation and error handling. Here are some common scenarios:</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-15">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Handling missing configurations</span>
-<span class="n">missing_config</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="s1">'nonexistent_config'</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Non-existent config result: </span><span class="si">{</span><span class="n">missing_config</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-<span class="c1"># Handling missing fields</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="n">invalid_field</span> <span class="o">=</span> <span class="n">card</span><span class="o">.</span><span class="n">get_field_values</span><span class="p">(</span><span class="s1">'metadata'</span><span class="p">,</span> <span class="s1">'nonexistent_field'</span><span class="p">)</span>
-<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Error accessing non-existent field: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-<span class="c1"># Checking if config exists before using</span>
-<span class="n">config_name</span> <span class="o">=</span> <span class="s1">'some_config'</span>
-<span class="k">if</span> <span class="n">card</span><span class="o">.</span><span class="n">get_config</span><span class="p">(</span><span class="n">config_name</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Config '</span><span class="si">{</span><span class="n">config_name</span><span class="si">}</span><span class="s2">' exists"</span><span class="p">)</span>
-<span class="k">else</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Config '</span><span class="si">{</span><span class="n">config_name</span><span class="si">}</span><span class="s2">' not found in this dataset"</span><span class="p">)</span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-15"># Handling missing configurations
-missing_config = card.get_config('nonexistent_config')
-print(f"Non-existent config result: {missing_config}")
-
-# Handling missing fields
-try:
-    invalid_field = card.get_field_values('metadata', 'nonexistent_field')
-except Exception as e:
-    print(f"Error accessing non-existent field: {e}")
-
-# Checking if config exists before using
-config_name = 'some_config'
-if card.get_config(config_name):
-    print(f"Config '{config_name}' exists")
-else:
-    print(f"Config '{config_name}' not found in this dataset")</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Non-existent config result: None
-Error accessing non-existent field: Field 'nonexistent_field' not found in config 'metadata'
-Config 'some_config' not found in this dataset
-</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="10-summary-and-next-steps">10. Summary and Next Steps<a class="anchor-link" href="#10-summary-and-next-steps">¶</a></h2><p>The DataCard class provides a powerful way to explore HuggingFace genomics datasets before committing to loading large amounts of data.</p>
-<h3 id="key-takeaways">Key Takeaways:<a class="anchor-link" href="#key-takeaways">¶</a></h3><ol>
-<li><strong>Dataset Structure</strong>: The Rossi 2021 dataset contains both experimental metadata and genome-wide ChIP-exo binding data</li>
-<li><strong>Partitioning</strong>: Data is efficiently partitioned by experimental run for fast access</li>
-<li><strong>Metadata Relationships</strong>: The system automatically understands how metadata relates to data configs</li>
-<li><strong>Schema Discovery</strong>: You can understand data types and structure before loading</li>
-</ol>
-<h3 id="next-steps">Next Steps:<a class="anchor-link" href="#next-steps">¶</a></h3><ul>
-<li>Use <code>HfQueryAPI</code> to load specific subsets of the data based on your exploration</li>
-<li>Apply filters based on experimental conditions discovered through DataCard</li>
-<li>Combine multiple datasets that have compatible schemas</li>
-</ul>
-<h3 id="example-integration-with-hfqueryapi">Example Integration with HfQueryAPI:<a class="anchor-link" href="#example-integration-with-hfqueryapi">¶</a></h3><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tfbpapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">HfQueryAPI</span>
-
-<span class="c1"># After exploring with DataCard, load specific data</span>
-<span class="n">query_api</span> <span class="o">=</span> <span class="n">HfQueryAPI</span><span class="p">(</span><span class="s1">'BrentLab/rossi_2021'</span><span class="p">)</span>
-
-<span class="c1"># Load metadata for planning</span>
-<span class="n">metadata_df</span> <span class="o">=</span> <span class="n">query_api</span><span class="o">.</span><span class="n">get_pandas</span><span class="p">(</span><span class="s1">'metadata'</span><span class="p">)</span>
-
-<span class="c1"># Load genome map data for specific experiments</span>
-<span class="c1"># (using partition filters based on DataCard exploration)</span>
-<span class="n">genome_data</span> <span class="o">=</span> <span class="n">query_api</span><span class="o">.</span><span class="n">get_pandas</span><span class="p">(</span><span class="s1">'genome_map'</span><span class="p">,</span> 
-                                  <span class="n">filters</span><span class="o">=</span><span class="p">{</span><span class="s1">'run_accession'</span><span class="p">:</span> <span class="s1">'SRR123456'</span><span class="p">})</span>
-</pre></div>
 </div>
 </div>
 </div>
@@ -3315,7 +3214,7 @@ Config 'some_config' not found in this dataset
     
     
     <a href="https://github.com/brentlab/tfbpapi" target="_blank" rel="noopener" title="GitHub Repository" class="md-social__link">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path fill="currentColor" d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
     </a>
   
 </div>
@@ -3332,10 +3231,11 @@ Config 'some_config' not found in this dataset
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.highlight", "search.share", "search.suggest", "content.code.copy", "content.code.select", "content.code.annotate", "content.action.edit", "content.action.view"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.path", "navigation.top", "search.highlight", "search.share", "search.suggest", "content.code.copy", "content.code.select", "content.code.annotate", "content.action.edit", "content.action.view"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"default": "latest", "provider": "mike"}}</script>
     
     
-      <script src="../../assets/javascripts/bundle.92b07e13.min.js"></script>
+      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
       
         <script src="../../javascripts/mathjax.js"></script>
       
