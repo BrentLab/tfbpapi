@@ -50,20 +50,42 @@ Position-level data across genomic coordinates
 
 ### 4. `metadata`
 Experimental metadata and sample descriptions
-- **Use case**: Sample information, experimental conditions, protocol details
+- **Use case**: Sample information, experimental conditions, protocol details. Note
+  that this can also include per-sample QC metrics. For cross-sample QC or analysis,
+  see [comparative](#5-comparative) below.
 - **Structure**: One row per sample
 - **Common fields**: Sample identifiers, experimental conditions, publication info
 - **Special field**: `applies_to` - Optional list of config names this metadata applies to
 
-### 5. `qc_data`
-Quality control metrics and assessments
-- **Use case**: QC metrics derived from raw or processed data, cross-dataset quality
-  assessments, validation metrics
-- **Structure**: One row per sample, measurement, or QC evaluation
-- **Common fields**: QC metrics, quality flags, threshold references, possibly
-  references to source datasets
-- **Note**: QC datasets can be derived from single or multiple source configs within
-  a repository or across repositories
+### 5. `comparative`
+
+Quality control metrics, validation results, and cross-dataset analysis outputs.
+
+**Use cases**:
+- Cross-dataset quality assessments and validation metrics
+- Analysis results relating samples across datasets or repositories
+- Comparative analyses (e.g., binding vs expression correlation)
+
+**Structure**: One row represents an observation on 2 or more samples. Note that the
+  name of the column containing the sample references isn't specified. However, the
+  role and format of the sample references are strictly defined. See
+  [Defining Sample References](#defining-sample-references) below.
+
+#### Defining Sample References
+
+The name of the field which contains the sample reference is user-defined. However,
+the contents of that field, and its role, must be as follows:
+
+- **`source_sample`**: Fields containing composite sample identifiers. This must be in
+  the format `"repo_id;config_name;sample_id"`.
+
+```
+"repo_id;config_name;sample_id"
+```
+
+Examples:
+- `"BrentLab/harbison_2004;harbison_2004;CBF1_YPD"`
+- `"BrentLab/kemmeren_2014;kemmeren_2014;sample_42"`
 
 ## Experimental Conditions
 

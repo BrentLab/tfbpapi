@@ -1,3 +1,4 @@
+# flake8: noqa
 """
 Three diverse datacard examples for testing datacard parsing and database construction.
 
@@ -468,11 +469,11 @@ configs:
 
   - config_name: qc_metrics
     description: Quality control metrics for all genome coverage samples
-    dataset_type: qc_data
+    dataset_type: comparative
     applies_to: ["genome_coverage"]
     data_files:
       - split: train
-        path: qc_data.parquet
+        path: comparative_data.parquet
     dataset_info:
       features:
         - name: sample_id

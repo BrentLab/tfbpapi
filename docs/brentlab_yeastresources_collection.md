@@ -4,7 +4,7 @@ This document describes the BrentLab yeast resources collection on HuggingFace a
 
 ## Collection Overview
 
-The BrentLab yeast resources collection contains 10 datasets related to yeast transcription factor binding and gene expression regulation:
+The BrentLab yeast resources collection contains 11 datasets related to yeast transcription factor binding and gene expression regulation:
 
 1. **barkai_compendium** - ChEC-seq binding data across multiple GEO series
 2. **callingcards** - Calling Cards transposon-based binding data
@@ -15,7 +15,8 @@ The BrentLab yeast resources collection contains 10 datasets related to yeast tr
 7. **kemmeren_2014** - TF deletion expression profiling
 8. **mahendrawada_2025** - ChEC-seq and nascent RNA-seq data
 9. **rossi_2021** - ChIP-exo binding data
-10. **yeast_genome_resources** - Reference genomic features
+10. **yeast_comparative_analysis** - Cross-dataset comparative analyses
+11. **yeast_genome_resources** - Reference genomic features
 
 ## Standardized Media Names
 
@@ -233,6 +234,25 @@ Separate metadata configs or embedded metadata via `metadata_fields`:
   dataset_type: annotated_features
   metadata_fields: ["regulator_locus_tag", "regulator_symbol", "condition"]
 ```
+
+### comparative
+
+**yeast_comparative_analysis** provides cross-dataset analysis results:
+
+- **dto config**: Direct Target Overlap analysis comparing binding and perturbation experiments
+- Uses `source_sample` role for composite identifiers
+- Format: `"repo_id;config_name;sample_id"` (semicolon-separated)
+- Contains 8 quantitative measures: rank thresholds, set sizes, FDR, p-values
+- Partitioned by binding_repo_dataset and perturbation_repo_dataset
+
+**Composite Sample Identifiers**:
+Comparative datasets use composite identifiers to reference samples from other datasets:
+- `binding_id`: Points to a binding experiment (e.g., `BrentLab/callingcards;annotated_features;1`)
+- `perturbation_id`: Points to a perturbation experiment (e.g., `BrentLab/hackett_2020;hackett_2020;200`)
+
+**Typical structure**: source_sample_1 x source_sample_2 x ... x measurements
+
+**Use case**: Answer questions like "Which binding experiments show significant overlap with perturbation effects?"
 
 ## Categorical Condition Definitions
 

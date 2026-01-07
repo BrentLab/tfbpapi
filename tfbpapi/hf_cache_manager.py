@@ -135,7 +135,9 @@ class HfCacheManager(DataCard):
                 return False
 
             # Load cached parquet files into DuckDB
-            self._create_duckdb_table_from_files(cached_files, table_name)
+            self._create_duckdb_table_from_files(
+                cached_files, table_name, config.config_name
+            )
             self.logger.info(
                 f"Loaded {len(cached_files)} cached files into {table_name}"
             )
@@ -190,7 +192,9 @@ class HfCacheManager(DataCard):
                 return False
 
             # Load downloaded files into DuckDB
-            self._create_duckdb_table_from_files(downloaded_files, table_name)
+            self._create_duckdb_table_from_files(
+                downloaded_files, table_name, config.config_name
+            )
             self.logger.info(
                 f"Downloaded and loaded {len(downloaded_files)} files into {table_name}"
             )
@@ -203,7 +207,7 @@ class HfCacheManager(DataCard):
             return False
 
     def _create_duckdb_table_from_files(
-        self, file_paths: list[str], table_name: str
+        self, file_paths: list[str], table_name: str, config_name: str
     ) -> None:
         """Create DuckDB table/view from parquet files."""
         if len(file_paths) == 1:
@@ -224,6 +228,50 @@ class HfCacheManager(DataCard):
         self.logger.debug(
             f"Created DuckDB view {table_name} from {len(file_paths)} files"
         )
+
+        # Validate source_sample fields if they exist
+        self._validate_source_sample_fields(table_name, config_name)
+
+    def _validate_source_sample_fields(self, table_name: str, config_name: str) -> None:
+        """
+        Validate source_sample fields have correct format.
+
+        Composite sample identifiers must be in the format:
+        "repo_id;config_name;sample_id" (exactly 3 semicolon-separated parts)
+
+        """
+        config = self.get_config(config_name)
+
+        # Find all source_sample fields
+        source_sample_fields = [
+            f.name
+            for f in config.dataset_info.features  # type: ignore
+            if f.role == "source_sample"
+        ]
+
+        if not source_sample_fields:
+            return  # No validation needed
+
+        # For each field, validate format
+        for field_name in source_sample_fields:
+            query = f"""
+            SELECT {field_name},
+                   LENGTH({field_name}) - LENGTH(REPLACE({field_name}, ';', ''))
+                   AS semicolon_count
+            FROM {table_name}
+            WHERE semicolon_count != 2
+            LIMIT 1
+            """
+            result = self.duckdb_conn.execute(query).fetchone()
+
+            if result:
+                raise ValueError(
+                    f"Invalid format in field '{field_name}' "
+                    f"with role='source_sample'. "
+                    f"Expected 'repo_id;config_name;sample_id' "
+                    f"(3 semicolon-separated parts), "
+                    f"but found: '{result[0]}'"
+                )
 
     def _extract_embedded_metadata_field(
         self, data_table_name: str, field_name: str, metadata_table_name: str
@@ -519,9 +567,7 @@ class HfCacheManager(DataCard):
             size /= 1024.0
         return f"{size:.1f}TB"
 
-    def query(
-        self, sql: str, config_name: str, refresh_cache: bool = False
-    ) -> Any:
+    def query(self, sql: str, config_name: str, refresh_cache: bool = False) -> Any:
         """
         Execute SQL query against a specific dataset configuration.
 
@@ -543,6 +589,7 @@ class HfCacheManager(DataCard):
                 "SELECT DISTINCT sample_id FROM harbison_2004",
                 "harbison_2004"
             )
+
         """
         # Validate config exists
         if config_name not in [c.config_name for c in self.configs]:

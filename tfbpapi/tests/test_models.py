@@ -30,7 +30,7 @@ class TestDatasetType:
         assert DatasetType.ANNOTATED_FEATURES == "annotated_features"
         assert DatasetType.GENOME_MAP == "genome_map"
         assert DatasetType.METADATA == "metadata"
-        assert DatasetType.QC_DATA == "qc_data"
+        assert DatasetType.COMPARATIVE == "comparative"
 
     def test_dataset_type_from_string(self):
         """Test creating DatasetType from string."""
@@ -157,7 +157,7 @@ class TestDatasetInfo:
             partitioning=PartitioningInfo(enabled=True, partition_by=["chr"]),
         )
         assert len(dataset_info.features) == 2
-        assert dataset_info.partitioning.enabled is True
+        assert dataset_info.partitioning.enabled is True  # type: ignore
 
 
 class TestDatasetConfig:

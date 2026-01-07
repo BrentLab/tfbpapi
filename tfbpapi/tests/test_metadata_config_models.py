@@ -5,10 +5,8 @@ Tests validation, error messages, and config loading for MetadataBuilder.
 
 """
 
-from pathlib import Path
-
 import pytest
-import yaml
+import yaml  # type: ignore
 from pydantic import ValidationError
 
 from tfbpapi.models import (
@@ -63,10 +61,97 @@ class TestPropertyMapping:
         assert mapping.path is None
 
     def test_invalid_neither_field_nor_path(self):
-        """Test that at least one of field or path is required."""
+        """Test that at least one of field, path, or expression is required."""
         with pytest.raises(ValidationError) as exc_info:
             PropertyMapping()
-        assert "At least one of 'field' or 'path' must be specified" in str(exc_info.value)
+        assert (
+            "At least one of 'field', 'path', or 'expression' must be specified"
+            in str(exc_info.value)
+        )
+
+    def test_valid_expression_only(self):
+        """Test valid expression-only mapping (derived field)."""
+        mapping = PropertyMapping(expression="dto_fdr < 0.05")
+        assert mapping.expression == "dto_fdr < 0.05"
+        assert mapping.field is None
+        assert mapping.path is None
+
+    def test_invalid_expression_with_field(self):
+        """Test that expression cannot be combined with field."""
+        with pytest.raises(ValidationError) as exc_info:
+            PropertyMapping(expression="dto_fdr < 0.05", field="sample_id")
+        assert "expression cannot be used with field or path" in str(exc_info.value)
+
+    def test_invalid_expression_with_path(self):
+        """Test that expression cannot be combined with path."""
+        with pytest.raises(ValidationError) as exc_info:
+            PropertyMapping(expression="dto_fdr < 0.05", path="media.carbon_source")
+        assert "expression cannot be used with field or path" in str(exc_info.value)
+
+
+class TestComparativeAnalysis:
+    """Tests for ComparativeAnalysis model."""
+
+    def test_valid_comparative_analysis(self):
+        """Test valid comparative analysis configuration."""
+        from tfbpapi.models import ComparativeAnalysis
+
+        ca = ComparativeAnalysis(
+            repo="BrentLab/yeast_comparative_analysis",
+            dataset="dto",
+            via_field="binding_id",
+        )
+        assert ca.repo == "BrentLab/yeast_comparative_analysis"
+        assert ca.dataset == "dto"
+        assert ca.via_field == "binding_id"
+
+
+class TestDatasetVirtualDBConfig:
+    """Tests for DatasetVirtualDBConfig model."""
+
+    def test_valid_config_with_sample_id(self):
+        """Test valid dataset config with sample_id."""
+        from tfbpapi.models import DatasetVirtualDBConfig, PropertyMapping
+
+        config = DatasetVirtualDBConfig(sample_id=PropertyMapping(field="sample_id"))
+        assert config.sample_id is not None
+        assert config.sample_id.field == "sample_id"
+
+    def test_valid_config_with_comparative_analyses(self):
+        """Test valid dataset config with comparative analyses."""
+        from tfbpapi.models import DatasetVirtualDBConfig
+
+        config_dict = {
+            "sample_id": {"field": "sample_id"},
+            "comparative_analyses": [
+                {
+                    "repo": "BrentLab/yeast_comparative_analysis",
+                    "dataset": "dto",
+                    "via_field": "binding_id",
+                }
+            ],
+        }
+        config = DatasetVirtualDBConfig.model_validate(config_dict)
+        assert config.sample_id is not None
+        assert len(config.comparative_analyses) == 1
+        assert (
+            config.comparative_analyses[0].repo == "BrentLab/yeast_comparative_analysis"
+        )
+
+    def test_config_with_extra_property_mappings(self):
+        """Test that extra fields are parsed as PropertyMappings."""
+        from tfbpapi.models import DatasetVirtualDBConfig
+
+        config_dict = {
+            "sample_id": {"field": "sample_id"},
+            "regulator_locus_tag": {"field": "regulator_locus_tag"},
+            "dto_fdr": {"expression": "dto_fdr < 0.05"},
+        }
+        config = DatasetVirtualDBConfig.model_validate(config_dict)
+
+        # Access extra fields via model_extra
+        assert "regulator_locus_tag" in config.model_extra
+        assert "dto_fdr" in config.model_extra
 
 
 class TestRepositoryConfig:
@@ -110,8 +195,11 @@ class TestRepositoryConfig:
         config = RepositoryConfig.model_validate(config_data)
         assert config.dataset is not None
         assert "dataset1" in config.dataset
-        assert config.dataset["dataset1"]["carbon_source"].field == "condition"
-        assert config.dataset["dataset1"]["carbon_source"].path is None
+        # Access extra field via model_extra
+        dataset_config = config.dataset["dataset1"]
+        assert "carbon_source" in dataset_config.model_extra
+        assert dataset_config.model_extra["carbon_source"].field == "condition"
+        assert dataset_config.model_extra["carbon_source"].path is None
 
     def test_valid_repo_wide_field_only_property(self):
         """Test that repo-wide field-only properties are valid."""
@@ -136,7 +224,9 @@ class TestMetadataConfig:
             },
             "repositories": {
                 "BrentLab/test": {
-                    "dataset": {"test": {"carbon_source": {"path": "media.carbon_source"}}}
+                    "dataset": {
+                        "test": {"carbon_source": {"path": "media.carbon_source"}}
+                    }
                 }
             },
         }
@@ -158,7 +248,9 @@ class TestMetadataConfig:
         config_data = {
             "repositories": {
                 "BrentLab/test": {
-                    "dataset": {"test": {"carbon_source": {"path": "media.carbon_source"}}}
+                    "dataset": {
+                        "test": {"carbon_source": {"path": "media.carbon_source"}}
+                    }
                 }
             }
         }
@@ -176,7 +268,9 @@ class TestMetadataConfig:
             "factor_aliases": {},
             "repositories": {
                 "BrentLab/test": {
-                    "dataset": {"test": {"carbon_source": {"path": "media.carbon_source"}}}
+                    "dataset": {
+                        "test": {"carbon_source": {"path": "media.carbon_source"}}
+                    }
                 }
             },
         }
@@ -248,7 +342,9 @@ class TestMetadataConfig:
             },
             "repositories": {
                 "BrentLab/test": {
-                    "dataset": {"test": {"temperature": {"path": "temperature_celsius"}}}
+                    "dataset": {
+                        "test": {"temperature": {"path": "temperature_celsius"}}
+                    }
                 }
             },
         }
@@ -310,7 +406,9 @@ class TestMetadataConfig:
                 "BrentLab/kemmeren_2014": {
                     "temperature": {"path": "temperature_celsius"},  # Repo-wide
                     "dataset": {
-                        "kemmeren_2014": {"carbon_source": {"path": "media.carbon_source"}}
+                        "kemmeren_2014": {
+                            "carbon_source": {"path": "media.carbon_source"}
+                        }
                     },
                 }
             },
