@@ -64,7 +64,8 @@ def get_nested_value(data: dict, path: str) -> Any:
 
         List of dicts - extract property from each item:
             get_nested_value(
-                {"media": {"carbon_source": [{"compound": "glucose"}, {"compound": "galactose"}]}},
+                {"media": {"carbon_source": [{"compound": "glucose"},
+                {"compound": "galactose"}]}},
                 "media.carbon_source.compound"
             )
             Returns: ["glucose", "galactose"]
@@ -82,7 +83,8 @@ def get_nested_value(data: dict, path: str) -> Any:
                 return None
             current = current[key]
         elif isinstance(current, list):
-            # If current is a list and we have more keys, extract property from each item
+            # If current is a list and we have more keys,
+            # extract property from each item
             if i < len(keys):
                 # Extract the remaining path from each list item
                 remaining_path = ".".join(keys[i:])
@@ -191,6 +193,8 @@ class VirtualDB:
         self.config = MetadataConfig.from_yaml(config_path)
         self.token = token
         self.cache: dict[tuple[str, str], pd.DataFrame] = {}
+        # Build mapping of comparative dataset references
+        self._comparative_links = self._build_comparative_links()
 
     def get_fields(
         self, repo_id: str | None = None, config_name: str | None = None
@@ -216,7 +220,9 @@ class VirtualDB:
             return sorted(mappings.keys())
 
         if repo_id is not None or config_name is not None:
-            raise ValueError("Both repo_id and config_name must be provided, or neither")
+            raise ValueError(
+                "Both repo_id and config_name must be provided, or neither"
+            )
 
         # Get all fields across all datasets
         all_fields: set[str] = set()
@@ -225,8 +231,16 @@ class VirtualDB:
             all_fields.update(repo_config.properties.keys())
             # Add dataset-specific fields
             if repo_config.dataset:
-                for dataset_props in repo_config.dataset.values():
-                    all_fields.update(dataset_props.keys())
+                for dataset_config in repo_config.dataset.values():
+                    # DatasetVirtualDBConfig stores property mappings in model_extra
+                    if (
+                        hasattr(dataset_config, "model_extra")
+                        and dataset_config.model_extra
+                    ):
+                        all_fields.update(dataset_config.model_extra.keys())
+                    # Also include special fields if they exist
+                    if dataset_config.sample_id:
+                        all_fields.add("sample_id")
 
         return sorted(all_fields)
 
@@ -312,6 +326,101 @@ class VirtualDB:
         else:
             return sorted(all_values)
 
+    def get_comparative_analyses(
+        self, repo_id: str | None = None, config_name: str | None = None
+    ) -> dict[str, Any]:
+        """
+        Get information about comparative analysis relationships.
+
+        Returns information about which comparative datasets are available
+        and how they link to primary datasets. Useful for discovering
+        what cross-dataset analyses can be performed.
+
+        :param repo_id: Optional repository ID to filter to specific repo
+        :param config_name: Optional config name (requires repo_id)
+        :return: Dictionary with two keys:
+                 - "primary_to_comparative": Maps primary datasets to their
+                   comparative analyses
+                 - "comparative_fields": Maps comparative datasets to fields
+                   available for joining
+        :raises ValueError: If config_name provided without repo_id
+
+        Examples:
+            Get all comparative analysis relationships:
+                info = vdb.get_comparative_analyses()
+
+            Get relationships for specific primary dataset:
+                info = vdb.get_comparative_analyses(
+                    "BrentLab/callingcards", "annotated_features"
+                )
+
+        """
+        if config_name and not repo_id:
+            raise ValueError("repo_id required when config_name is specified")
+
+        primary_to_comparative: dict[str, list[dict[str, str]]] = {}
+        comparative_fields: dict[str, list[str]] = {}
+
+        # Filter links based on parameters
+        if repo_id and config_name:
+            # Specific dataset requested
+            links_to_process = {
+                (repo_id, config_name): self._comparative_links.get(
+                    (repo_id, config_name), {}
+                )
+            }
+        elif repo_id:
+            # All configs in specific repo
+            links_to_process = {
+                k: v for k, v in self._comparative_links.items() if k[0] == repo_id
+            }
+        else:
+            # All links
+            links_to_process = self._comparative_links
+
+        # Build primary to comparative mapping
+        for (prim_repo, prim_config), link_info in links_to_process.items():
+            if "comparative_analyses" not in link_info:
+                continue
+
+            dataset_key = f"{prim_repo}/{prim_config}"
+            primary_to_comparative[dataset_key] = []
+
+            for ca in link_info["comparative_analyses"]:
+                primary_to_comparative[dataset_key].append(
+                    {
+                        "comparative_repo": ca["repo"],
+                        "comparative_dataset": ca["dataset"],
+                        "via_field": ca["via_field"],
+                    }
+                )
+
+                # Track which fields are available from comparative datasets
+                comp_key = f"{ca['repo']}/{ca['dataset']}"
+                if comp_key not in comparative_fields:
+                    # Get fields from the comparative dataset
+                    # First try config mappings
+                    comp_fields = self.get_fields(ca["repo"], ca["dataset"])
+
+                    # If no mappings, get actual fields from DataCard
+                    if not comp_fields:
+                        try:
+                            card = DataCard(ca["repo"], token=self.token)
+                            config = card.get_config(ca["dataset"])
+                            if config and config.dataset_info:
+                                comp_fields = [
+                                    f.name for f in config.dataset_info.features
+                                ]
+                        except Exception:
+                            comp_fields = []
+
+                    comparative_fields[comp_key] = comp_fields
+
+        return {
+            "primary_to_comparative": primary_to_comparative,
+            "comparative_fields": comparative_fields,
+        }
+
     def query(
         self,
         filters: dict[str, Any] | None = None,
@@ -366,11 +475,59 @@ class VirtualDB:
             if metadata_df.empty:
                 continue
 
-            # Apply filters
+            # Separate filters into primary and comparative
+            primary_filters = {}
+            comparative_filters = {}
             if filters:
-                metadata_df = self._apply_filters(metadata_df, filters, repo_id, config_name)
+                # Get comparative field mapping
+                comp_field_mapping = self._get_comparative_fields_for_dataset(
+                    repo_id, config_name
+                )
+                for field, value in filters.items():
+                    if field in comp_field_mapping:
+                        comparative_filters[field] = value
+                    else:
+                        primary_filters[field] = value
+
+            # Apply primary filters first
+            if primary_filters:
+                metadata_df = self._apply_filters(
+                    metadata_df, primary_filters, repo_id, config_name
+                )
+
+            # Enrich with comparative data if needed
+            # IMPORTANT: Do this BEFORE getting complete data so comparative fields
+            # are joined at the sample level, not measurement level
+            # This happens when: fields are requested from comparative datasets
+            # OR when filtering on comparative fields
+            if fields or comparative_filters:
+                comp_field_mapping = self._get_comparative_fields_for_dataset(
+                    repo_id, config_name
+                )
+                if fields:
+                    requested_comp_fields = [
+                        f for f in fields if f in comp_field_mapping
+                    ]
+                # Also need fields that are filtered on
+                filtered_comp_fields = [
+                    f for f in comparative_filters.keys() if f in comp_field_mapping
+                ]
+                all_comp_fields = list(
+                    set(requested_comp_fields + filtered_comp_fields)
+                )
+                if all_comp_fields:
+                    metadata_df = self._enrich_with_comparative_data(
+                        metadata_df, repo_id, config_name, all_comp_fields
+                    )
+
+            # Apply comparative filters after enrichment
+            if comparative_filters:
+                metadata_df = self._apply_filters(
+                    metadata_df, comparative_filters, repo_id, config_name
+                )
 
             # If complete=True, join with full data
+            # Do this AFTER comparative enrichment so DTO fields are already added
             if complete:
                 sample_ids = metadata_df["sample_id"].tolist()
                 if sample_ids:
@@ -390,10 +547,11 @@ class VirtualDB:
                 for field in fields:
                     if field in metadata_df.columns and field not in keep_cols:
                         keep_cols.append(field)
-                metadata_df = metadata_df[keep_cols]
+                metadata_df = metadata_df[keep_cols].copy()
 
             # Add dataset identifier
             if "dataset_id" not in metadata_df.columns:
+                metadata_df = metadata_df.copy()
                 metadata_df["dataset_id"] = f"{repo_id}/{config_name}"
 
             results.append(metadata_df)
@@ -404,9 +562,7 @@ class VirtualDB:
         # Concatenate results, filling NaN for missing columns
         return pd.concat(results, ignore_index=True, sort=False)
 
-    def materialize_views(
-        self, datasets: list[tuple[str, str]] | None = None
-    ) -> None:
+    def materialize_views(self, datasets: list[tuple[str, str]] | None = None) -> None:
         """
         Build and cache metadata DataFrames for faster subsequent queries.
 
@@ -430,9 +586,7 @@ class VirtualDB:
             # Build and cache
             self._build_metadata_table(repo_id, config_name, use_cache=False)
 
-    def invalidate_cache(
-        self, datasets: list[tuple[str, str]] | None = None
-    ) -> None:
+    def invalidate_cache(self, datasets: list[tuple[str, str]] | None = None) -> None:
         """
         Clear cached metadata DataFrames.
 
@@ -451,14 +605,304 @@ class VirtualDB:
                 if dataset_key in self.cache:
                     del self.cache[dataset_key]
 
+    def _build_comparative_links(self) -> dict[tuple[str, str], dict[str, Any]]:
+        """
+        Build mapping of primary datasets to their comparative dataset references.
+
+        Returns dict keyed by (repo_id, config_name) with value being dict: {
+        "comparative_analyses": [         {             "repo": comparative_repo_id,
+        "dataset": comparative_config_name,             "via_field":
+        field_name_with_composite_ids         }     ] }
+
+        """
+        links: dict[tuple[str, str], dict[str, Any]] = {}
+
+        for repo_id, repo_config in self.config.repositories.items():
+            if not repo_config.dataset:
+                continue
+
+            for config_name, dataset_config in repo_config.dataset.items():
+                if dataset_config.comparative_analyses:
+                    links[(repo_id, config_name)] = {
+                        "comparative_analyses": [
+                            {
+                                "repo": ca.repo,
+                                "dataset": ca.dataset,
+                                "via_field": ca.via_field,
+                            }
+                            for ca in dataset_config.comparative_analyses
+                        ]
+                    }
+
+        return links
+
+    def _get_comparative_fields_for_dataset(
+        self, repo_id: str, config_name: str
+    ) -> dict[str, dict[str, str]]:
+        """
+        Get mapping of comparative fields available for a primary dataset.
+
+        :param repo_id: Primary dataset repository ID
+        :param config_name: Primary dataset config name
+        :return: Dict mapping field_name to comparative dataset info
+                 {field_name: {
+                     "comp_repo": comparative_repo_id,
+                     "comp_dataset": comparative_dataset_name,
+                     "via_field": field_with_composite_ids
+                 }}
+
+        Example:
+            For callingcards dataset linked to DTO via binding_id:
+            {
+                "dto_fdr": {
+                    "comp_repo": "BrentLab/yeast_comparative_analysis",
+                    "comp_dataset": "dto",
+                    "via_field": "binding_id"
+                },
+                "dto_empirical_pvalue": {...}
+            }
+
+        """
+        field_mapping: dict[str, dict[str, str]] = {}
+
+        # Get comparative analyses for this dataset
+        links = self._comparative_links.get((repo_id, config_name), {})
+        if "comparative_analyses" not in links:
+            return field_mapping
+
+        # For each comparative dataset, get its fields
+        for ca in links["comparative_analyses"]:
+            comp_repo = ca["repo"]
+            comp_dataset = ca["dataset"]
+            via_field = ca["via_field"]
+
+            # Get fields from comparative dataset
+            comp_fields = self.get_fields(comp_repo, comp_dataset)
+
+            # If no fields from config, try DataCard
+            if not comp_fields:
+                try:
+                    from tfbpapi.datacard import DataCard
+
+                    card = DataCard(comp_repo, token=self.token)
+                    config = card.get_config(comp_dataset)
+                    if config and config.dataset_info:
+                        comp_fields = [f.name for f in config.dataset_info.features]
+                except Exception:
+                    comp_fields = []
+
+            # Map each field to this comparative dataset
+            for field_name in comp_fields:
+                # Skip the via_field itself (it's the join key)
+                if field_name == via_field:
+                    continue
+
+                field_mapping[field_name] = {
+                    "comp_repo": comp_repo,
+                    "comp_dataset": comp_dataset,
+                    "via_field": via_field,
+                }
+
+        return field_mapping
+
+    def _enrich_with_comparative_data(
+        self,
+        primary_df: pd.DataFrame,
+        repo_id: str,
+        config_name: str,
+        requested_fields: list[str],
+    ) -> pd.DataFrame:
+        """
+        Enrich primary dataset with fields from comparative datasets.
+
+        :param primary_df: Primary dataset DataFrame with sample_id column
+        :param repo_id: Primary dataset repository ID
+        :param config_name: Primary dataset config name
+        :param requested_fields: List of field names requested by user
+        :return: DataFrame enriched with comparative fields
+
+        """
+        # Get mapping of which fields come from which comparative datasets
+        comp_field_mapping = self._get_comparative_fields_for_dataset(
+            repo_id, config_name
+        )
+
+        if not comp_field_mapping:
+            return primary_df
+
+        # Find which requested fields are from comparative datasets
+        comp_fields_to_fetch = [f for f in requested_fields if f in comp_field_mapping]
+
+        if not comp_fields_to_fetch:
+            return primary_df
+
+        # Group fields by comparative dataset to minimize queries
+        by_comp_dataset: dict[tuple[str, str, str], list[str]] = {}
+        for field in comp_fields_to_fetch:
+            info = comp_field_mapping[field]
+            key = (info["comp_repo"], info["comp_dataset"], info["via_field"])
+            if key not in by_comp_dataset:
+                by_comp_dataset[key] = []
+            by_comp_dataset[key].append(field)
+
+        # For each comparative dataset, load and join
+        result_df = primary_df.copy()
+
+        for (comp_repo, comp_dataset, via_field), fields in by_comp_dataset.items():
+            try:
+                # Load comparative dataset using HfCacheManager
+                # but query the raw data table instead of metadata view
+                from tfbpapi.hf_cache_manager import HfCacheManager
+
+                comp_cache_mgr = HfCacheManager(
+                    comp_repo, duckdb_conn=duckdb.connect(":memory:"), token=self.token
+                )
+
+                # Get the config to load data
+                comp_config = comp_cache_mgr.get_config(comp_dataset)
+                if not comp_config:
+                    continue
+
+                # Load the data (this will download and register parquet files)
+                result = comp_cache_mgr._get_metadata_for_config(comp_config)
+                if not result.get("success", False):
+                    continue
+
+                # Now query the raw data table directly (not the metadata view)
+                # The raw table name is config_name without "metadata_" prefix
+                select_fields = [via_field] + fields
+                columns = ", ".join(select_fields)
+
+                # Query the actual parquet data by creating a view from the files
+                try:
+                    # Get file paths that were loaded
+                    import glob
+
+                    from huggingface_hub import snapshot_download
+
+                    cache_dir = snapshot_download(
+                        repo_id=comp_repo,
+                        repo_type="dataset",
+                        allow_patterns=f"{comp_dataset}/**/*.parquet",
+                        token=self.token,
+                    )
+
+                    parquet_files = glob.glob(
+                        f"{cache_dir}/{comp_dataset}/**/*.parquet", recursive=True
+                    )
+
+                    if not parquet_files:
+                        continue
+
+                    # Create a temporary view from parquet files
+                    temp_view = f"temp_{comp_dataset}_raw"
+                    files_sql = ", ".join([f"'{f}'" for f in parquet_files])
+                    comp_cache_mgr.duckdb_conn.execute(
+                        f"CREATE OR REPLACE VIEW {temp_view} AS "
+                        f"SELECT * FROM read_parquet([{files_sql}])"
+                    )
+
+                    # Query the view
+                    sql = f"SELECT {columns} FROM {temp_view}"
+                    comp_df = comp_cache_mgr.duckdb_conn.execute(sql).fetchdf()
+
+                except Exception:
+                    # If direct parquet loading fails, skip this comparative dataset
+                    continue
+
+                if comp_df.empty:
+                    continue
+
+                # Parse composite identifiers to extract sample_id
+                # via_field contains values like
+                # "BrentLab/harbison_2004;harbison_2004;123"
+                # We need to extract the third component and match on
+                # current repo/config
+                def extract_sample_id(composite_id: str) -> str | None:
+                    """Extract sample_id if composite matches current dataset."""
+                    if pd.isna(composite_id):
+                        return None
+                    try:
+                        parts = composite_id.split(";")
+                        if len(parts) != 3:
+                            return None
+                        # Check if this composite ID references our dataset
+                        if parts[0] == repo_id and parts[1] == config_name:
+                            return parts[2]
+                        return None
+                    except Exception:
+                        return None
+
+                comp_df["_join_sample_id"] = comp_df[via_field].apply(extract_sample_id)
+
+                # Convert _join_sample_id to match primary_df sample_id dtype
+                # This handles cases where sample_id is int but composite has string
+                if "_join_sample_id" in comp_df.columns:
+                    primary_dtype = primary_df["sample_id"].dtype
+                    if pd.api.types.is_integer_dtype(primary_dtype):
+                        # Convert to numeric, coercing errors to NaN
+                        comp_df["_join_sample_id"] = pd.to_numeric(
+                            comp_df["_join_sample_id"], errors="coerce"
+                        )
+                    elif pd.api.types.is_string_dtype(primary_dtype):
+                        comp_df["_join_sample_id"] = comp_df["_join_sample_id"].astype(
+                            str
+                        )
+
+                # Filter to only rows that match our dataset
+                comp_df = comp_df[comp_df["_join_sample_id"].notna()].copy()
+
+                if comp_df.empty:
+                    continue
+
+                # Drop the via_field column (we don't need it in results)
+                comp_df = comp_df.drop(columns=[via_field])
+
+                # Merge with primary data
+                result_df = result_df.merge(
+                    comp_df, left_on="sample_id", right_on="_join_sample_id", how="left"
+                )
+
+                # Drop the temporary join column
+                result_df = result_df.drop(columns=["_join_sample_id"])
+
+            except Exception:
+                # If enrichment fails for this comparative dataset, continue
+                continue
+
+        return result_df
+
+    @staticmethod
+    def _parse_composite_identifier(composite_id: str) -> tuple[str, str, str]:
+        """
+        Parse composite sample identifier into components.
+
+        :param composite_id: Composite ID in format "repo_id;config_name;sample_id"
+        :return: Tuple of (repo_id, config_name, sample_id)
+
+        Example:
+            _parse_composite_identifier(
+                "BrentLab/harbison_2004;harbison_2004;sample_42"
+            )
+            Returns: ("BrentLab/harbison_2004", "harbison_2004", "sample_42")
+
+        """
+        parts = composite_id.split(";")
+        if len(parts) != 3:
+            raise ValueError(
+                f"Invalid composite ID format: {composite_id}. "
+                "Expected 'repo_id;config_name;sample_id'"
+            )
+        return parts[0], parts[1], parts[2]
+
     def _build_metadata_table(
         self, repo_id: str, config_name: str, use_cache: bool = True
     ) -> pd.DataFrame:
         """
         Build metadata table for a single dataset.
 
-        Extracts sample-level metadata from experimental conditions hierarchy
-        and field definitions, with normalization and missing value handling.
+        Extracts sample-level metadata from experimental conditions hierarchy and field
+        definitions, with normalization and missing value handling.
 
         :param repo_id: Repository ID
         :param config_name: Configuration name
@@ -485,17 +929,31 @@ class VirtualDB:
                 return pd.DataFrame()
 
             # Extract repo/config-level metadata
-            repo_metadata = self._extract_repo_level(card, config_name, property_mappings)
+            repo_metadata = self._extract_repo_level(
+                card, config_name, property_mappings
+            )
 
             # Extract field-level metadata
-            field_metadata = self._extract_field_level(card, config_name, property_mappings)
+            field_metadata = self._extract_field_level(
+                card, config_name, property_mappings
+            )
 
             # Get sample-level data from HuggingFace
             config = card.get_config(config_name)
+
+            # Check if this is a comparative dataset
+            from tfbpapi.models import DatasetType
+
+            is_comparative = (
+                config
+                and hasattr(config, "dataset_type")
+                and config.dataset_type == DatasetType.COMPARATIVE
+            )
+
             if config and hasattr(config, "metadata_fields") and config.metadata_fields:
                 # Select only metadata fields
                 columns = ", ".join(config.metadata_fields)
-                if "sample_id" not in config.metadata_fields:
+                if not is_comparative and "sample_id" not in config.metadata_fields:
                     columns = f"sample_id, {columns}"
                 sql = f"SELECT DISTINCT {columns} FROM {config_name}"
             else:
@@ -504,8 +962,9 @@ class VirtualDB:
 
             df = cache_mgr.query(sql, config_name)
 
-            # One row per sample_id
-            if "sample_id" in df.columns:
+            # For non-comparative datasets: one row per sample_id
+            # For comparative datasets: keep all rows (each row is a relationship)
+            if not is_comparative and "sample_id" in df.columns:
                 df = df.groupby("sample_id").first().reset_index()
 
             # Add repo-level metadata as columns
@@ -517,6 +976,9 @@ class VirtualDB:
             if field_metadata:
                 df = self._add_field_metadata(df, field_metadata)
 
+            # Apply dtype conversions to DataFrame columns
+            df = self._apply_column_dtypes(df, property_mappings)
+
             # Cache result
             if use_cache:
                 self.cache[cache_key] = df
@@ -524,8 +986,71 @@ class VirtualDB:
             return df
 
         except Exception as e:
+            # Log error for debugging with full traceback
+            import traceback
+
+            print(f"Error downloading metadata for {config_name}: {e}")
+            traceback.print_exc()
             # Return empty DataFrame on error
             return pd.DataFrame()
+
+    def _apply_column_dtypes(
+        self, df: pd.DataFrame, property_mappings: dict[str, PropertyMapping]
+    ) -> pd.DataFrame:
+        """
+        Apply dtype conversions to DataFrame columns based on property mappings.
+
+        :param df: DataFrame to apply conversions to
+        :param property_mappings: Property mappings with dtype specifications
+        :return: DataFrame with converted column dtypes
+
+        """
+        for prop_name, mapping in property_mappings.items():
+            # Skip if no dtype specified or column doesn't exist
+            if not mapping.dtype or prop_name not in df.columns:
+                continue
+
+            # Convert column dtype
+            try:
+                if mapping.dtype == "numeric":
+                    df[prop_name] = pd.to_numeric(df[prop_name], errors="coerce")
+                elif mapping.dtype == "bool":
+                    df[prop_name] = df[prop_name].astype(bool)
+                elif mapping.dtype == "string":
+                    df[prop_name] = df[prop_name].astype(str)
+            except (ValueError, TypeError):
+                # Conversion failed, leave as is
+                pass
+
+        return df
+
+    def _convert_dtype(self, value: Any, dtype: str) -> Any:
+        """
+        Convert value to specified data type.
+
+        :param value: The value to convert to a given `dtype`
+        :param dtype: Target data type ("numeric", "bool", "string")
+
+        :return: Converted value or None if conversion fails
+
+        """
+        if value is None:
+            return None
+
+        try:
+            if dtype == "numeric":
+                # Try float first (handles both int and float)
+                return float(value)
+            elif dtype == "bool":
+                return bool(value)
+            elif dtype == "string":
+                return str(value)
+            else:
+                # Unknown dtype, pass through unchanged
+                return value
+        except (ValueError, TypeError):
+            # Conversion failed, return None
+            return None
 
     def _extract_repo_level(
         self,
@@ -560,10 +1085,12 @@ class VirtualDB:
                 continue
 
             # Build full path
-            full_path = f"experimental_conditions.{mapping.path}"
+            # Note: `conditions` is already the experimental_conditions dict,
+            # so we don't add the prefix
+            full_path = mapping.path
 
             # Get value at path
-            value = get_nested_value(conditions, full_path)
+            value = get_nested_value(conditions, full_path)  # type: ignore
 
             # Handle missing values
             missing_label = self.config.missing_value_labels.get(prop_name)
@@ -574,6 +1101,12 @@ class VirtualDB:
 
             # Ensure value is a list
             actual_values = [value] if not isinstance(value, list) else value
+
+            # Apply dtype conversion if specified
+            if mapping.dtype:
+                actual_values = [
+                    self._convert_dtype(v, mapping.dtype) for v in actual_values
+                ]
 
             # Normalize using aliases
             aliases = self.config.factor_aliases.get(prop_name)
@@ -603,16 +1136,18 @@ class VirtualDB:
         field_metadata: dict[str, dict[str, Any]] = {}
 
         # Group property mappings by field
-        field_mappings: dict[str, dict[str, str]] = {}
+        field_mappings: dict[str, dict[str, PropertyMapping]] = {}
         for prop_name, mapping in property_mappings.items():
-            if mapping.field is not None:
+            # Only process if field is specified AND path exists
+            # (no path means it's just a column alias, not metadata extraction)
+            if mapping.field is not None and mapping.path is not None:
                 field_name = mapping.field
                 if field_name not in field_mappings:
                     field_mappings[field_name] = {}
-                field_mappings[field_name][prop_name] = mapping.path
+                field_mappings[field_name][prop_name] = mapping
 
         # Process each field that has mappings
-        for field_name, prop_paths in field_mappings.items():
+        for field_name, prop_mappings_dict in field_mappings.items():
             # Get field definitions
             definitions = card.get_field_definitions(config_name, field_name)
             if not definitions:
@@ -623,9 +1158,9 @@ class VirtualDB:
                 if field_value not in field_metadata:
                     field_metadata[field_value] = {}
 
-                for prop_name, path in prop_paths.items():
+                for prop_name, mapping in prop_mappings_dict.items():
                     # Get value at path
-                    value = get_nested_value(definition, path)
+                    value = get_nested_value(definition, mapping.path)  # type: ignore
 
                     # Handle missing values
                     missing_label = self.config.missing_value_labels.get(prop_name)
@@ -637,10 +1172,17 @@ class VirtualDB:
                     # Ensure value is a list
                     actual_values = [value] if not isinstance(value, list) else value
 
+                    # Apply dtype conversion if specified
+                    if mapping.dtype:
+                        actual_values = [
+                            self._convert_dtype(v, mapping.dtype) for v in actual_values
+                        ]
+
                     # Normalize using aliases
                     aliases = self.config.factor_aliases.get(prop_name)
                     normalized_values = [
-                        normalize_value(v, aliases, missing_label) for v in actual_values
+                        normalize_value(v, aliases, missing_label)
+                        for v in actual_values
                     ]
 
                     field_metadata[field_value][prop_name] = normalized_values
@@ -702,7 +1244,9 @@ class VirtualDB:
             if isinstance(filter_value, tuple):
                 operator = filter_value[0]
                 if operator == "between" and len(filter_value) == 3:
-                    df = df[(df[field] >= filter_value[1]) & (df[field] <= filter_value[2])]
+                    df = df[
+                        (df[field] >= filter_value[1]) & (df[field] <= filter_value[2])
+                    ]
                 elif operator in (">=", ">", "<=", "<", "==", "!="):
                     if operator == ">=":
                         df = df[df[field] >= filter_value[1]]
@@ -770,9 +1314,14 @@ class VirtualDB:
             # Merge with metadata (metadata_df has normalized fields)
             # Drop metadata columns from full_df to avoid duplicates
             metadata_cols = [
-                col for col in metadata_df.columns if col not in ["sample_id", "dataset_id"]
+                col
+                for col in metadata_df.columns
+                if col not in ["sample_id", "dataset_id"]
             ]
-            full_df = full_df.drop(columns=[c for c in metadata_cols if c in full_df.columns], errors="ignore")
+            full_df = full_df.drop(
+                columns=[c for c in metadata_cols if c in full_df.columns],
+                errors="ignore",
+            )
 
             # Merge on sample_id
             result = full_df.merge(metadata_df, on="sample_id", how="left")

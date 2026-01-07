@@ -5,11 +5,12 @@ Tests configuration loading, schema discovery, querying, filtering, and caching.
 
 """
 
-from pathlib import Path
 import tempfile
-import pytest
+from pathlib import Path
+
 import pandas as pd
-import yaml
+import pytest
+import yaml  # type: ignore
 
 from tfbpapi.virtual_db import VirtualDB, get_nested_value, normalize_value
 
@@ -33,10 +34,7 @@ class TestHelperFunctions:
         """Test extracting property from list of dicts."""
         data = {
             "media": {
-                "carbon_source": [
-                    {"compound": "glucose"},
-                    {"compound": "galactose"}
-                ]
+                "carbon_source": [{"compound": "glucose"}, {"compound": "galactose"}]
             }
         }
         result = get_nested_value(data, "media.carbon_source.compound")
@@ -44,7 +42,7 @@ class TestHelperFunctions:
 
     def test_get_nested_value_non_dict(self):
         """Test that non-dict input returns None."""
-        result = get_nested_value("not a dict", "path")
+        result = get_nested_value("not a dict", "path")  # type: ignore
         assert result is None
 
     def test_normalize_value_exact_match(self):
@@ -90,15 +88,11 @@ class TestVirtualDBConfig:
             "factor_aliases": {
                 "carbon_source": {
                     "glucose": ["D-glucose", "dextrose"],
-                    "galactose": ["D-galactose", "Galactose"]
+                    "galactose": ["D-galactose", "Galactose"],
                 }
             },
-            "missing_value_labels": {
-                "carbon_source": "unspecified"
-            },
-            "description": {
-                "carbon_source": "Carbon source in growth media"
-            },
+            "missing_value_labels": {"carbon_source": "unspecified"},
+            "description": {"carbon_source": "Carbon source in growth media"},
             "repositories": {
                 "BrentLab/test_repo": {
                     "temperature_celsius": {"path": "temperature_celsius"},
@@ -106,19 +100,19 @@ class TestVirtualDBConfig:
                         "test_dataset": {
                             "carbon_source": {
                                 "field": "condition",
-                                "path": "media.carbon_source.compound"
+                                "path": "media.carbon_source.compound",
                             }
                         }
-                    }
+                    },
                 }
-            }
+            },
         }
         config.update(overrides)
         return config
 
     def test_init_with_valid_config(self):
         """Test VirtualDB initialization with valid config."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(self.create_test_config(), f)
             config_path = f.name
 
@@ -132,7 +126,7 @@ class TestVirtualDBConfig:
 
     def test_init_with_token(self):
         """Test VirtualDB initialization with HF token."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(self.create_test_config(), f)
             config_path = f.name
 
@@ -149,7 +143,7 @@ class TestVirtualDBConfig:
 
     def test_repr(self):
         """Test string representation."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(self.create_test_config(), f)
             config_path = f.name
 
@@ -176,25 +170,28 @@ class TestSchemaDiscovery:
                     "temperature_celsius": {"path": "temperature_celsius"},
                     "dataset": {
                         "dataset1": {
-                            "carbon_source": {"field": "condition", "path": "media.carbon_source"}
+                            "carbon_source": {
+                                "field": "condition",
+                                "path": "media.carbon_source",
+                            }
                         }
-                    }
+                    },
                 },
                 "BrentLab/repo2": {
                     "nitrogen_source": {"path": "media.nitrogen_source"},
                     "dataset": {
                         "dataset2": {
                             "carbon_source": {"path": "media.carbon_source"},
-                            "temperature_celsius": {"path": "temperature_celsius"}
+                            "temperature_celsius": {"path": "temperature_celsius"},
                         }
-                    }
-                }
-            }
+                    },
+                },
+            },
         }
 
     def test_get_fields_all_datasets(self):
         """Test getting all fields across all datasets."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(self.create_multi_dataset_config(), f)
             config_path = f.name
 
@@ -210,7 +207,7 @@ class TestSchemaDiscovery:
 
     def test_get_fields_specific_dataset(self):
         """Test getting fields for specific dataset."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(self.create_multi_dataset_config(), f)
             config_path = f.name
 
@@ -226,7 +223,7 @@ class TestSchemaDiscovery:
 
     def test_get_fields_invalid_partial_args(self):
         """Test error when only one of repo_id/config_name provided."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(self.create_multi_dataset_config(), f)
             config_path = f.name
 
@@ -239,7 +236,7 @@ class TestSchemaDiscovery:
 
     def test_get_common_fields(self):
         """Test getting fields common to all datasets."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(self.create_multi_dataset_config(), f)
             config_path = f.name
 
@@ -253,14 +250,6 @@ class TestSchemaDiscovery:
             assert "nitrogen_source" not in common
         finally:
             Path(config_path).unlink()
-
-    def test_get_common_fields_empty_config(self):
-        """Test getting common fields with no repositories."""
-        config = {"factor_aliases": {}}
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            # This will fail validation (needs at least one repo)
-            # So we skip this test
-            pass
 
 
 class TestCaching:
@@ -278,12 +267,12 @@ class TestCaching:
                         }
                     }
                 }
-            }
+            },
         }
 
     def test_invalidate_cache_all(self):
         """Test invalidating all cache."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(self.create_simple_config(), f)
             config_path = f.name
 
@@ -300,7 +289,7 @@ class TestCaching:
 
     def test_invalidate_cache_specific(self):
         """Test invalidating specific dataset cache."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             yaml.dump(self.create_simple_config(), f)
             config_path = f.name
 
@@ -323,13 +312,15 @@ class TestFiltering:
 
     def test_apply_filters_exact_match(self):
         """Test exact value matching in filters."""
-        df = pd.DataFrame({
-            "sample_id": ["s1", "s2", "s3"],
-            "carbon_source": ["glucose", "galactose", "glucose"]
-        })
+        df = pd.DataFrame(
+            {
+                "sample_id": ["s1", "s2", "s3"],
+                "carbon_source": ["glucose", "galactose", "glucose"],
+            }
+        )
 
         # Create minimal VirtualDB instance
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             config = {
                 "repositories": {
                     "BrentLab/test": {
@@ -354,17 +345,18 @@ class TestFiltering:
 
     def test_apply_filters_numeric_range(self):
         """Test numeric range filtering."""
-        df = pd.DataFrame({
-            "sample_id": ["s1", "s2", "s3"],
-            "temperature_celsius": [25, 30, 37]
-        })
+        df = pd.DataFrame(
+            {"sample_id": ["s1", "s2", "s3"], "temperature_celsius": [25, 30, 37]}
+        )
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             config = {
                 "repositories": {
                     "BrentLab/test": {
                         "dataset": {
-                            "test": {"temperature_celsius": {"path": "temperature_celsius"}}
+                            "test": {
+                                "temperature_celsius": {"path": "temperature_celsius"}
+                            }
                         }
                     }
                 }
@@ -384,7 +376,10 @@ class TestFiltering:
 
             # Test between operator
             filtered = vdb._apply_filters(
-                df, {"temperature_celsius": ("between", 28, 32)}, "BrentLab/test", "test"
+                df,
+                {"temperature_celsius": ("between", 28, 32)},
+                "BrentLab/test",
+                "test",
             )
             assert len(filtered) == 1
             assert filtered.iloc[0]["temperature_celsius"] == 30
@@ -393,17 +388,17 @@ class TestFiltering:
 
     def test_apply_filters_with_alias_expansion(self):
         """Test filter with alias expansion."""
-        df = pd.DataFrame({
-            "sample_id": ["s1", "s2", "s3"],
-            "carbon_source": ["glucose", "D-glucose", "galactose"]
-        })
+        df = pd.DataFrame(
+            {
+                "sample_id": ["s1", "s2", "s3"],
+                "carbon_source": ["glucose", "D-glucose", "galactose"],
+            }
+        )
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             config = {
                 "factor_aliases": {
-                    "carbon_source": {
-                        "glucose": ["D-glucose", "dextrose", "glucose"]
-                    }
+                    "carbon_source": {"glucose": ["D-glucose", "dextrose", "glucose"]}
                 },
                 "repositories": {
                     "BrentLab/test": {
@@ -411,7 +406,7 @@ class TestFiltering:
                             "test": {"carbon_source": {"path": "media.carbon_source"}}
                         }
                     }
-                }
+                },
             }
             yaml.dump(config, f)
             config_path = f.name
@@ -432,23 +427,14 @@ class TestExtraction:
 
     def test_add_field_metadata(self):
         """Test adding field-level metadata to DataFrame."""
-        df = pd.DataFrame({
-            "sample_id": ["s1", "s2"],
-            "condition": ["YPD", "YPG"]
-        })
+        df = pd.DataFrame({"sample_id": ["s1", "s2"], "condition": ["YPD", "YPG"]})
 
         field_metadata = {
-            "YPD": {
-                "carbon_source": ["glucose"],
-                "growth_media": ["YPD"]
-            },
-            "YPG": {
-                "carbon_source": ["glycerol"],
-                "growth_media": ["YPG"]
-            }
+            "YPD": {"carbon_source": ["glucose"], "growth_media": ["YPD"]},
+            "YPG": {"carbon_source": ["glycerol"], "growth_media": ["YPG"]},
         }
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             config = {
                 "repositories": {
                     "BrentLab/test": {
@@ -467,8 +453,14 @@ class TestExtraction:
 
             assert "carbon_source" in result.columns
             assert "growth_media" in result.columns
-            assert result.loc[result["condition"] == "YPD", "carbon_source"].iloc[0] == "glucose"
-            assert result.loc[result["condition"] == "YPG", "carbon_source"].iloc[0] == "glycerol"
+            assert (
+                result.loc[result["condition"] == "YPD", "carbon_source"].iloc[0]
+                == "glucose"
+            )
+            assert (
+                result.loc[result["condition"] == "YPG", "carbon_source"].iloc[0]
+                == "glycerol"
+            )
         finally:
             Path(config_path).unlink()
 
@@ -478,7 +470,7 @@ class TestQuery:
 
     def test_query_empty_result(self):
         """Test query with no matching datasets."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
             config = {
                 "repositories": {
                     "BrentLab/test": {
@@ -497,6 +489,202 @@ class TestQuery:
             result = vdb.query(datasets=[("BrentLab/other", "other")])
             assert isinstance(result, pd.DataFrame)
             assert result.empty
+        finally:
+            Path(config_path).unlink()
+
+
+class TestComparativeDatasets:
+    """Tests for comparative dataset field-based joins."""
+
+    def test_parse_composite_identifier(self):
+        """Test parsing composite identifiers."""
+        composite_id = "BrentLab/harbison_2004;harbison_2004;sample_42"
+        repo, config, sample = VirtualDB._parse_composite_identifier(composite_id)
+        assert repo == "BrentLab/harbison_2004"
+        assert config == "harbison_2004"
+        assert sample == "sample_42"
+
+    def test_parse_composite_identifier_invalid(self):
+        """Test that invalid composite IDs raise errors."""
+        with pytest.raises(ValueError, match="Invalid composite ID format"):
+            VirtualDB._parse_composite_identifier("invalid:format")
+
+    def test_get_comparative_fields_for_dataset(self):
+        """Test getting comparative fields mapping."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            config = {
+                "repositories": {
+                    "BrentLab/primary": {
+                        "dataset": {
+                            "primary_data": {
+                                "sample_id": {"field": "sample_id"},
+                                "comparative_analyses": [
+                                    {
+                                        "repo": "BrentLab/comparative",
+                                        "dataset": "comp_data",
+                                        "via_field": "binding_id",
+                                    }
+                                ],
+                            }
+                        }
+                    },
+                    "BrentLab/comparative": {
+                        "dataset": {
+                            "comp_data": {
+                                "dto_fdr": {"field": "dto_fdr"},
+                                "dto_pvalue": {"field": "dto_empirical_pvalue"},
+                            }
+                        }
+                    },
+                }
+            }
+            yaml.dump(config, f)
+            config_path = f.name
+
+        try:
+            vdb = VirtualDB(config_path)
+            field_mapping = vdb._get_comparative_fields_for_dataset(
+                "BrentLab/primary", "primary_data"
+            )
+
+            # Should have dto_fdr and dto_pvalue, but NOT binding_id (via_field)
+            assert "dto_fdr" in field_mapping
+            assert "dto_pvalue" in field_mapping
+            assert "binding_id" not in field_mapping
+
+            # Check mapping structure
+            assert field_mapping["dto_fdr"]["comp_repo"] == "BrentLab/comparative"
+            assert field_mapping["dto_fdr"]["comp_dataset"] == "comp_data"
+            assert field_mapping["dto_fdr"]["via_field"] == "binding_id"
+        finally:
+            Path(config_path).unlink()
+
+    def test_get_comparative_fields_no_links(self):
+        """Test that datasets without comparative links return empty mapping."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            config = {
+                "repositories": {
+                    "BrentLab/primary": {
+                        "dataset": {
+                            "primary_data": {"sample_id": {"field": "sample_id"}}
+                        }
+                    }
+                }
+            }
+            yaml.dump(config, f)
+            config_path = f.name
+
+        try:
+            vdb = VirtualDB(config_path)
+            field_mapping = vdb._get_comparative_fields_for_dataset(
+                "BrentLab/primary", "primary_data"
+            )
+            assert field_mapping == {}
+        finally:
+            Path(config_path).unlink()
+
+    def test_get_comparative_analyses(self):
+        """Test getting comparative analysis relationships."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            config = {
+                "repositories": {
+                    "BrentLab/primary": {
+                        "dataset": {
+                            "primary_data": {
+                                "sample_id": {"field": "sample_id"},
+                                "comparative_analyses": [
+                                    {
+                                        "repo": "BrentLab/comparative",
+                                        "dataset": "comp_data",
+                                        "via_field": "binding_id",
+                                    }
+                                ],
+                            }
+                        }
+                    },
+                    "BrentLab/comparative": {
+                        "dataset": {"comp_data": {"dto_fdr": {"field": "dto_fdr"}}}
+                    },
+                }
+            }
+            yaml.dump(config, f)
+            config_path = f.name
+
+        try:
+            vdb = VirtualDB(config_path)
+            info = vdb.get_comparative_analyses()
+
+            # Check primary to comparative mapping
+            assert "BrentLab/primary/primary_data" in info["primary_to_comparative"]
+            links = info["primary_to_comparative"]["BrentLab/primary/primary_data"]
+            assert len(links) == 1
+            assert links[0]["comparative_repo"] == "BrentLab/comparative"
+            assert links[0]["comparative_dataset"] == "comp_data"
+            assert links[0]["via_field"] == "binding_id"
+
+            # Check comparative fields
+            assert "BrentLab/comparative/comp_data" in info["comparative_fields"]
+            assert (
+                "dto_fdr"
+                in info["comparative_fields"]["BrentLab/comparative/comp_data"]
+            )
+        finally:
+            Path(config_path).unlink()
+
+    def test_get_comparative_analyses_filtered(self):
+        """Test filtering comparative analyses by repo and config."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+            config = {
+                "repositories": {
+                    "BrentLab/primary1": {
+                        "dataset": {
+                            "data1": {
+                                "sample_id": {"field": "sample_id"},
+                                "comparative_analyses": [
+                                    {
+                                        "repo": "BrentLab/comp",
+                                        "dataset": "comp_data",
+                                        "via_field": "id1",
+                                    }
+                                ],
+                            }
+                        }
+                    },
+                    "BrentLab/primary2": {
+                        "dataset": {
+                            "data2": {
+                                "sample_id": {"field": "sample_id"},
+                                "comparative_analyses": [
+                                    {
+                                        "repo": "BrentLab/comp",
+                                        "dataset": "comp_data",
+                                        "via_field": "id2",
+                                    }
+                                ],
+                            }
+                        }
+                    },
+                }
+            }
+            yaml.dump(config, f)
+            config_path = f.name
+
+        try:
+            vdb = VirtualDB(config_path)
+
+            # Get all
+            all_info = vdb.get_comparative_analyses()
+            assert len(all_info["primary_to_comparative"]) == 2
+
+            # Filter by repo and config
+            filtered = vdb.get_comparative_analyses("BrentLab/primary1", "data1")
+            assert len(filtered["primary_to_comparative"]) == 1
+            assert "BrentLab/primary1/data1" in filtered["primary_to_comparative"]
+
+            # Filter by repo only
+            repo_filtered = vdb.get_comparative_analyses("BrentLab/primary2")
+            assert len(repo_filtered["primary_to_comparative"]) == 1
+            assert "BrentLab/primary2/data2" in repo_filtered["primary_to_comparative"]
         finally:
             Path(config_path).unlink()
 

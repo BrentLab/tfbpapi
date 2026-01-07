@@ -22,11 +22,14 @@ from typing import Any
 from pydantic import ValidationError
 
 from tfbpapi.errors import DataCardError, DataCardValidationError, HfDataFetchError
-from tfbpapi.fetchers import HfDataCardFetcher, HfRepoStructureFetcher, HfSizeInfoFetcher
+from tfbpapi.fetchers import (
+    HfDataCardFetcher,
+    HfRepoStructureFetcher,
+    HfSizeInfoFetcher,
+)
 from tfbpapi.models import (
     DatasetCard,
     DatasetConfig,
-    DatasetType,
     ExtractedMetadata,
     FeatureInfo,
     MetadataRelationship,
@@ -37,14 +40,9 @@ class DataCard:
     """
     Parser and explorer for HuggingFace dataset metadata.
 
-    DataCard parses HuggingFace dataset cards into flexible Python objects,
-    enabling users to drill down into the YAML structure to understand dataset
-    organization, experimental conditions, and metadata relationships.
-
     The parsed structure uses Pydantic models with `extra="allow"` to accept
     arbitrary fields (like experimental_conditions) without requiring code
-    changes. This makes the system flexible enough to handle domain-specific
-    metadata variations.
+    changes.
 
     Key capabilities:
     - Parse dataset card YAML into structured objects
@@ -53,7 +51,7 @@ class DataCard:
     - Extract metadata schema for table design
     - Discover metadata relationships
 
-    Example (new API):
+    Example:
         >>> card = DataCard("BrentLab/harbison_2004")
         >>> # Use context manager for config exploration
         >>> with card.config("harbison_2004") as cfg:
@@ -174,48 +172,6 @@ class DataCard:
 
         return config.dataset_info.features
 
-    def get_features_by_role(
-        self, config_name: str, role: str | None = None
-    ) -> dict[str, list[str]]:
-        """
-        Get features grouped by role.
-
-        If role is specified, returns only features with that role.
-        If role is None, returns all features grouped by role.
-
-        :param config_name: Configuration name
-        :param role: Optional specific role to filter by
-        :return: Dict mapping role -> list of field names
-        :raises DataCardError: If config not found
-
-        Example:
-            >>> # Get all features by role
-            >>> by_role = card.get_features_by_role("config_name")
-            >>> # {'regulator_identifier': ['regulator_locus_tag'],
-            >>> #  'target_identifier': ['target_locus_tag'], ...}
-            >>>
-            >>> # Get only experimental condition features
-            >>> cond_fields = card.get_features_by_role("config_name",
-            ...                                          "experimental_condition")
-            >>> # {'experimental_condition': ['condition', 'treatment']}
-
-        """
-        features = self.get_features(config_name)
-
-        # Group by role
-        by_role: dict[str, list[str]] = {}
-        for feature in features:
-            feature_role = feature.role if feature.role else "no_role"
-            if feature_role not in by_role:
-                by_role[feature_role] = []
-            by_role[feature_role].append(feature.name)
-
-        # Filter by specific role if requested
-        if role is not None:
-            return {role: by_role.get(role, [])}
-
-        return by_role
-
     def _extract_partition_values(
         self, config: DatasetConfig, field_name: str
     ) -> set[str]:
@@ -321,7 +277,8 @@ class DataCard:
 
         - **Field roles**: Which fields are regulators, targets, conditions, etc.
         - **Top-level conditions**: Repo-wide conditions (constant for all samples)
-        - **Config-level conditions**: Config-specific conditions (constant for this config)
+        - **Config-level conditions**: Config-specific conditions
+          (constant for this config)
         - **Field-level definitions**: Per-sample condition definitions
 
         The returned schema provides all the information needed to:
@@ -410,7 +367,8 @@ class DataCard:
         All conditions are returned as flexible dicts that preserve the original
         YAML structure. Navigate nested dicts to access specific values.
 
-        :param config_name: Optional config name. If provided, merges top and config levels
+        :param config_name: Optional config name. If provided, merges top
+          and config levels
         :return: Dict of experimental conditions (empty dict if none defined)
 
         Example:
@@ -471,7 +429,8 @@ class DataCard:
 
         :param config_name: Configuration name
         :param field_name: Field name (typically has role=experimental_condition)
-        :return: Dict mapping field values to their definition dicts (empty if no definitions)
+        :return: Dict mapping field values to their definition dicts
+          (empty if no definitions)
         :raises DataCardError: If config or field not found
 
         Example:
