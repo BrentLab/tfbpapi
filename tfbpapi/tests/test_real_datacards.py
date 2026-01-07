@@ -6,10 +6,8 @@ correctly with the updated models.py and specification.
 
 """
 
-import warnings
-
 import pytest
-import yaml
+import yaml  # type: ignore
 
 from tfbpapi.models import DatasetCard
 
@@ -671,7 +669,7 @@ def test_media_additives():
     condition_feature = next(
         f for f in config.dataset_info.features if f.name == "condition"
     )
-    but14_def = condition_feature.definitions["BUT14"]
+    but14_def = condition_feature.definitions["BUT14"]  # type: ignore
 
     # Check additives
     env_conds_dict = but14_def["environmental_conditions"]
