@@ -350,7 +350,7 @@ class TestDataCard:
         # Get the genome_map_data config which has partitioning enabled
         config = datacard.get_config("genome_map_data")
         assert config is not None
-        assert config.dataset_info.partitioning.enabled is True
+        assert config.dataset_info.partitioning.enabled is True  # type: ignore
 
         values = datacard._extract_partition_values(config, "regulator")
         assert values == {"TF1", "TF2", "TF3"}
@@ -443,7 +443,7 @@ class TestDataCard:
         datacard = DataCard(test_repo_id)
 
         config = datacard.get_config("genome_map_data")
-        values = datacard._extract_partition_values(config, "regulator")
+        values = datacard._extract_partition_values(config, "regulator")  # type: ignore
 
         # Should return empty set on error
         assert values == set()
