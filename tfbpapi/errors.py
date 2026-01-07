@@ -1,7 +1,5 @@
 """Custom exception classes for dataset management."""
 
-from typing import Any
-
 
 class HfDataFetchError(Exception):
     """Raised when HuggingFace API requests fail."""

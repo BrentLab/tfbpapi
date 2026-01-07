@@ -1,6 +1,6 @@
 """Test script to verify datacard parsing with new environmental_conditions."""
 
-import yaml
+import yaml  # type: ignore
 
 from tfbpapi.models import DatasetCard
 from tfbpapi.tests.example_datacards import (
