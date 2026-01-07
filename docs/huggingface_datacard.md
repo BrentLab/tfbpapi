@@ -1,47 +1,30 @@
 # HuggingFace Dataset Card Format
 
-This document describes the expected YAML metadata format for HuggingFace dataset repositories used with the tfbpapi package. The metadata is defined in the repository's README.md file frontmatter and provides structured information about the dataset configuration and contents.
+This document describes the expected YAML metadata format for HuggingFace dataset
+repositories used with the tfbpapi package. The metadata is defined in the repository's
+README.md file, at the top in a yaml block, and provides structured information about
+the dataset configuration and contents.  
 
-## Required Top-Level Fields
+This documentation is intended for developers preparing or augmenting a huggingface
+dataset repository to be compatible with tfbpapi. Before reading, please review the
+[BrentLab/hackett_2020](https://huggingface.co/datasets/BrentLab/hackett_2020/blob/main/README.md) 
+datacard as an example of a complete implementation of a simple repository. After
+reviewing Hackett 2020 and this documentation, it might be helpful to review a more
+complex example such as:
 
-### Basic Metadata
-```yaml
-license: mit                    # Dataset license
-language:                      # Languages (usually 'en' for scientific data)
-- en
-tags:                          # Descriptive tags for discoverability
-- biology
-- genomics
-- yeast
-- transcription-factors
-pretty_name: "Dataset Name"    # Human-readable dataset name
-size_categories:               # Dataset size category
-- 100K<n<1M
-```
-
-### Dataset Configurations
-
-The most important section is the `configs` array, which defines multiple dataset configurations within a single repository:
-
-```yaml
-configs:
-- config_name: config_identifier
-  description: Human-readable description
-  dataset_type: [genomic_features|annotated_features|genome_map|metadata]
-  default: true                # Optional: marks default config
-  applies_to: [config1, config2]  # Optional: for metadata configs only
-  metadata_fields: [field1, field2]  # Optional: for embedded metadata extraction
-  data_files:
-  - split: train               # Usually 'train' for scientific data
-    path: file.parquet         # Path to data file(s)
-  dataset_info:
-    features: [...]            # Feature definitions (see below)
-    partitioning: [...]        # Optional: for partitioned datasets
-```
+- [BrentLab/barkai_compendium](https://huggingface.co/datasets/BrentLab/barkai_compendium):
+  This contains a `genome_map` partitioned dataset with separate metadata applied via
+  the `applies_to` field. 
+- [Brentlab/rossi_2021](https://huggingface.co/datasets/BrentLab/rossi_2021):
+  This contains multiple `annotated_features` datasets with embedded metadata
+- [Brentlab/yeast_genomic_features](https://huggingface.co/datasets/BrentLab/yeast_genomic_features):
+  This contains a simple `genomic_features` dataset used as a reference for other
+  datasets in the collection.
 
 ## Dataset Types
 
-The tfbpapi recognizes four main dataset types via the `dataset_type` field:
+The `dataset_type` field is a property of each config (hierarchically under
+`config_name`). `tfbpapi` recognizes the following dataset types:
 
 ### 1. `genomic_features`
 Static information about genomic features (genes, promoters, etc.)
@@ -50,10 +33,14 @@ Static information about genomic features (genes, promoters, etc.)
 - **Required fields**: Usually includes gene identifiers, coordinates, classifications
 
 ### 2. `annotated_features`
-Quantitative data associated with genomic features
+Quantitative data associated with genomic features. A field `sample_id` should exist
+to identify single experiments in a single set of conditions.
 - **Use case**: Expression data, binding scores, differential expression results
-- **Structure**: Regulator-target pairs or feature-condition measurements
-- **Common fields**: `regulator_*`, `target_*`, quantitative measurements
+- **Structure**: Each sample will have one row per genomic feature measured. The
+  role `quantitative_measure` should be used to identify measurement columns.
+- **Common fields**: `regulator_*`, `target_*` fields with the roles
+  `regulator_identifier` and `target_identifier` respectively. Fields with the role
+  `quantitative_measure` for measurements.
 
 ### 3. `genome_map`
 Position-level data across genomic coordinates
@@ -63,57 +50,188 @@ Position-level data across genomic coordinates
 
 ### 4. `metadata`
 Experimental metadata and sample descriptions
-- **Use case**: Sample information, experimental conditions, protocol details
-- **Structure**: One row per experiment/sample
+- **Use case**: Sample information, experimental conditions, protocol details. Note
+  that this can also include per-sample QC metrics. For cross-sample QC or analysis,
+  see [comparative](#5-comparative) below.
+- **Structure**: One row per sample
 - **Common fields**: Sample identifiers, experimental conditions, publication info
 - **Special field**: `applies_to` - Optional list of config names this metadata applies to
+
+### 5. `comparative`
+
+Quality control metrics, validation results, and cross-dataset analysis outputs.
+
+**Use cases**:
+- Cross-dataset quality assessments and validation metrics
+- Analysis results relating samples across datasets or repositories
+- Comparative analyses (e.g., binding vs expression correlation)
+
+**Structure**: One row represents an observation on 2 or more samples. Note that the
+  name of the column containing the sample references isn't specified. However, the
+  role and format of the sample references are strictly defined. See
+  [Defining Sample References](#defining-sample-references) below.
+
+#### Defining Sample References
+
+The name of the field which contains the sample reference is user-defined. However,
+the contents of that field, and its role, must be as follows:
+
+- **`source_sample`**: Fields containing composite sample identifiers. This must be in
+  the format `"repo_id;config_name;sample_id"`.
+
+```
+"repo_id;config_name;sample_id"
+```
+
+Examples:
+- `"BrentLab/harbison_2004;harbison_2004;CBF1_YPD"`
+- `"BrentLab/kemmeren_2014;kemmeren_2014;sample_42"`
+
+## Experimental Conditions
+
+Experimental conditions can be specified in three ways:
+1. **Top-level** `experimental_conditions`: Apply to all configs in the repository.
+  Use when experimental parameters are common across all datasets. This will occur
+  at the same level as `configs`
+2. **Config-level** `experimental_conditions`: Apply to a specific config
+  ([dataset](#dataset)). Use when certain datasets have experimental parameters that
+  are not shared by all other datasets in the [repository](#huggingface-repo), but
+  are common to all [samples](#sample) within that dataset.
+3. **Field-level** with `role: experimental_condition` ([feature-roles](#feature-roles)): For
+  per-sample or per-measurement variation in experimental conditions stored as
+  data columns. This is specified in the
+  `dataset_info.features` ([feature-definitions](#feature-definitions))
+  section of a config. `experimental_condition` fields which are categorical can are
+  specifically defined in [categorical fields with value definitions](#categorical-fields-with-value-definitions).
+
+The priority of experimental conditions is:
+
+field-level > config-level > top-level
+
+**Example of all three methods:**
+```yaml
+# Top-level experimental conditions (apply to all [datasets](#dataset) in the repo)
+experimental_conditions:
+  temperature_celsius: 30
+configs:
+- config_name: overexpression_data
+  description: TF overexpression perturbation data
+  dataset_type: annotated_features
+  # The overexpression_data [dataset](#dataset) has an additional experimental
+  # condition that is specific to this dataset
+  experimental_conditions:
+    strain_background: "BY4741"
+  data_files:
+    - split: train
+      path: overexpression.parquet
+  dataset_info:
+    features:
+      - name: time
+        dtype: float
+        description: Time point in minutes
+        role: experimental_condition
+      - name: mechanism
+        dtype: string
+        description: Induction mechanism (GEV or ZEV)
+        role: experimental_condition
+        definitions:
+          GEV:
+            perturbation_method:
+              type: inducible_overexpression
+              system: GEV
+              inducer: beta-estradiol
+              description: "Galactose-inducible estrogen receptor-VP16 fusion system"
+          ZEV:
+            perturbation_method:
+              type: inducible_overexpression
+              system: ZEV
+              inducer: beta-estradiol
+              description: >-
+                "Z3 (synthetic zinc finger)-estrogen receptor-VP16 fusion system"
+      - name: log2_ratio
+        dtype: float
+        description: Log2 fold change
+        role: quantitative_measure
+```
 
 ## Feature Definitions
 
 Each config must include detailed feature definitions in `dataset_info.features`:
-
 ```yaml
 dataset_info:
   features:
-  - name: field_name           # Column name in the data
-    dtype: string              # Data type (string, int64, float64, etc.)
-    description: "Detailed description of what this field contains"
-    role: "target_identifier"  # Optional: semantic role of the feature
+    - name: field_name           # Column name in the data
+      dtype: string              # Data type (string, int64, float64, etc.)
+      description: "Detailed description of what this field contains"
+      role: "target_identifier"  # Optional: semantic role of the feature
 ```
 
-### Common Data Types
-- `string`: Text data, identifiers, categories
-- `int64`: Integer values
-- `float64`: Decimal numbers, measurements
-- `int32`, `float32`: For large datasets where precision/memory matters
+### Categorical Fields with Value Definitions
+
+For fields with `role: experimental_condition` that contain categorical values, you can
+provide structured definitions for each value using the `definitions` field. This allows
+machine-parsable specification of what each condition value means experimentally:
+```yaml
+- name: condition
+  dtype:
+    class_label:
+      names: ["standard", "heat_shock"]
+  role: experimental_condition
+  description: Growth condition of the sample
+  definitions:
+    standard:
+      media:
+        name: synthetic_complete
+        carbon_source:
+          - compound: D-glucose
+            concentration_percent: 2
+        nitrogen_source:
+          - compound: yeast_nitrogen_base
+            # lastname et al 2025 used 6.71 g/L
+            concentration_percent: 0.671
+            specifications:
+              - without_amino_acids
+              - without_ammonium_sulfate
+          - compound: ammonium_sulfate
+            # lastname et al 2025 used 5 g/L
+            concentration_percent: 0.5
+          - compound: amino_acid_dropout_mix
+            # lastname et al 2025 used 2 g/L
+            concentration_percent: 0.2
+    heat_shock:
+      temperature_celsius: 37
+      duration_minutes: 10
+```
+
+Each key in `definitions` must correspond to a possible value in the field.
+The structure under each value provides experimental parameters specific to that
+condition using the same nested format as `experimental_conditions` at config or
+top level.
 
 ### Naming Conventions
 
 **Gene/Feature Identifiers:**
-- `*_locus_tag`: Systematic gene identifiers (e.g., "YDL227C")
-- `*_symbol`: Standard gene symbols (e.g., "HO")
-- `*_id`: Alternative identifier systems
+- `(regulator/target)_locus_tag`: Systematic gene identifiers (e.g., "YJR060W"). Must
+  be able to join to a genomic_features dataset. If none is specific,
+  then the BrentLab/yeast_genomic_features is used
+- `(regulator/target)_symbol`: Standard gene symbols (e.g., "CBF1"). Must be able to
+  join to a genomic_features dataset. If none is specific,
+  then the BrentLab/yeast_genomic_features is used
 
-**Regulator-Target Relationships:**
-- `regulator_*`: Fields describing the regulatory factor
-- `target_*`: Fields describing the target gene/feature
+**Genomic Coordinates:**  
+Unless otherwise noted, assume that coordinates are 0-based, half-open intervals
 
-**Genomic Coordinates:**
 - `chr`: Chromosome identifier
 - `start`, `end`: Genomic coordinates
 - `pos`: Single position
 - `strand`: Strand information (+ or -)
 
-### Feature Roles
+## Feature Roles
 
-The optional `role` field provides semantic meaning to features, especially useful for `annotated_features` datasets:
-
-**Standard Roles:**
-- `target_identifier`: Identifies target genes/features (e.g., target_locus_tag, target_symbol)
-- `regulator_identifier`: Identifies regulatory factors (e.g., regulator_locus_tag, regulator_symbol)
-- `quantitative_measure`: Quantitative measurements (e.g., binding_score, expression_level, p_value)
-- `experimental_condition`: Experimental conditions or metadata
-- `genomic_coordinate`: Positional information (chr, start, end, pos)
+The optional `role` field provides semantic meaning to features, especially useful
+for annotated_features datasets. The following roles are recognized by tfbpapi.
+**NOTE** `experimental_condition` is a reserved role with additional behavior
+as described above.
 
 ## Partitioned Datasets
 
@@ -133,7 +251,9 @@ This allows efficient querying of subsets without loading the entire dataset.
 
 ### Metadata Relationships with `applies_to`
 
-For metadata configs, you can explicitly specify which other configs the metadata applies to using the `applies_to` field. This provides more control than automatic type-based matching.
+For metadata configs, you can explicitly specify which other configs the metadata
+applies to using the `applies_to` field. This provides more control than automatic
+type-based matching.
 
 ```yaml
 configs:
@@ -159,7 +279,9 @@ configs:
 
 ### Embedded Metadata with `metadata_fields`
 
-When no explicit metadata config exists, you can extract metadata directly from the dataset's own files using the `metadata_fields` field. This specifies which fields should be treated as metadata.
+When no explicit metadata config exists, you can extract metadata directly from the
+dataset's own files using the `metadata_fields` field. This specifies which fields
+should be treated as metadata.
 
 ### Single File Embedded Metadata
 
@@ -211,20 +333,6 @@ For partitioned datasets, partition values are extracted from directory structur
       enabled: true
       partition_by: ["run_accession", "regulator_symbol"]
 ```
-
-### How Embedded Metadata Works
-
-1. **Partition Fields**: For partitioned datasets, values are extracted from directory names (e.g., `accession=SRR123` → `SRR123`)
-2. **Data Fields**: For single files, distinct values are extracted via HuggingFace Datasets Server API
-3. **Synthetic Config**: A synthetic metadata config is created with extracted values
-4. **Automatic Pairing**: The synthetic metadata automatically applies to the source config
-
-### Metadata Extraction Priority
-
-The system tries metadata sources in this order:
-1. **Explicit metadata configs** with `applies_to` field
-2. **Automatic type-based pairing** between data configs and metadata configs
-3. **Embedded metadata extraction** from `metadata_fields`
 
 ## Data File Organization
 
@@ -316,19 +424,73 @@ configs:
       description: DOI of associated publication
 ```
 
-## Validation
+## Terms and definitions
 
-The tfbpapi will validate:
-1. Required fields are present (`dataset_type`, feature definitions)
-2. Data types match the schema
-3. Referenced files exist in the repository
-4. Partitioning configuration is consistent with data structure
+### field/feature/attribute/column
+In a collection of samples (see below), the fields record information about the
+record. For example, if there are two samples each of which report results for 6000
+genes and the way in which the samples differ is by growth media, then growth_media
+would be a feature with two levels, eg YPD and SC. If the two samples are stored in
+the same parquet file, then there would be a column where the entry for all 6000
+rows of the first sample would be YPD and the entry for all 6000 rows of the second
+sample would be SC.
 
-## Best Practices
+### record/row
+A row in a table, or a single observation in a single sample (see below).
 
-1. **Descriptive names**: Use clear, descriptive field names and descriptions
-2. **Consistent identifiers**: Use standard gene naming conventions
-3. **Appropriate types**: Choose data types that balance precision and storage efficiency
-4. **Complete metadata**: Include publication DOIs, processing methods, and data provenance
-5. **Logical partitioning**: Partition large datasets by experimental conditions or samples
-6. **Default config**: Mark the most commonly used configuration as `default: true`
+### metadata
+Data about data. However, there are multiple objects to which metadata is attached in
+our usage, in particular at the dataset level and at the repo level (see below for
+those terms).
+
+### sample
+The result of a single biological experiment. For example, if a given dataset has 20
+regulators, in 3 replicates in 2 conditions, then there would be 20×3×2 samples.
+If the way the results are reported is over 6000 genes, then we would expect all
+20×3×2 of those samples to have 6000 records.
+
+### huggingface repo
+HuggingFace is a thin layer on top of GitHub. HuggingFace repos are GitHub repos with
+additional functionality.
+
+### datacard
+A README file in the HuggingFace repo. In HuggingFace, this is called a datacard and
+has an additional YAML section at the top. This YAML section stores information on
+the repo and is extensible. It is in this YAML section that we record a defined set
+of attributes and features that allow us to search/filter/subset the data in the
+collection (see below). See the datacard format documentation for a full description.
+
+### dataset
+In our HuggingFace repos, we store one or more datasets. These datasets have
+defined types. In general, we try to refer to datasets by the first author and year
+of the paper from which they originate, eg 'Mahendrawada 2025'. However, the
+distinction between a dataset and a repo can be complicated, as in the case of
+Mahendrawada 2025 there is ChEC-seq, ChIP-seq and RNA-seq data. Each of those may be
+provided in multiple datasets, eg one which was reported by the authors, and another
+reprocessed in our lab. A dataset should refer to a single one of those collections
+and may require further specification beyond the first author's name and year published.
+
+### huggingface collection
+HuggingFace allows you to group repositories together, which is what we are doing
+with all repos storing data related to the yeast database project.
+
+### regulator
+A superset that includes "TF" or "transcription factor". These are proteins which
+are assayed for their effect on gene expression.
+
+### target
+Genes on which the regulator's effect is measured.
+
+### tfbpapi
+A Python package which provides the interface to the HuggingFace collection.
+
+### active set (of samples)
+In order to conduct analysis, a user will need to define a set of samples. A sample
+(see definition above) is defined by the metadata features, eg regulator_locus_tag.
+If the user is interested in all datasets in which this regulator exists, then the
+active set would be the set of samples, across the entire collection (see HuggingFace
+collection above), with this regulator_locus_tag. The user may choose to filter on
+additional features in order to further refine the active set (eg, if a different
+dataset has 2 conditions for that regulator, then the user may wish to only retain
+1 of those conditions in their active set. They may wish to completely exclude a
+different dataset, etc).

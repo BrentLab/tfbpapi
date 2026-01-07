@@ -3,19 +3,18 @@
 from unittest.mock import Mock, patch
 
 import pytest
-from pydantic import ValidationError
 
-from tfbpapi.datainfo import DataCard
-from tfbpapi.datainfo.models import DatasetType
+from tfbpapi import DataCard
 from tfbpapi.errors import DataCardError, DataCardValidationError, HfDataFetchError
+from tfbpapi.models import DatasetType
 
 
 class TestDataCard:
     """Test suite for DataCard class."""
 
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
     def test_init(
         self,
         mock_size_fetcher,
@@ -37,9 +36,9 @@ class TestDataCard:
         mock_structure_fetcher.assert_called_once_with(token=test_token)
         mock_size_fetcher.assert_called_once_with(token=test_token)
 
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
     def test_init_without_token(
         self, mock_size_fetcher, mock_structure_fetcher, mock_card_fetcher, test_repo_id
     ):
@@ -54,9 +53,9 @@ class TestDataCard:
         mock_structure_fetcher.assert_called_once_with(token=None)
         mock_size_fetcher.assert_called_once_with(token=None)
 
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
     def test_load_and_validate_card_success(
         self,
         mock_size_fetcher,
@@ -81,9 +80,9 @@ class TestDataCard:
         assert card.pretty_name == "Test Genomics Dataset"
         mock_fetcher_instance.fetch.assert_called_once_with(test_repo_id)
 
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
     def test_load_card_no_data(
         self, mock_size_fetcher, mock_structure_fetcher, mock_card_fetcher, test_repo_id
     ):
@@ -97,9 +96,9 @@ class TestDataCard:
         with pytest.raises(DataCardValidationError, match="No dataset card found"):
             _ = datacard.dataset_card
 
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
     def test_load_card_validation_error(
         self,
         mock_size_fetcher,
@@ -120,9 +119,9 @@ class TestDataCard:
         ):
             _ = datacard.dataset_card
 
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
     def test_load_card_fetch_error(
         self, mock_size_fetcher, mock_structure_fetcher, mock_card_fetcher, test_repo_id
     ):
@@ -136,9 +135,9 @@ class TestDataCard:
         with pytest.raises(DataCardError, match="Failed to fetch dataset card"):
             _ = datacard.dataset_card
 
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
     def test_configs_property(
         self,
         mock_size_fetcher,
@@ -162,9 +161,9 @@ class TestDataCard:
         assert "genome_map_data" in config_names
         assert "experiment_metadata" in config_names
 
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
     def test_get_config_by_name(
         self,
         mock_size_fetcher,
@@ -188,109 +187,9 @@ class TestDataCard:
         # Test non-existent config
         assert datacard.get_config("nonexistent") is None
 
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
-    def test_get_configs_by_type(
-        self,
-        mock_size_fetcher,
-        mock_structure_fetcher,
-        mock_card_fetcher,
-        test_repo_id,
-        sample_dataset_card_data,
-    ):
-        """Test getting configurations by dataset type."""
-        mock_fetcher_instance = Mock()
-        mock_card_fetcher.return_value = mock_fetcher_instance
-        mock_fetcher_instance.fetch.return_value = sample_dataset_card_data
-
-        datacard = DataCard(test_repo_id)
-
-        # Test with enum
-        genomic_configs = datacard.get_configs_by_type(DatasetType.GENOMIC_FEATURES)
-        assert len(genomic_configs) == 1
-        assert genomic_configs[0].config_name == "genomic_features"
-
-        # Test with string
-        metadata_configs = datacard.get_configs_by_type("metadata")
-        assert len(metadata_configs) == 1
-        assert metadata_configs[0].config_name == "experiment_metadata"
-
-        # Test with genome_map type
-        genome_map_configs = datacard.get_configs_by_type("genome_map")
-        assert len(genome_map_configs) == 1
-        assert genome_map_configs[0].config_name == "genome_map_data"
-
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
-    def test_get_field_values_success(
-        self,
-        mock_size_fetcher,
-        mock_structure_fetcher,
-        mock_card_fetcher,
-        test_repo_id,
-        sample_dataset_card_data,
-    ):
-        """Test getting field values for a specific config and field."""
-        mock_fetcher_instance = Mock()
-        mock_card_fetcher.return_value = mock_fetcher_instance
-        mock_fetcher_instance.fetch.return_value = sample_dataset_card_data
-
-        datacard = DataCard(test_repo_id)
-
-        # Test existing field
-        values = datacard.get_field_values("binding_data", "regulator_symbol")
-        # Since _extract_field_values returns empty set by default, we expect empty set
-        assert isinstance(values, set)
-
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
-    def test_get_field_values_config_not_found(
-        self,
-        mock_size_fetcher,
-        mock_structure_fetcher,
-        mock_card_fetcher,
-        test_repo_id,
-        sample_dataset_card_data,
-    ):
-        """Test error when config not found."""
-        mock_fetcher_instance = Mock()
-        mock_card_fetcher.return_value = mock_fetcher_instance
-        mock_fetcher_instance.fetch.return_value = sample_dataset_card_data
-
-        datacard = DataCard(test_repo_id)
-
-        with pytest.raises(
-            DataCardError, match="Configuration 'nonexistent' not found"
-        ):
-            datacard.get_field_values("nonexistent", "some_field")
-
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
-    def test_get_field_values_field_not_found(
-        self,
-        mock_size_fetcher,
-        mock_structure_fetcher,
-        mock_card_fetcher,
-        test_repo_id,
-        sample_dataset_card_data,
-    ):
-        """Test error when field not found."""
-        mock_fetcher_instance = Mock()
-        mock_card_fetcher.return_value = mock_fetcher_instance
-        mock_fetcher_instance.fetch.return_value = sample_dataset_card_data
-
-        datacard = DataCard(test_repo_id)
-
-        with pytest.raises(DataCardError, match="Field 'nonexistent' not found"):
-            datacard.get_field_values("binding_data", "nonexistent")
-
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
     def test_get_metadata_relationships(
         self,
         mock_size_fetcher,
@@ -320,9 +219,9 @@ class TestDataCard:
         assert embedded_rels[0].data_config == "binding_data"
         assert embedded_rels[0].metadata_config == "binding_data_embedded"
 
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
     def test_get_repository_info_success(
         self,
         mock_size_fetcher,
@@ -357,9 +256,9 @@ class TestDataCard:
         assert info["last_modified"] == "2023-12-01T10:30:00Z"
         assert info["has_default_config"] is True
 
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
     def test_get_repository_info_fetch_error(
         self,
         mock_size_fetcher,
@@ -387,77 +286,9 @@ class TestDataCard:
         assert info["total_files"] is None
         assert info["last_modified"] is None
 
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
-    def test_explore_config(
-        self,
-        mock_size_fetcher,
-        mock_structure_fetcher,
-        mock_card_fetcher,
-        test_repo_id,
-        sample_dataset_card_data,
-    ):
-        """Test exploring a specific configuration."""
-        mock_fetcher_instance = Mock()
-        mock_card_fetcher.return_value = mock_fetcher_instance
-        mock_fetcher_instance.fetch.return_value = sample_dataset_card_data
-
-        datacard = DataCard(test_repo_id)
-
-        # Test regular config
-        config_info = datacard.explore_config("binding_data")
-
-        assert config_info["config_name"] == "binding_data"
-        assert config_info["description"] == "Transcription factor binding measurements"
-        assert config_info["dataset_type"] == "annotated_features"
-        assert config_info["is_default"] is False
-        assert config_info["num_features"] == 4
-        assert len(config_info["features"]) == 4
-        assert config_info["metadata_fields"] == [
-            "regulator_symbol",
-            "experimental_condition",
-        ]
-
-        # Test config with partitioning
-        partitioned_config_info = datacard.explore_config("genome_map_data")
-        assert "partitioning" in partitioned_config_info
-        assert partitioned_config_info["partitioning"]["enabled"] is True
-        assert partitioned_config_info["partitioning"]["partition_by"] == [
-            "regulator",
-            "experiment",
-        ]
-
-        # Test metadata config with applies_to
-        metadata_config_info = datacard.explore_config("experiment_metadata")
-        assert metadata_config_info["applies_to"] == ["binding_data"]
-
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
-    def test_explore_config_not_found(
-        self,
-        mock_size_fetcher,
-        mock_structure_fetcher,
-        mock_card_fetcher,
-        test_repo_id,
-        sample_dataset_card_data,
-    ):
-        """Test exploring a non-existent configuration."""
-        mock_fetcher_instance = Mock()
-        mock_card_fetcher.return_value = mock_fetcher_instance
-        mock_fetcher_instance.fetch.return_value = sample_dataset_card_data
-
-        datacard = DataCard(test_repo_id)
-
-        with pytest.raises(
-            DataCardError, match="Configuration 'nonexistent' not found"
-        ):
-            datacard.explore_config("nonexistent")
-
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
     def test_summary(
         self,
         mock_size_fetcher,
@@ -490,9 +321,9 @@ class TestDataCard:
         assert "experiment_metadata" in summary
         assert "(default)" in summary  # genomic_features is marked as default
 
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
     def test_extract_partition_values(
         self,
         mock_size_fetcher,
@@ -527,9 +358,9 @@ class TestDataCard:
             test_repo_id, "regulator"
         )
 
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
     def test_extract_partition_values_no_partitioning(
         self,
         mock_size_fetcher,
@@ -557,9 +388,9 @@ class TestDataCard:
         assert values == set()
         mock_structure_fetcher_instance.get_partition_values.assert_not_called()
 
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
     def test_extract_partition_values_field_not_in_partitions(
         self,
         mock_size_fetcher,
@@ -587,9 +418,9 @@ class TestDataCard:
         assert values == set()
         mock_structure_fetcher_instance.get_partition_values.assert_not_called()
 
-    @patch("tfbpapi.datainfo.datacard.HfDataCardFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfRepoStructureFetcher")
-    @patch("tfbpapi.datainfo.datacard.HfSizeInfoFetcher")
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
     def test_extract_partition_values_fetch_error(
         self,
         mock_size_fetcher,

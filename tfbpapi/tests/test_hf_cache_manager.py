@@ -7,8 +7,8 @@ from unittest.mock import Mock, patch
 import duckdb
 import pytest
 
-from tfbpapi.datainfo.models import DatasetType
-from tfbpapi.HfCacheManager import HfCacheManager
+from tfbpapi.hf_cache_manager import HfCacheManager
+from tfbpapi.models import DatasetType
 
 
 class TestHfCacheManagerInit:
@@ -20,7 +20,7 @@ class TestHfCacheManagerInit:
         repo_id = "test/repo"
 
         with patch(
-            "tfbpapi.HfCacheManager.DataCard.__init__", return_value=None
+            "tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None
         ) as mock_datacard_init:
             cache_manager = HfCacheManager(repo_id, conn)
             # Manually set the properties that would normally
@@ -43,7 +43,7 @@ class TestHfCacheManagerInit:
         logger = logging.getLogger("test_logger")
 
         with patch(
-            "tfbpapi.HfCacheManager.DataCard.__init__", return_value=None
+            "tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None
         ) as mock_datacard_init:
             cache_manager = HfCacheManager(repo_id, conn, token=token, logger=logger)
             # Manually set the properties that would
@@ -69,7 +69,7 @@ class TestHfCacheManagerDatacard:
         token = "test_token"
 
         with patch(
-            "tfbpapi.HfCacheManager.DataCard.__init__", return_value=None
+            "tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None
         ) as mock_datacard_init:
             cache_manager = HfCacheManager(repo_id, conn, token=token)
 
@@ -78,13 +78,12 @@ class TestHfCacheManagerDatacard:
 
             # Should have DataCard methods available (they exist on the class)
             assert hasattr(cache_manager, "get_config")
-            assert hasattr(cache_manager, "get_configs_by_type")
 
 
 class TestHfCacheManagerDuckDBOperations:
     """Test DuckDB operations that are still part of HfCacheManager."""
 
-    @patch("tfbpapi.HfCacheManager.DataCard.__init__", return_value=None)
+    @patch("tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None)
     def test_create_duckdb_table_from_files_single_file(
         self, mock_datacard_init, tmpdir
     ):
@@ -97,8 +96,11 @@ class TestHfCacheManagerDuckDBOperations:
         mock_conn = Mock()
         test_cache_manager = HfCacheManager("test/repo", mock_conn)
 
+        # Mock the validation method since we're testing table creation
+        test_cache_manager._validate_source_sample_fields = Mock()  # type: ignore
+
         test_cache_manager._create_duckdb_table_from_files(
-            [str(parquet_file)], "test_table"
+            [str(parquet_file)], "test_table", "test_config"
         )
 
         mock_conn.execute.assert_called_once()
@@ -106,7 +108,7 @@ class TestHfCacheManagerDuckDBOperations:
         assert "CREATE OR REPLACE VIEW test_table" in sql_call
         assert str(parquet_file) in sql_call
 
-    @patch("tfbpapi.HfCacheManager.DataCard.__init__", return_value=None)
+    @patch("tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None)
     def test_create_duckdb_table_from_files_multiple_files(
         self, mock_datacard_init, tmpdir
     ):
@@ -123,7 +125,12 @@ class TestHfCacheManagerDuckDBOperations:
         mock_conn = Mock()
         test_cache_manager = HfCacheManager("test/repo", mock_conn)
 
-        test_cache_manager._create_duckdb_table_from_files(files, "test_table")
+        # Mock the validation method since we're testing table creation
+        test_cache_manager._validate_source_sample_fields = Mock()  # type: ignore
+
+        test_cache_manager._create_duckdb_table_from_files(
+            files, "test_table", "test_config"
+        )
 
         mock_conn.execute.assert_called_once()
         sql_call = mock_conn.execute.call_args[0][0]
@@ -137,7 +144,7 @@ class TestHfCacheManagerCacheManagement:
 
     def setup_method(self):
         """Set up test fixtures."""
-        with patch("tfbpapi.HfCacheManager.DataCard.__init__", return_value=None):
+        with patch("tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None):
             self.conn = duckdb.connect(":memory:")
             self.repo_id = "test/repo"
             self.cache_manager = HfCacheManager(self.repo_id, self.conn)
@@ -160,7 +167,7 @@ class TestHfCacheManagerCacheManagement:
         assert self.cache_manager._format_bytes(1024**3) == "1.0GB"
         assert self.cache_manager._format_bytes(1024**4) == "1.0TB"
 
-    @patch("tfbpapi.HfCacheManager.scan_cache_dir")
+    @patch("tfbpapi.hf_cache_manager.scan_cache_dir")
     def test_clean_cache_by_age(self, mock_scan_cache_dir):
         """Test age-based cache cleaning."""
         # Setup mock cache info
@@ -184,7 +191,7 @@ class TestHfCacheManagerCacheManagement:
         assert result == mock_delete_strategy
         mock_cache_info.delete_revisions.assert_called_once_with("abc123")
 
-    @patch("tfbpapi.HfCacheManager.scan_cache_dir")
+    @patch("tfbpapi.hf_cache_manager.scan_cache_dir")
     def test_clean_cache_by_age_no_old_revisions(self, mock_scan_cache_dir):
         """Test age-based cleaning when no old revisions exist."""
         mock_cache_info = Mock()
@@ -208,7 +215,7 @@ class TestHfCacheManagerCacheManagement:
         assert result == mock_delete_strategy
         mock_cache_info.delete_revisions.assert_called_once_with()
 
-    @patch("tfbpapi.HfCacheManager.scan_cache_dir")
+    @patch("tfbpapi.hf_cache_manager.scan_cache_dir")
     def test_clean_cache_by_size(self, mock_scan_cache_dir):
         """Test size-based cache cleaning."""
         # Setup mock cache info
@@ -238,7 +245,7 @@ class TestHfCacheManagerCacheManagement:
         assert result == mock_delete_strategy
         mock_cache_info.delete_revisions.assert_called_once()
 
-    @patch("tfbpapi.HfCacheManager.scan_cache_dir")
+    @patch("tfbpapi.hf_cache_manager.scan_cache_dir")
     def test_clean_cache_by_size_already_under_target(self, mock_scan_cache_dir):
         """Test size-based cleaning when already under target."""
         mock_cache_info = Mock()
@@ -258,7 +265,7 @@ class TestHfCacheManagerCacheManagement:
 
         assert result == mock_delete_strategy
 
-    @patch("tfbpapi.HfCacheManager.scan_cache_dir")
+    @patch("tfbpapi.hf_cache_manager.scan_cache_dir")
     def test_clean_unused_revisions(self, mock_scan_cache_dir):
         """Test cleaning unused revisions."""
         # Setup mock with multiple revisions
@@ -292,7 +299,7 @@ class TestHfCacheManagerCacheManagement:
         # Should delete oldest revision (ghi789)
         mock_cache_info.delete_revisions.assert_called_once_with("ghi789")
 
-    @patch("tfbpapi.HfCacheManager.scan_cache_dir")
+    @patch("tfbpapi.hf_cache_manager.scan_cache_dir")
     def test_auto_clean_cache(self, mock_scan_cache_dir):
         """Test automated cache cleaning."""
         mock_cache_info = Mock()
@@ -336,7 +343,7 @@ class TestHfCacheManagerErrorHandling:
 
     def setup_method(self):
         """Set up test fixtures."""
-        with patch("tfbpapi.HfCacheManager.DataCard.__init__", return_value=None):
+        with patch("tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None):
             self.conn = duckdb.connect(":memory:")
             self.repo_id = "test/repo"
             self.cache_manager = HfCacheManager(self.repo_id, self.conn)
@@ -346,7 +353,7 @@ class TestHfCacheManagerErrorHandling:
         with pytest.raises(ValueError):
             self.cache_manager._parse_size_string("invalid")
 
-    @patch("tfbpapi.HfCacheManager.scan_cache_dir")
+    @patch("tfbpapi.hf_cache_manager.scan_cache_dir")
     def test_clean_cache_invalid_strategy(self, mock_scan_cache_dir):
         """Test error handling for invalid cleanup strategy."""
         mock_cache_info = Mock()
@@ -367,7 +374,7 @@ class TestHfCacheManagerIntegration:
 
     def setup_method(self):
         """Set up test fixtures."""
-        with patch("tfbpapi.HfCacheManager.DataCard.__init__", return_value=None):
+        with patch("tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None):
             self.conn = duckdb.connect(":memory:")
             self.repo_id = "test/repo"
             self.cache_manager = HfCacheManager(self.repo_id, self.conn)
@@ -382,9 +389,12 @@ class TestHfCacheManagerIntegration:
         mock_conn = Mock()
         test_cache_manager = HfCacheManager("test/repo", mock_conn)
 
+        # Mock the validation method since we're testing table creation
+        test_cache_manager._validate_source_sample_fields = Mock()  # type: ignore
+
         # Test _create_duckdb_table_from_files directly
         test_cache_manager._create_duckdb_table_from_files(
-            [str(metadata_file)], "metadata_test_metadata"
+            [str(metadata_file)], "metadata_test_metadata", "test_metadata"
         )
 
         # Verify the SQL was generated correctly
@@ -517,3 +527,257 @@ def mock_cache_info(mock_cache_repo):
 
     cache_info.delete_revisions = mock_delete_revisions
     return cache_info
+
+
+class TestSourceSampleValidation:
+    """Test validation of source_sample field format."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.conn = duckdb.connect(":memory:")
+        self.repo_id = "test/repo"
+
+    def test_valid_source_sample_format(self, tmpdir):
+        """Test that valid source_sample format passes validation."""
+        # Create parquet file with valid composite identifiers
+        parquet_file = tmpdir.join("valid_data.parquet")
+        self.conn.execute(
+            f"""
+            COPY (
+                SELECT
+                    'BrentLab/harbison_2004;harbison_2004;CBF1_YPD'
+                    as binding_sample_ref,
+                    'gene_' || (row_number() OVER()) as target_locus_tag,
+                    random() * 100 as binding_score
+                FROM range(5)
+            ) TO '{parquet_file}' (FORMAT PARQUET)
+            """
+        )
+
+        # Create mock datacard with source_sample field
+        mock_feature = Mock()
+        mock_feature.name = "binding_sample_ref"
+        mock_feature.role = "source_sample"
+
+        mock_dataset_info = Mock()
+        mock_dataset_info.features = [mock_feature]
+
+        mock_config = Mock()
+        mock_config.config_name = "test_config"
+        mock_config.dataset_info = mock_dataset_info
+
+        with patch("tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None):
+            cache_manager = HfCacheManager(self.repo_id, self.conn)
+            cache_manager.get_config = Mock(return_value=mock_config)  # type: ignore
+
+            # Should not raise any error
+            cache_manager._create_duckdb_table_from_files(
+                [str(parquet_file)], "test_table", "test_config"
+            )
+
+    def test_invalid_source_sample_two_parts(self, tmpdir):
+        """Test that source_sample with only 2 parts raises ValueError."""
+        # Create parquet file with invalid format (only 2 parts)
+        parquet_file = tmpdir.join("invalid_data.parquet")
+        self.conn.execute(
+            f"""
+            COPY (
+                SELECT
+                    'BrentLab/harbison_2004;CBF1_YPD' as binding_sample_ref,
+                    'gene_' || (row_number() OVER()) as target_locus_tag,
+                    random() * 100 as binding_score
+                FROM range(5)
+            ) TO '{parquet_file}' (FORMAT PARQUET)
+            """
+        )
+
+        # Create mock datacard with source_sample field
+        mock_feature = Mock()
+        mock_feature.name = "binding_sample_ref"
+        mock_feature.role = "source_sample"
+
+        mock_dataset_info = Mock()
+        mock_dataset_info.features = [mock_feature]
+
+        mock_config = Mock()
+        mock_config.config_name = "test_config"
+        mock_config.dataset_info = mock_dataset_info
+
+        with patch("tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None):
+            cache_manager = HfCacheManager(self.repo_id, self.conn)
+            cache_manager.get_config = Mock(return_value=mock_config)  # type: ignore
+
+            # Should raise ValueError with clear message
+            with pytest.raises(ValueError) as exc_info:
+                cache_manager._create_duckdb_table_from_files(
+                    [str(parquet_file)], "test_table", "test_config"
+                )
+
+            error_msg = str(exc_info.value)
+            assert "Invalid format in field 'binding_sample_ref'" in error_msg
+            assert "role='source_sample'" in error_msg
+            assert "3 semicolon-separated parts" in error_msg
+            assert "BrentLab/harbison_2004;CBF1_YPD" in error_msg
+
+    def test_invalid_source_sample_one_part(self, tmpdir):
+        """Test that source_sample with only 1 part raises ValueError."""
+        # Create parquet file with invalid format (only 1 part)
+        parquet_file = tmpdir.join("invalid_data.parquet")
+        self.conn.execute(
+            f"""
+            COPY (
+                SELECT
+                    'CBF1_YPD' as binding_sample_ref,
+                    'gene_' || (row_number() OVER()) as target_locus_tag,
+                    random() * 100 as binding_score
+                FROM range(5)
+            ) TO '{parquet_file}' (FORMAT PARQUET)
+            """
+        )
+
+        # Create mock datacard with source_sample field
+        mock_feature = Mock()
+        mock_feature.name = "binding_sample_ref"
+        mock_feature.role = "source_sample"
+
+        mock_dataset_info = Mock()
+        mock_dataset_info.features = [mock_feature]
+
+        mock_config = Mock()
+        mock_config.config_name = "test_config"
+        mock_config.dataset_info = mock_dataset_info
+
+        with patch("tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None):
+            cache_manager = HfCacheManager(self.repo_id, self.conn)
+            cache_manager.get_config = Mock(return_value=mock_config)  # type: ignore
+
+            # Should raise ValueError
+            with pytest.raises(ValueError) as exc_info:
+                cache_manager._create_duckdb_table_from_files(
+                    [str(parquet_file)], "test_table", "test_config"
+                )
+
+            error_msg = str(exc_info.value)
+            assert "Invalid format in field 'binding_sample_ref'" in error_msg
+            assert "CBF1_YPD" in error_msg
+
+    def test_invalid_source_sample_four_parts(self, tmpdir):
+        """Test that source_sample with 4 parts raises ValueError."""
+        # Create parquet file with invalid format (4 parts)
+        parquet_file = tmpdir.join("invalid_data.parquet")
+        self.conn.execute(
+            f"""
+            COPY (
+                SELECT
+                    'a;b;c;d' as binding_sample_ref,
+                    'gene_' || (row_number() OVER()) as target_locus_tag,
+                    random() * 100 as binding_score
+                FROM range(5)
+            ) TO '{parquet_file}' (FORMAT PARQUET)
+            """
+        )
+
+        # Create mock datacard with source_sample field
+        mock_feature = Mock()
+        mock_feature.name = "binding_sample_ref"
+        mock_feature.role = "source_sample"
+
+        mock_dataset_info = Mock()
+        mock_dataset_info.features = [mock_feature]
+
+        mock_config = Mock()
+        mock_config.config_name = "test_config"
+        mock_config.dataset_info = mock_dataset_info
+
+        with patch("tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None):
+            cache_manager = HfCacheManager(self.repo_id, self.conn)
+            cache_manager.get_config = Mock(return_value=mock_config)  # type: ignore
+
+            # Should raise ValueError
+            with pytest.raises(ValueError) as exc_info:
+                cache_manager._create_duckdb_table_from_files(
+                    [str(parquet_file)], "test_table", "test_config"
+                )
+
+            error_msg = str(exc_info.value)
+            assert "Invalid format in field 'binding_sample_ref'" in error_msg
+            assert "a;b;c;d" in error_msg
+
+    def test_no_source_sample_fields(self, tmpdir):
+        """Test that validation is skipped when no source_sample fields exist."""
+        # Create parquet file with normal data
+        parquet_file = tmpdir.join("normal_data.parquet")
+        self.conn.execute(
+            f"""
+            COPY (
+                SELECT
+                    'gene_' || (row_number() OVER()) as target_locus_tag,
+                    random() * 100 as expression_value
+                FROM range(5)
+            ) TO '{parquet_file}' (FORMAT PARQUET)
+            """
+        )
+
+        # Create mock datacard without source_sample fields
+        mock_feature = Mock()
+        mock_feature.name = "target_locus_tag"
+        mock_feature.role = "target_identifier"
+
+        mock_dataset_info = Mock()
+        mock_dataset_info.features = [mock_feature]
+
+        mock_config = Mock()
+        mock_config.config_name = "test_config"
+        mock_config.dataset_info = mock_dataset_info
+
+        with patch("tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None):
+            cache_manager = HfCacheManager(self.repo_id, self.conn)
+            cache_manager.get_config = Mock(return_value=mock_config)  # type: ignore
+
+            # Should not raise any error
+            cache_manager._create_duckdb_table_from_files(
+                [str(parquet_file)], "test_table", "test_config"
+            )
+
+    def test_multiple_source_sample_fields(self, tmpdir):
+        """Test validation with multiple source_sample fields."""
+        # Create parquet file with multiple composite identifier fields
+        parquet_file = tmpdir.join("multi_ref_data.parquet")
+        self.conn.execute(
+            f"""
+            COPY (
+                SELECT
+                    'BrentLab/harbison_2004;harbison_2004;CBF1_YPD'
+                    as binding_sample_ref,
+                    'BrentLab/kemmeren_2014;kemmeren_2014;sample_42'
+                    as expression_sample_ref,
+                    'gene_' || (row_number() OVER()) as target_locus_tag
+                FROM range(5)
+            ) TO '{parquet_file}' (FORMAT PARQUET)
+            """
+        )
+
+        # Create mock datacard with multiple source_sample fields
+        mock_feature1 = Mock()
+        mock_feature1.name = "binding_sample_ref"
+        mock_feature1.role = "source_sample"
+
+        mock_feature2 = Mock()
+        mock_feature2.name = "expression_sample_ref"
+        mock_feature2.role = "source_sample"
+
+        mock_dataset_info = Mock()
+        mock_dataset_info.features = [mock_feature1, mock_feature2]
+
+        mock_config = Mock()
+        mock_config.config_name = "test_config"
+        mock_config.dataset_info = mock_dataset_info
+
+        with patch("tfbpapi.hf_cache_manager.DataCard.__init__", return_value=None):
+            cache_manager = HfCacheManager(self.repo_id, self.conn)
+            cache_manager.get_config = Mock(return_value=mock_config)  # type: ignore
+
+            # Both fields are valid - should not raise
+            cache_manager._create_duckdb_table_from_files(
+                [str(parquet_file)], "test_table", "test_config"
+            )

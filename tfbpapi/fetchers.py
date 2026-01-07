@@ -8,8 +8,8 @@ import requests
 from huggingface_hub import DatasetCard, repo_info
 from requests import HTTPError
 
-from ..constants import get_hf_token
-from ..errors import HfDataFetchError
+from tfbpapi.constants import get_hf_token
+from tfbpapi.errors import HfDataFetchError
 
 
 class HfDataCardFetcher:
