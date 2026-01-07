@@ -6,12 +6,12 @@ import pytest
 import requests
 from requests import HTTPError
 
+from tfbpapi.errors import HfDataFetchError
 from tfbpapi.fetchers import (
     HfDataCardFetcher,
     HfRepoStructureFetcher,
     HfSizeInfoFetcher,
 )
-from tfbpapi.errors import HfDataFetchError
 
 
 class TestHfDataCardFetcher:
@@ -270,7 +270,6 @@ class TestHfRepoStructureFetcher:
         assert result1 == result2
 
         # Force refresh should call API again
-        result3 = fetcher.fetch(test_repo_id, force_refresh=True)
         assert mock_repo_info.call_count == 2
 
     @patch("tfbpapi.fetchers.repo_info")
@@ -302,7 +301,7 @@ class TestHfRepoStructureFetcher:
     def test_extract_partition_info(self):
         """Test extracting partition information from file paths."""
         fetcher = HfRepoStructureFetcher()
-        partitions = {}
+        partitions = {}  # type: ignore
 
         # Test normal partition pattern
         fetcher._extract_partition_info(

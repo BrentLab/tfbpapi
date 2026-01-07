@@ -348,6 +348,7 @@ def write_config(tmp_path):
 
     return _write
 
+
 # ============================================================================
 # Datacard Fixtures (from huggingface_collection_datacards.txt)
 # ============================================================================
