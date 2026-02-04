@@ -22,17 +22,20 @@ repositories:
     sample_id:
       field: sample_id
     # Repository-wide properties (apply to all datasets in this repository)
+    # Paths are explicit from the datacard root
     nitrogen_source:
-      path: media.nitrogen_source.name
+      path: experimental_conditions.media.nitrogen_source.name
 
     dataset:
       # Each dataset gets its own view with standardized fields
       harbison_2004:
         # Dataset-specific properties (constant for all samples)
+        # Explicit path from datacard/config root
         phosphate_source:
-          path: media.phosphate_source.compound
+          path: experimental_conditions.media.phosphate_source.compound
 
         # Field-level properties (vary per sample)
+        # Path is relative to field's definitions dict
         carbon_source:
           field: condition
           path: media.carbon_source.compound
@@ -51,9 +54,9 @@ repositories:
           - repo: BrentLab/yeast_comparative_analysis
             # and dataset
             dataset: dto
-            # and the field in the comparative analysis that links back tot this
+            # and the field in the comparative analysis that links back to this
             # dataset. Note that this field should have role `source_sample`, and it
-            # should therefore be formated as `repo_id;config_name;sample_id` where the
+            # should therefore be formatted as `repo_id;config_name;sample_id` where the
             # sample_id is derived from the field in this dataset that is specified
             # for this dataset in the `sample_id` field above.
             via_field: perturbation_id
@@ -66,11 +69,12 @@ repositories:
         sample_id:
           field: sample_id
         # Same logical fields, different physical paths
+        # Explicit path from datacard/config root
         carbon_source:
-          path: media.carbon_source.compound
+          path: experimental_conditions.media.carbon_source.compound
           dtype: string
         temperature_celsius:
-          path: temperature_celsius
+          path: experimental_conditions.temperature_celsius
           dtype: numeric  # Enables numeric filtering with comparison operators
 
 # ===== Normalization Rules =====
@@ -94,33 +98,33 @@ description:
 Properties are extracted at three hierarchy levels:
 
 1. **Repository-wide**: Common to all datasets in a repository
-   - Paths relative to repository-level `experimental_conditions`
-   - Example: `path: media.nitrogen_source.name`
+   - Paths relative to datacard/config root (explicit)
+   - Example: `path: experimental_conditions.media.nitrogen_source.name`
 
 2. **Dataset-specific**: Specific to one dataset configuration
-   - Paths relative to config-level `experimental_conditions`
-   - Example: `path: media.phosphate_source.compound`
+   - Paths relative to datacard/config root (explicit)
+   - Example: `path: experimental_conditions.media.phosphate_source.compound`
 
 3. **Field-level**: Vary per sample, defined in field definitions
    - `field` specifies which field to extract from
-   - `path` relative to field definitions (not `experimental_conditions`)
+   - `path` relative to that field's definitions dict
    - Example: `field: condition, path: media.carbon_source.compound`
 
 **Special case**: Field without path creates a column alias
-- `field: condition` (no path) to renames `condition` column, enables normalization
+- `field: condition` (no path) renames `condition` column, enables normalization
 
 ### Path Resolution
 
 Paths use dot notation to navigate nested structures:
 
-**Repository/Dataset-level** (automatically prepends `experimental_conditions.`):
-- `path: temperature_celsius` to `experimental_conditions.temperature_celsius`
-- `path: media.carbon_source.compound` to
-  `experimental_conditions.media.carbon_source.compound`
+**Repository/Dataset-level** (explicit paths from datacard root):
+- `path: experimental_conditions.temperature_celsius` - access experimental conditions
+- `path: experimental_conditions.media.carbon_source.compound` - nested condition data
+- `path: description` - access fields outside experimental_conditions
 
 **Field-level** (paths relative to field definitions):
-- `field: condition, path: media.carbon_source.compound` to looks in field
-`condition`'s definitions to navigates to `media.carbon_source.compound`
+- `field: condition, path: media.carbon_source.compound` looks in field
+  `condition`'s definitions and navigates to `media.carbon_source.compound`
 
 ### Data Type Specifications
 
@@ -174,25 +178,30 @@ repositories:
   BrentLab/example:
     dataset:
       example_dataset:
-        # String field for categorical data
+        # String field for categorical data (explicit path from datacard root)
         strain_background:
-          path: strain_background
+          path: experimental_conditions.strain_background
           dtype: string
 
         # Numeric field for quantitative filtering
         temperature_celsius:
-          path: temperature_celsius
+          path: experimental_conditions.temperature_celsius
           dtype: numeric
 
-        # Numeric field for concentration measurements
+        # Numeric field for concentration measurements (nested path)
         drug_concentration_um:
-          path: drug_treatment.concentration_um
+          path: experimental_conditions.drug_treatment.concentration_um
           dtype: numeric
 
         # Boolean field
         is_heat_shock:
-          path: is_heat_shock
+          path: experimental_conditions.is_heat_shock
           dtype: bool
+
+        # Access fields outside experimental_conditions
+        dataset_description:
+          path: description
+          dtype: string
 ```
 
 ## VirtualDB Structure

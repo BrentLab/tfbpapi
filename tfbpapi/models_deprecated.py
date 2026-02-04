@@ -10,23 +10,11 @@ Also includes models for VirtualDB metadata normalization configuration.
 """
 
 from enum import Enum
-from functools import cached_property
 from pathlib import Path
-from typing import Any, TypeAlias
+from typing import Any
 
 import yaml  # type: ignore[import-untyped]
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    computed_field,
-    field_serializer,
-    field_validator,
-    model_validator,
-)
-
-# Type aliases for improved readability
-FactorAliases: TypeAlias = dict[str, dict[str, list[str | int | float | bool]]]
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class DatasetType(str, Enum):
@@ -117,20 +105,10 @@ class DatasetConfig(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-    @field_validator("applies_to", mode="after")
+    @field_validator("applies_to")
     @classmethod
-    def applies_to_only_for_metadata(
-        cls, v: list[str] | None, info
-    ) -> list[str] | None:
-        """
-        Validate that applies_to is only used for metadata or comparative configs.
-
-        :param v: The applies_to field value
-        :param info: Validation info containing other field values
-        :return: The validated applies_to value
-        :raises ValueError: If applies_to is used with invalid dataset type
-
-        """
+    def applies_to_only_for_metadata(cls, v, info):
+        """Validate that applies_to is only used for metadata or comparative configs."""
         if v is not None:
             dataset_type = info.data.get("dataset_type")
             if dataset_type not in (DatasetType.METADATA, DatasetType.COMPARATIVE):
@@ -140,17 +118,10 @@ class DatasetConfig(BaseModel):
                 )
         return v
 
-    @field_validator("metadata_fields", mode="after")
+    @field_validator("metadata_fields")
     @classmethod
-    def metadata_fields_not_empty(cls, v: list[str] | None) -> list[str] | None:
-        """
-        Validate metadata_fields is not an empty list.
-
-        :param v: The metadata_fields value
-        :return: The validated metadata_fields value
-        :raises ValueError: If metadata_fields is an empty list
-
-        """
+    def metadata_fields_validation(cls, v):
+        """Validate metadata_fields usage."""
         if v is not None and len(v) == 0:
             raise ValueError("metadata_fields cannot be empty list, use None instead")
         return v
@@ -169,95 +140,52 @@ class DatasetCard(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-    @field_validator("configs", mode="after")
+    @field_validator("configs")
     @classmethod
-    def validate_configs(cls, v: list[DatasetConfig]) -> list[DatasetConfig]:
-        """
-        Validate configs list.
-
-        Ensures at least one config exists, all config names are unique, and at most one
-        config is marked as default.
-
-        :param v: The list of DatasetConfig objects
-        :return: The validated list of configs
-        :raises ValueError: If validation fails
-
-        """
-        # Check non-empty
+    def configs_not_empty(cls, v):
+        """Ensure at least one config is present."""
         if not v:
             raise ValueError("At least one dataset configuration is required")
+        return v
 
-        # Check unique names
+    @field_validator("configs")
+    @classmethod
+    def unique_config_names(cls, v):
+        """Ensure config names are unique."""
         names = [config.config_name for config in v]
         if len(names) != len(set(names)):
             raise ValueError("Configuration names must be unique")
-
-        # Check at most one default
-        defaults = sum(1 for config in v if config.default)
-        if defaults > 1:
-            raise ValueError("At most one configuration can be marked as default")
-
         return v
 
-    # Computed properties for better discoverability
-    @computed_field  # type: ignore[prop-decorator]
-    @cached_property
-    def default_config(self) -> DatasetConfig | None:
-        """
-        Get the default configuration if one exists.
+    @field_validator("configs")
+    @classmethod
+    def at_most_one_default(cls, v):
+        """Ensure at most one config is marked as default."""
+        defaults = [config for config in v if config.default]
+        if len(defaults) > 1:
+            raise ValueError("At most one configuration can be marked as default")
+        return v
 
-        :return: The default DatasetConfig or None if no default is set
-
-        """
-        for config in self.configs:
-            if config.default:
-                return config
-        return None
-
-    @computed_field  # type: ignore[prop-decorator]
-    @cached_property
-    def config_names(self) -> list[str]:
-        """
-        Get all configuration names.
-
-        :return: List of all config_name values
-
-        """
-        return [config.config_name for config in self.configs]
-
-    # Utility methods (not serialized)
     def get_config_by_name(self, name: str) -> DatasetConfig | None:
-        """
-        Get a configuration by name.
-
-        :param name: The configuration name to search for
-        :return: The matching DatasetConfig or None if not found
-
-        """
+        """Get a configuration by name."""
         for config in self.configs:
             if config.config_name == name:
                 return config
         return None
 
     def get_configs_by_type(self, dataset_type: DatasetType) -> list[DatasetConfig]:
-        """
-        Get all configurations of a specific type.
-
-        :param dataset_type: The DatasetType to filter by
-        :return: List of matching DatasetConfig objects
-
-        """
+        """Get all configurations of a specific type."""
         return [
             config for config in self.configs if config.dataset_type == dataset_type
         ]
 
+    def get_default_config(self) -> DatasetConfig | None:
+        """Get the default configuration if one exists."""
+        defaults = [config for config in self.configs if config.default]
+        return defaults[0] if defaults else None
+
     def get_data_configs(self) -> list[DatasetConfig]:
-        """
-        Get all non-metadata configurations.
-
-        :return: List of DatasetConfig objects excluding metadata types
-
-        """
+        """Get all non-metadata configurations."""
         return [
             config
             for config in self.configs
@@ -265,12 +193,7 @@ class DatasetCard(BaseModel):
         ]
 
     def get_metadata_configs(self) -> list[DatasetConfig]:
-        """
-        Get all metadata configurations.
-
-        :return: List of DatasetConfig objects with metadata type
-
-        """
+        """Get all metadata configurations."""
         return [
             config
             for config in self.configs
@@ -288,16 +211,10 @@ class ExtractedMetadata(BaseModel):
     values: set[str] = Field(..., description="Unique values found")
     extraction_method: str = Field(..., description="How the metadata was extracted")
 
-    @field_serializer("values", mode="plain")
-    def serialize_values(self, value: set[str]) -> list[str]:
-        """
-        Serialize set as sorted list for JSON compatibility.
-
-        :param value: Set of string values
-        :return: Sorted list of strings
-
-        """
-        return sorted(value)
+    model_config = ConfigDict(
+        # Allow sets in JSON serialization
+        json_encoders={set: list}
+    )
 
 
 class MetadataRelationship(BaseModel):
@@ -323,14 +240,15 @@ class ComparativeAnalysis(BaseModel):
     This model specifies which comparative dataset references the current
     dataset and through which field (via_field).
 
-    :ivar repo: HuggingFace repository ID of the comparative dataset
-    :ivar dataset: Config name of the comparative dataset
-    :ivar via_field: Field in the comparative dataset containing composite
-        identifiers that reference this dataset's samples.
-        Format: "repo_id;config_name;sample_id"
+    Attributes:
+        repo: HuggingFace repository ID of the comparative dataset
+        dataset: Config name of the comparative dataset
+        via_field: Field in the comparative dataset containing composite
+                   identifiers that reference this dataset's samples.
+                   Format: "repo_id;config_name;sample_id"
 
-    Example::
-
+    Example:
+        ```python
         # In BrentLab/callingcards config
         ComparativeAnalysis(
             repo="BrentLab/yeast_comparative_analysis",
@@ -339,6 +257,7 @@ class ComparativeAnalysis(BaseModel):
         )
         # Means: dto dataset has a binding_id field with values like:
         # "BrentLab/callingcards;annotated_features;123"
+        ```
 
     """
 
@@ -353,38 +272,33 @@ class PropertyMapping(BaseModel):
     """
     Mapping specification for a single property.
 
-    :ivar field: Optional field name for field-level properties.
-        When specified, looks in this field's definitions.
-        When omitted, uses repo/config-level resolution.
-    :ivar path: Optional dot-notation path to the property value.
-        For repo/config-level: relative to datacard/config root
-        (e.g., "experimental_conditions.media.carbon_source" or "description")
-        For field-level: relative to the field's definitions dict
-        (e.g., "temperature_celsius" resolves within each sample's definition)
-        When omitted with field specified, creates a column alias.
-    :ivar expression: Optional SQL expression for derived/computed fields.
-        When specified, creates a computed column.
-        Cannot be used with field or path.
-    :ivar dtype: Optional data type specification for type conversion.
-        Supported values: 'string', 'numeric', 'bool'.
-        When specified, extracted values are converted to this type.
+    Attributes:
+        path: Optional dot-notation path to the property value.
+              For repo/config-level: relative to experimental_conditions
+              For field-level: relative to field definitions
+              When omitted with field specified, creates a column alias.
+        field: Optional field name for field-level properties.
+               When specified, looks in this field's definitions.
+               When omitted, looks in repo/config-level experimental_conditions.
+        expression: Optional SQL expression for derived/computed fields.
+                    When specified, creates a computed column.
+                    Cannot be used with field or path.
+        dtype: Optional data type specification for type conversion.
+               Supported values: 'string', 'numeric', 'bool'.
+               When specified, extracted values are converted to this type.
 
-    Examples::
+    Examples:
+        Field-level property with path:
+            PropertyMapping(field="condition", path="media.carbon_source")
 
-        # Repo/config-level property (explicit path from datacard root)
-        PropertyMapping(path="experimental_conditions.media.carbon_source.compound")
+        Repo/config-level property:
+            PropertyMapping(path="temperature_celsius")
 
-        # Repo/config-level property outside experimental_conditions
-        PropertyMapping(path="description")
+        Field-level column alias (no path):
+            PropertyMapping(field="condition")
 
-        # Field-level property with path (relative to field definitions)
-        PropertyMapping(field="condition", path="temperature_celsius")
-
-        # Field-level column alias (no path)
-        PropertyMapping(field="condition")
-
-        # Derived field with expression
-        PropertyMapping(expression="dto_fdr < 0.05")
+        Derived field with expression:
+            PropertyMapping(expression="dto_fdr < 0.05")
 
     """
 
@@ -397,33 +311,33 @@ class PropertyMapping(BaseModel):
         None, description="Data type for conversion: 'string', 'numeric', or 'bool'"
     )
 
-    @field_validator("path", "field", "expression", mode="before")
+    @field_validator("path")
     @classmethod
-    def strip_whitespace(cls, v: str | None) -> str | None:
-        """
-        Strip whitespace and validate non-empty strings.
+    def validate_path(cls, v: str | None) -> str | None:
+        """Ensure path is not just whitespace if provided."""
+        if v is not None and not v.strip():
+            raise ValueError("path cannot be empty or whitespace")
+        return v.strip() if v else None
 
-        :param v: String value to validate
-        :return: Stripped string or None
-        :raises ValueError: If string is empty or only whitespace
+    @field_validator("field")
+    @classmethod
+    def validate_field(cls, v: str | None) -> str | None:
+        """Ensure field is not empty string if provided."""
+        if v is not None and not v.strip():
+            raise ValueError("field cannot be empty or whitespace")
+        return v.strip() if v else None
 
-        """
-        if v is None:
-            return None
-        v = v.strip()
-        if not v:
-            raise ValueError("Value cannot be empty or whitespace")
-        return v
+    @field_validator("expression")
+    @classmethod
+    def validate_expression(cls, v: str | None) -> str | None:
+        """Ensure expression is not empty string if provided."""
+        if v is not None and not v.strip():
+            raise ValueError("expression cannot be empty or whitespace")
+        return v.strip() if v else None
 
     @model_validator(mode="after")
-    def validate_field_types(self) -> "PropertyMapping":
-        """
-        Ensure at least one field type is specified and mutually exclusive.
-
-        :return: The validated PropertyMapping instance
-        :raises ValueError: If validation constraints are violated
-
-        """
+    def validate_at_least_one_specified(self) -> "PropertyMapping":
+        """Ensure at least one field type is specified and mutually exclusive."""
         if self.expression is not None:
             if self.field is not None or self.path is not None:
                 raise ValueError(
@@ -441,16 +355,16 @@ class DatasetVirtualDBConfig(BaseModel):
     """
     VirtualDB configuration for a specific dataset within a repository.
 
-    Additional property mappings can be provided as extra fields and will be
-    automatically parsed as PropertyMapping objects.
+    Attributes:
+        sample_id: Mapping for the sample identifier field (required for
+          primary datasets)
+        comparative_analyses: Optional list of comparative datasets that
+          reference this dataset
+        properties: Property mappings for this specific dataset (field names to
+          PropertyMapping)
 
-    :ivar sample_id: Mapping for the sample identifier field (required for
-        primary datasets)
-    :ivar comparative_analyses: Optional list of comparative datasets that
-        reference this dataset
-
-    Example::
-
+    Example:
+        ```yaml
         # In BrentLab/callingcards config
         annotated_features:
           sample_id:
@@ -463,6 +377,7 @@ class DatasetVirtualDBConfig(BaseModel):
             field: regulator_locus_tag
           dto_fdr:  # Field from comparative dataset, optional renaming
             field: dto_fdr
+        ```
 
     """
 
@@ -473,82 +388,71 @@ class DatasetVirtualDBConfig(BaseModel):
         default_factory=list,
         description="Comparative datasets referencing this dataset",
     )
-
+    # Allow additional property mappings via extra fields
     model_config = ConfigDict(extra="allow")
 
     @model_validator(mode="before")
     @classmethod
-    def parse_property_mappings(cls, data: Any) -> dict[str, Any]:
-        """
-        Parse extra fields as PropertyMapping objects.
-
-        :param data: Raw input data
-        :return: Processed data with PropertyMapping objects
-        :raises ValueError: If PropertyMapping validation fails
-
-        """
+    def parse_property_mappings(cls, data: Any) -> Any:
+        """Parse extra fields as PropertyMapping objects."""
         if not isinstance(data, dict):
             return data
 
+        # Process all fields except sample_id and comparative_analyses
         result = {}
         for key, value in data.items():
-            # Known typed fields - let Pydantic handle them
             if key in ("sample_id", "comparative_analyses"):
+                # These are typed fields, let Pydantic handle them
                 result[key] = value
-            # Dict values should be PropertyMappings
             elif isinstance(value, dict):
+                # Assume it's a PropertyMapping
                 try:
                     result[key] = PropertyMapping.model_validate(value)
                 except Exception as e:
                     raise ValueError(
                         f"Invalid PropertyMapping for field '{key}': {e}"
                     ) from e
-            # Already parsed PropertyMapping or other type
             else:
+                # Already parsed or wrong type
                 result[key] = value
 
         return result
 
-    @property
-    def property_mappings(self) -> dict[str, PropertyMapping]:
-        """
-        Get all property mappings from extra fields.
-
-        :return: Dictionary of property names to PropertyMapping objects
-
-        """
-        if not self.model_extra:
-            return {}
-
-        return {
-            key: value
-            for key, value in self.model_extra.items()
-            if isinstance(value, PropertyMapping)
-        }
-
 
 class RepositoryConfig(BaseModel):
     """
-    Configuration for a single repository.
+    Configuration for a single repository. Eg BrentLab/harbison_2004.
 
-    For example: BrentLab/harbison_2004
+    Attributes:
+        properties: Repo-wide property mappings that apply to all datasets
+        dataset: Dataset-specific configurations including sample_id,
+                 comparative_analyses, and property mappings
 
-    :ivar properties: Repo-wide property mappings that apply to all datasets
-    :ivar dataset: Dataset-specific configurations including sample_id,
-        comparative_analyses, and property mappings
-
-    Example::
-
-        BrentLab/harbison_2004:
-          temperature_celsius:
-            path: temperature_celsius
-          dataset:
-            harbison_2004:
-              sample_id:
-                field: sample_id
-              carbon_source:
-                field: condition
-                path: media.carbon_source
+    Example:
+        ```python
+        config = RepositoryConfig(
+            properties={
+                "temperature_celsius": PropertyMapping(path="temperature_celsius")
+            },
+            dataset={
+                "dataset_name": DatasetVirtualDBConfig(
+                    sample_id=PropertyMapping(field="sample_id"),
+                    comparative_analyses=[
+                        ComparativeAnalysis(
+                            repo="BrentLab/yeast_comparative_analysis",
+                            dataset="dto",
+                            via_field="binding_id"
+                        )
+                    ],
+                    # Additional property mappings via extra fields
+                    **{"carbon_source": PropertyMapping(
+                        field="condition",
+                        path="media.carbon_source"
+                    )}
+                )
+            }
+        )
+        ```
 
     """
 
@@ -561,31 +465,27 @@ class RepositoryConfig(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_structure(cls, data: Any) -> dict[str, Any]:
-        """
-        Parse raw dict structure into typed objects.
-
-        :param data: Raw input data
-        :return: Processed data with typed objects
-        :raises ValueError: If validation fails
-
-        """
+    def parse_structure(cls, data: Any) -> Any:
+        """Parse raw dict structure into typed objects."""
         if not isinstance(data, dict):
             return data
 
-        # Parse dataset section
-        parsed_datasets: dict[str, DatasetVirtualDBConfig] | None = None
+        # Extract and parse dataset section
         dataset_section = data.get("dataset")
+        parsed_datasets: dict[str, DatasetVirtualDBConfig] = {}
 
         if dataset_section:
             if not isinstance(dataset_section, dict):
                 raise ValueError("'dataset' key must contain a dict")
-
-            parsed_datasets = {}
             for dataset_name, config_dict in dataset_section.items():
                 if not isinstance(config_dict, dict):
                     raise ValueError(f"Dataset '{dataset_name}' must contain a dict")
 
+                # Parse DatasetVirtualDBConfig
+                # The config_dict may contain:
+                # - sample_id (PropertyMapping)
+                # - comparative_analyses (list[ComparativeAnalysis])
+                # - Other fields as PropertyMappings (via extra="allow")
                 try:
                     parsed_datasets[dataset_name] = (
                         DatasetVirtualDBConfig.model_validate(config_dict)
@@ -616,14 +516,16 @@ class MetadataConfig(BaseModel):
     Specifies optional alias mappings for normalizing factor levels across
     heterogeneous datasets, plus property path mappings for each repository.
 
-    :ivar factor_aliases: Optional mappings of standardized names to actual values.
-        Example: {"carbon_source": {"glucose": ["D-glucose", "dextrose"]}}
-    :ivar missing_value_labels: Labels for missing values by property name
-    :ivar description: Human-readable descriptions for each property
-    :ivar repositories: Dict mapping repository IDs to their configurations
+    Attributes:
+        factor_aliases: Optional mappings of standardized names to actual values.
+                        Example: {"carbon_source":
+                        {"glucose": ["D-glucose", "dextrose"]}}
+        missing_value_labels: Labels for missing values by property name
+        description: Human-readable descriptions for each property
+        repositories: Dict mapping repository IDs to their configurations
 
-    Example::
-
+    Example:
+        ```yaml
         repositories:
           BrentLab/harbison_2004:
             dataset:
@@ -640,11 +542,6 @@ class MetadataConfig(BaseModel):
                 carbon_source:
                   path: media.carbon_source
 
-                comparative_analyses:
-                    - repo: BrentLab/yeast_comparative_analysis
-                        dataset: dto
-                        via_field: perturbation_id
-
         factor_aliases:
           carbon_source:
             glucose: ["D-glucose", "dextrose"]
@@ -655,10 +552,11 @@ class MetadataConfig(BaseModel):
 
         description:
           carbon_source: "Carbon source in growth media"
+        ```
 
     """
 
-    factor_aliases: FactorAliases = Field(
+    factor_aliases: dict[str, dict[str, list[Any]]] = Field(
         default_factory=dict,
         description="Optional alias mappings for normalizing factor levels",
     )
@@ -674,55 +572,74 @@ class MetadataConfig(BaseModel):
         ..., description="Repository configurations keyed by repo ID"
     )
 
-    @field_validator("missing_value_labels", "description", mode="before")
+    @field_validator("missing_value_labels", mode="before")
     @classmethod
-    def filter_none_values(cls, v: dict[str, str] | None) -> dict[str, str]:
-        """
-        Filter out None values that may come from empty YAML values.
-
-        :param v: Dictionary that may contain None values
-        :return: Dictionary with None values filtered out
-
-        """
+    def validate_missing_value_labels(cls, v: Any) -> dict[str, str]:
+        """Validate missing value labels structure, filtering out None values."""
         if not v:
             return {}
-        # Pydantic will validate it's a dict, we just filter None values
+        if not isinstance(v, dict):
+            raise ValueError("missing_value_labels must be a dict")
+        # Filter out None values that may come from empty YAML values
         return {k: val for k, val in v.items() if val is not None}
 
-    @field_validator("factor_aliases", mode="after")
+    @field_validator("description", mode="before")
     @classmethod
-    def validate_factor_aliases(cls, v: FactorAliases) -> FactorAliases:
-        """
-        Validate factor alias structure and value types.
+    def validate_description(cls, v: Any) -> dict[str, str]:
+        """Validate description structure, filtering out None values."""
+        if not v:
+            return {}
+        if not isinstance(v, dict):
+            raise ValueError("description must be a dict")
+        # Filter out None values that may come from empty YAML values
+        return {k: val for k, val in v.items() if val is not None}
 
-        :param v: Factor aliases dictionary
-        :return: Validated factor aliases
-        :raises ValueError: If any alias has an empty value list
+    @field_validator("factor_aliases")
+    @classmethod
+    def validate_factor_aliases(
+        cls, v: dict[str, dict[str, list[Any]]]
+    ) -> dict[str, dict[str, list[Any]]]:
+        """Validate factor alias structure."""
+        # Empty is OK - aliases are optional
+        if not v:
+            return v
 
-        """
         for prop_name, aliases in v.items():
+            if not isinstance(aliases, dict):
+                raise ValueError(
+                    f"Property '{prop_name}' aliases must be a dict, "
+                    f"got {type(aliases).__name__}"
+                )
+
+            # Validate each alias mapping
             for alias_name, actual_values in aliases.items():
+                if not isinstance(actual_values, list):
+                    raise ValueError(
+                        f"Alias '{alias_name}' for '{prop_name}' must map "
+                        f"to a list of values"
+                    )
                 if not actual_values:
                     raise ValueError(
                         f"Alias '{alias_name}' for '{prop_name}' cannot "
                         f"have empty value list"
                     )
+                for val in actual_values:
+                    if not isinstance(val, (str, int, float, bool)):
+                        raise ValueError(
+                            f"Alias '{alias_name}' for '{prop_name}' contains "
+                            f"invalid value type: {type(val).__name__}"
+                        )
+
         return v
 
     @model_validator(mode="before")
     @classmethod
-    def parse_repositories(cls, data: Any) -> dict[str, Any]:
-        """
-        Parse repository configurations from 'repositories' key.
-
-        :param data: Raw configuration data
-        :return: Processed configuration with parsed repositories
-        :raises ValueError: If repositories are invalid or missing
-
-        """
+    def parse_repositories(cls, data: Any) -> Any:
+        """Parse repository configurations from 'repositories' key."""
         if not isinstance(data, dict):
             return data
 
+        # Extract repositories from 'repositories' key
         repositories_data = data.get("repositories", {})
 
         if not repositories_data:
@@ -731,7 +648,9 @@ class MetadataConfig(BaseModel):
                 "with at least one repository"
             )
 
-        # Parse each repository config
+        if not isinstance(repositories_data, dict):
+            raise ValueError("'repositories' key must contain a dict")
+
         repositories = {}
         for repo_id, repo_config in repositories_data.items():
             try:
@@ -755,19 +674,20 @@ class MetadataConfig(BaseModel):
 
         :param path: Path to YAML configuration file
         :return: Validated MetadataConfig instance
-        :raises ValidationError: If configuration is invalid
         :raises FileNotFoundError: If file doesn't exist
-        :raises ValueError: If YAML file does not contain a dictionary
+        :raises ValueError: If configuration is invalid
 
         """
-        with open(Path(path)) as f:
+        path = Path(path)
+
+        if not path.exists():
+            raise FileNotFoundError(f"Configuration file not found: {path}")
+
+        with open(path) as f:
             data = yaml.safe_load(f)
 
         if not isinstance(data, dict):
-            raise ValueError(
-                f"Configuration file must contain a YAML dictionary, "
-                f"got {type(data).__name__} instead"
-            )
+            raise ValueError("Configuration must be a YAML dict")
 
         return cls.model_validate(data)
 
@@ -805,6 +725,8 @@ class MetadataConfig(BaseModel):
         # Override with dataset-specific properties
         if repo_config.dataset and config_name in repo_config.dataset:
             dataset_config = repo_config.dataset[config_name]
-            mappings.update(dataset_config.property_mappings)
+            # DatasetVirtualDBConfig stores property mappings in model_extra
+            if hasattr(dataset_config, "model_extra") and dataset_config.model_extra:
+                mappings.update(dataset_config.model_extra)
 
         return mappings

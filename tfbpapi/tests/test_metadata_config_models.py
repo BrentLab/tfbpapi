@@ -35,19 +35,19 @@ class TestPropertyMapping:
         """Test that empty path is rejected."""
         with pytest.raises(ValidationError) as exc_info:
             PropertyMapping(path="")
-        assert "path cannot be empty" in str(exc_info.value)
+        assert "cannot be empty" in str(exc_info.value)
 
     def test_invalid_whitespace_path(self):
         """Test that whitespace-only path is rejected."""
         with pytest.raises(ValidationError) as exc_info:
             PropertyMapping(path="   ")
-        assert "path cannot be empty" in str(exc_info.value)
+        assert "cannot be empty" in str(exc_info.value)
 
     def test_invalid_empty_field(self):
         """Test that empty field string is rejected."""
         with pytest.raises(ValidationError) as exc_info:
             PropertyMapping(field="", path="media.carbon_source")
-        assert "field cannot be empty" in str(exc_info.value)
+        assert "cannot be empty" in str(exc_info.value)
 
     def test_path_whitespace_stripped(self):
         """Test that path whitespace is stripped."""
@@ -469,7 +469,9 @@ class TestMetadataConfig:
 
         with pytest.raises(ValueError) as exc_info:
             MetadataConfig.from_yaml(config_path)
-        assert "Configuration must be a YAML dict" in str(exc_info.value)
+        assert "Configuration file must contain a YAML dictionary" in str(
+            exc_info.value
+        )
 
     def test_nested_alias_property_names(self, tmp_path):
         """Test that alias property names can use dot notation."""

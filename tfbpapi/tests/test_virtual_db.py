@@ -95,9 +95,13 @@ class TestVirtualDBConfig:
             "description": {"carbon_source": "Carbon source in growth media"},
             "repositories": {
                 "BrentLab/test_repo": {
-                    "temperature_celsius": {"path": "temperature_celsius"},
+                    # Repo-level: explicit path from datacard root
+                    "temperature_celsius": {
+                        "path": "experimental_conditions.temperature_celsius"
+                    },
                     "dataset": {
                         "test_dataset": {
+                            # Field-level: path relative to field definitions
                             "carbon_source": {
                                 "field": "condition",
                                 "path": "media.carbon_source.compound",
@@ -167,9 +171,13 @@ class TestSchemaDiscovery:
             "factor_aliases": {},
             "repositories": {
                 "BrentLab/repo1": {
-                    "temperature_celsius": {"path": "temperature_celsius"},
+                    # Repo-level: explicit path from datacard root
+                    "temperature_celsius": {
+                        "path": "experimental_conditions.temperature_celsius"
+                    },
                     "dataset": {
                         "dataset1": {
+                            # Field-level: path relative to field definitions
                             "carbon_source": {
                                 "field": "condition",
                                 "path": "media.carbon_source",
@@ -178,11 +186,19 @@ class TestSchemaDiscovery:
                     },
                 },
                 "BrentLab/repo2": {
-                    "nitrogen_source": {"path": "media.nitrogen_source"},
+                    # Repo-level: explicit path from datacard root
+                    "nitrogen_source": {
+                        "path": "experimental_conditions.media.nitrogen_source"
+                    },
                     "dataset": {
                         "dataset2": {
-                            "carbon_source": {"path": "media.carbon_source"},
-                            "temperature_celsius": {"path": "temperature_celsius"},
+                            # Config-level: explicit path from datacard root
+                            "carbon_source": {
+                                "path": "experimental_conditions.media.carbon_source"
+                            },
+                            "temperature_celsius": {
+                                "path": "experimental_conditions.temperature_celsius"
+                            },
                         }
                     },
                 },
@@ -263,7 +279,10 @@ class TestCaching:
                 "BrentLab/test_repo": {
                     "dataset": {
                         "test_dataset": {
-                            "carbon_source": {"path": "media.carbon_source"}
+                            # Config-level: explicit path from datacard root
+                            "carbon_source": {
+                                "path": "experimental_conditions.media.carbon_source"
+                            }
                         }
                     }
                 }
@@ -325,7 +344,11 @@ class TestFiltering:
                 "repositories": {
                     "BrentLab/test": {
                         "dataset": {
-                            "test": {"carbon_source": {"path": "media.carbon_source"}}
+                            "test": {
+                                "carbon_source": {
+                                    "path": "experimental_conditions.media.carbon_source"  # noqa: E501
+                                }
+                            }
                         }
                     }
                 }
@@ -355,7 +378,9 @@ class TestFiltering:
                     "BrentLab/test": {
                         "dataset": {
                             "test": {
-                                "temperature_celsius": {"path": "temperature_celsius"}
+                                "temperature_celsius": {
+                                    "path": "experimental_conditions.temperature_celsius"  # noqa: E501
+                                }
                             }
                         }
                     }
@@ -403,7 +428,11 @@ class TestFiltering:
                 "repositories": {
                     "BrentLab/test": {
                         "dataset": {
-                            "test": {"carbon_source": {"path": "media.carbon_source"}}
+                            "test": {
+                                "carbon_source": {
+                                    "path": "experimental_conditions.media.carbon_source"  # noqa: E501
+                                }
+                            }
                         }
                     }
                 },
@@ -439,7 +468,11 @@ class TestExtraction:
                 "repositories": {
                     "BrentLab/test": {
                         "dataset": {
-                            "test": {"carbon_source": {"path": "media.carbon_source"}}
+                            "test": {
+                                "carbon_source": {
+                                    "path": "experimental_conditions.media.carbon_source"  # noqa: E501
+                                }
+                            }
                         }
                     }
                 }
@@ -475,7 +508,11 @@ class TestQuery:
                 "repositories": {
                     "BrentLab/test": {
                         "dataset": {
-                            "test": {"carbon_source": {"path": "media.carbon_source"}}
+                            "test": {
+                                "carbon_source": {
+                                    "path": "experimental_conditions.media.carbon_source"  # noqa: E501
+                                }
+                            }
                         }
                     }
                 }

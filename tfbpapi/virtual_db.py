@@ -41,7 +41,6 @@ import duckdb
 import pandas as pd
 
 from tfbpapi.datacard import DataCard
-from tfbpapi.errors import DataCardError
 from tfbpapi.hf_cache_manager import HfCacheManager
 from tfbpapi.models import MetadataConfig, PropertyMapping
 
@@ -1061,6 +1060,10 @@ class VirtualDB:
         """
         Extract and normalize repo/config-level metadata.
 
+        Paths are resolved relative to the datacard/config root, allowing access to any
+        field in the datacard structure (e.g.,
+        "experimental_conditions.media.carbon_source" or "description").
+
         :param card: DataCard instance
         :param config_name: Configuration name
         :param property_mappings: Property mappings for this dataset
@@ -1069,13 +1072,17 @@ class VirtualDB:
         """
         metadata: dict[str, list[str]] = {}
 
-        # Get experimental conditions
-        try:
-            conditions = card.get_experimental_conditions(config_name)
-        except DataCardError:
-            conditions = {}
+        # Build root data dict from top-level card and config data
+        # Config-level data takes precedence over top-level
+        root_data: dict[str, Any] = {}
+        if card.dataset_card.model_extra:
+            root_data.update(card.dataset_card.model_extra)
 
-        if not conditions:
+        config = card.get_config(config_name)
+        if config and config.model_extra:
+            root_data.update(config.model_extra)
+
+        if not root_data:
             return metadata
 
         # Extract each mapped property
@@ -1084,13 +1091,11 @@ class VirtualDB:
             if mapping.field is not None:
                 continue
 
-            # Build full path
-            # Note: `conditions` is already the experimental_conditions dict,
-            # so we don't add the prefix
-            full_path = mapping.path
+            if not mapping.path:
+                continue
 
-            # Get value at path
-            value = get_nested_value(conditions, full_path)  # type: ignore
+            # Path is now relative to datacard/config root
+            value = get_nested_value(root_data, mapping.path)
 
             # Handle missing values
             missing_label = self.config.missing_value_labels.get(prop_name)
@@ -1126,6 +1131,10 @@ class VirtualDB:
     ) -> dict[str, dict[str, Any]]:
         """
         Extract and normalize field-level metadata.
+
+        Paths are resolved relative to the field's definitions dict. For each field
+        value in the definitions, the path is used to extract the corresponding
+        metadata. This works for any field with definitions, regardless of role.
 
         :param card: DataCard instance
         :param config_name: Configuration name
