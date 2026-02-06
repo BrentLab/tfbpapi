@@ -6,13 +6,14 @@ specific to tfbpapi can be found at
 https://brentlab.github.io/tfbpapi/huggingface_datacard/. Next, a developer can create
 a virtualDB configuration file that describes which huggingface repos and datasets to
 use, a set of common fields, datasets that contain comparative analytics, and more.
-VirtualDB, this code, then uses DuckDB to construct tables and views are
-which are lazily created over Parquet files which are cached locally. VirtualDB uses
-the information in the datacard to create metadata views which describe sample level
-features. Derived columns are attached to both the metadata and full data views. Any
-comparative analysis datasets are also parsed and joined to the primary datasets'
-metadata views. The expectation is that a developer will use this interface to write
-SQL queries against the views to provide an API to downstream users and applications.
+VirtualDB, this code, then uses DuckDB to construct views that are lazily created
+over Parquet files cached locally. For primary datasets, VirtualDB creates metadata
+views (one row per sample with derived columns) and full data views (measurement-level
+data joined to metadata). For comparative analysis datasets, VirtualDB creates expanded
+views that parse composite ID fields into ``_source`` (aliased to the configured
+db_name) and ``_id`` (sample_id) columns. The expectation is that a developer will
+use this interface to write SQL queries against the views to provide an API to
+downstream users and applications.
 
 Example Usage::
 
