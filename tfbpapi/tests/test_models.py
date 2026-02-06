@@ -476,7 +476,7 @@ class TestDatasetCard:
                 ),
             ]
         )
-        default = card.get_default_config()
+        default = card.default_config
         assert default is not None
         assert default.config_name == "data2"
 

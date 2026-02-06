@@ -35,19 +35,19 @@ class TestPropertyMapping:
         """Test that empty path is rejected."""
         with pytest.raises(ValidationError) as exc_info:
             PropertyMapping(path="")
-        assert "path cannot be empty" in str(exc_info.value)
+        assert "cannot be empty" in str(exc_info.value)
 
     def test_invalid_whitespace_path(self):
         """Test that whitespace-only path is rejected."""
         with pytest.raises(ValidationError) as exc_info:
             PropertyMapping(path="   ")
-        assert "path cannot be empty" in str(exc_info.value)
+        assert "cannot be empty" in str(exc_info.value)
 
     def test_invalid_empty_field(self):
         """Test that empty field string is rejected."""
         with pytest.raises(ValidationError) as exc_info:
             PropertyMapping(field="", path="media.carbon_source")
-        assert "field cannot be empty" in str(exc_info.value)
+        assert "cannot be empty" in str(exc_info.value)
 
     def test_path_whitespace_stripped(self):
         """Test that path whitespace is stripped."""
@@ -89,23 +89,6 @@ class TestPropertyMapping:
         assert "expression cannot be used with field or path" in str(exc_info.value)
 
 
-class TestComparativeAnalysis:
-    """Tests for ComparativeAnalysis model."""
-
-    def test_valid_comparative_analysis(self):
-        """Test valid comparative analysis configuration."""
-        from tfbpapi.models import ComparativeAnalysis
-
-        ca = ComparativeAnalysis(
-            repo="BrentLab/yeast_comparative_analysis",
-            dataset="dto",
-            via_field="binding_id",
-        )
-        assert ca.repo == "BrentLab/yeast_comparative_analysis"
-        assert ca.dataset == "dto"
-        assert ca.via_field == "binding_id"
-
-
 class TestDatasetVirtualDBConfig:
     """Tests for DatasetVirtualDBConfig model."""
 
@@ -117,26 +100,34 @@ class TestDatasetVirtualDBConfig:
         assert config.sample_id is not None
         assert config.sample_id.field == "sample_id"
 
-    def test_valid_config_with_comparative_analyses(self):
-        """Test valid dataset config with comparative analyses."""
+    def test_valid_config_with_field_mappings_and_links(self):
+        """Test valid dataset config with field mappings and links for comparative
+        datasets."""
         from tfbpapi.models import DatasetVirtualDBConfig
 
         config_dict = {
             "sample_id": {"field": "sample_id"},
-            "comparative_analyses": [
-                {
-                    "repo": "BrentLab/yeast_comparative_analysis",
-                    "dataset": "dto",
-                    "via_field": "binding_id",
-                }
-            ],
+            "dto_fdr": {"field": "dto_fdr"},
+            # Field mapping for aliasing: dto_pvalue displays dto_empirical_pvalue
+            "dto_pvalue": {"field": "dto_empirical_pvalue"},
+            "links": {
+                "binding_id": [
+                    ["BrentLab/harbison_2004", "harbison_2004"],
+                    ["BrentLab/callingcards", "annotated_features"],
+                ]
+            },
         }
         config = DatasetVirtualDBConfig.model_validate(config_dict)
         assert config.sample_id is not None
-        assert len(config.comparative_analyses) == 1
-        assert (
-            config.comparative_analyses[0].repo == "BrentLab/yeast_comparative_analysis"
-        )
+        # Check field mapping for aliasing via property_mappings
+        assert "dto_pvalue" in config.property_mappings
+        assert config.property_mappings["dto_pvalue"].field == "dto_empirical_pvalue"
+        assert "binding_id" in config.links
+        assert len(config.links["binding_id"]) == 2
+        assert config.links["binding_id"][0] == [
+            "BrentLab/harbison_2004",
+            "harbison_2004",
+        ]
 
     def test_config_with_extra_property_mappings(self):
         """Test that extra fields are parsed as PropertyMappings."""
@@ -152,6 +143,73 @@ class TestDatasetVirtualDBConfig:
         # Access extra fields via model_extra
         assert "regulator_locus_tag" in config.model_extra
         assert "dto_fdr" in config.model_extra
+
+    def test_valid_db_name(self):
+        """Test valid db_name is accepted."""
+        from tfbpapi.models import DatasetVirtualDBConfig
+
+        config = DatasetVirtualDBConfig.model_validate(
+            {"db_name": "harbison", "sample_id": {"field": "sample_id"}}
+        )
+        assert config.db_name == "harbison"
+
+    def test_db_name_none_by_default(self):
+        """Test db_name defaults to None."""
+        from tfbpapi.models import DatasetVirtualDBConfig
+
+        config = DatasetVirtualDBConfig.model_validate(
+            {"sample_id": {"field": "sample_id"}}
+        )
+        assert config.db_name is None
+
+    def test_db_name_invalid_sql_identifier(self):
+        """Test that invalid SQL identifiers are rejected."""
+        from tfbpapi.models import DatasetVirtualDBConfig
+
+        with pytest.raises(ValidationError) as exc_info:
+            DatasetVirtualDBConfig.model_validate(
+                {"db_name": "123bad", "sample_id": {"field": "sample_id"}}
+            )
+        assert "not a valid SQL identifier" in str(exc_info.value)
+
+    def test_db_name_with_spaces_rejected(self):
+        """Test that db_name with spaces is rejected."""
+        from tfbpapi.models import DatasetVirtualDBConfig
+
+        with pytest.raises(ValidationError) as exc_info:
+            DatasetVirtualDBConfig.model_validate(
+                {"db_name": "my table", "sample_id": {"field": "sample_id"}}
+            )
+        assert "not a valid SQL identifier" in str(exc_info.value)
+
+    def test_db_name_reserved_samples(self):
+        """Test that 'samples' is reserved and rejected."""
+        from tfbpapi.models import DatasetVirtualDBConfig
+
+        with pytest.raises(ValidationError) as exc_info:
+            DatasetVirtualDBConfig.model_validate(
+                {"db_name": "samples", "sample_id": {"field": "sample_id"}}
+            )
+        assert "reserved" in str(exc_info.value)
+
+    def test_db_name_reserved_case_insensitive(self):
+        """Test that reserved name check is case-insensitive."""
+        from tfbpapi.models import DatasetVirtualDBConfig
+
+        with pytest.raises(ValidationError) as exc_info:
+            DatasetVirtualDBConfig.model_validate(
+                {"db_name": "Samples", "sample_id": {"field": "sample_id"}}
+            )
+        assert "reserved" in str(exc_info.value)
+
+    def test_db_name_underscores_allowed(self):
+        """Test that underscores are allowed in db_name."""
+        from tfbpapi.models import DatasetVirtualDBConfig
+
+        config = DatasetVirtualDBConfig.model_validate(
+            {"db_name": "_my_table_2", "sample_id": {"field": "sample_id"}}
+        )
+        assert config.db_name == "_my_table_2"
 
 
 class TestRepositoryConfig:
@@ -469,7 +527,9 @@ class TestMetadataConfig:
 
         with pytest.raises(ValueError) as exc_info:
             MetadataConfig.from_yaml(config_path)
-        assert "Configuration must be a YAML dict" in str(exc_info.value)
+        assert "Configuration file must contain a YAML dictionary" in str(
+            exc_info.value
+        )
 
     def test_nested_alias_property_names(self, tmp_path):
         """Test that alias property names can use dot notation."""
@@ -512,3 +572,145 @@ class TestMetadataConfig:
         assert config.factor_aliases["carbon_source.specifications"]["no_aa"] == [
             "without_amino_acids"
         ]
+
+    def test_unique_db_names_valid(self):
+        """Test that unique db_names across datasets pass validation."""
+        config_data = {
+            "repositories": {
+                "BrentLab/repo1": {
+                    "dataset": {
+                        "dataset_a": {
+                            "db_name": "alpha",
+                            "sample_id": {"field": "sample_id"},
+                        },
+                        "dataset_b": {
+                            "db_name": "beta",
+                            "sample_id": {"field": "sample_id"},
+                        },
+                    }
+                }
+            }
+        }
+        config = MetadataConfig.model_validate(config_data)
+        repo = config.get_repository_config("BrentLab/repo1")
+        assert repo.dataset["dataset_a"].db_name == "alpha"
+        assert repo.dataset["dataset_b"].db_name == "beta"
+
+    def test_duplicate_db_names_rejected(self):
+        """Test that duplicate db_names are rejected."""
+        config_data = {
+            "repositories": {
+                "BrentLab/repo1": {
+                    "dataset": {
+                        "dataset_a": {
+                            "db_name": "same_name",
+                            "sample_id": {"field": "sample_id"},
+                        },
+                        "dataset_b": {
+                            "db_name": "same_name",
+                            "sample_id": {"field": "sample_id"},
+                        },
+                    }
+                }
+            }
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            MetadataConfig.model_validate(config_data)
+        assert "Duplicate db_name" in str(exc_info.value)
+
+    def test_duplicate_db_name_case_insensitive(self):
+        """Test that db_name uniqueness is case-insensitive."""
+        config_data = {
+            "repositories": {
+                "BrentLab/repo1": {
+                    "dataset": {
+                        "dataset_a": {
+                            "db_name": "Alpha",
+                            "sample_id": {"field": "sample_id"},
+                        },
+                        "dataset_b": {
+                            "db_name": "alpha",
+                            "sample_id": {"field": "sample_id"},
+                        },
+                    }
+                }
+            }
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            MetadataConfig.model_validate(config_data)
+        assert "Duplicate db_name" in str(exc_info.value)
+
+    def test_db_name_falls_back_to_config_name(self):
+        """Test that config_name is used when db_name is not set."""
+        config_data = {
+            "repositories": {
+                "BrentLab/repo1": {
+                    "dataset": {
+                        "harbison_2004": {
+                            "sample_id": {"field": "sample_id"},
+                        }
+                    }
+                },
+                "BrentLab/repo2": {
+                    "dataset": {
+                        "kemmeren_2014": {
+                            "sample_id": {"field": "sample_id"},
+                        }
+                    }
+                },
+            }
+        }
+        # Should pass -- different config_names used as fallback
+        config = MetadataConfig.model_validate(config_data)
+        assert config is not None
+
+    def test_db_name_collides_with_config_name(self):
+        """Test that db_name colliding with another config_name is rejected."""
+        config_data = {
+            "repositories": {
+                "BrentLab/repo1": {
+                    "dataset": {
+                        "harbison": {
+                            "sample_id": {"field": "sample_id"},
+                        }
+                    }
+                },
+                "BrentLab/repo2": {
+                    "dataset": {
+                        "kemmeren": {
+                            "db_name": "harbison",
+                            "sample_id": {"field": "sample_id"},
+                        }
+                    }
+                },
+            }
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            MetadataConfig.model_validate(config_data)
+        assert "Duplicate db_name" in str(exc_info.value)
+
+    def test_duplicate_db_names_across_repos(self):
+        """Test that db_name uniqueness spans across repositories."""
+        config_data = {
+            "repositories": {
+                "BrentLab/repo1": {
+                    "dataset": {
+                        "ds1": {
+                            "db_name": "shared",
+                            "sample_id": {"field": "sample_id"},
+                        }
+                    }
+                },
+                "BrentLab/repo2": {
+                    "dataset": {
+                        "ds2": {
+                            "db_name": "shared",
+                            "sample_id": {"field": "sample_id"},
+                        }
+                    }
+                },
+            }
+        }
+        with pytest.raises(ValidationError) as exc_info:
+            MetadataConfig.model_validate(config_data)
+        assert "Duplicate db_name" in str(exc_info.value)

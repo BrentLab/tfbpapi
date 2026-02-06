@@ -264,7 +264,7 @@ class DataCard:
             "dataset_types": [config.dataset_type.value for config in card.configs],
             "total_files": total_files,
             "last_modified": last_modified,
-            "has_default_config": self.dataset_card.get_default_config() is not None,
+            "has_default_config": self.dataset_card.default_config is not None,
         }
 
     def extract_metadata_schema(self, config_name: str) -> dict[str, Any]:
