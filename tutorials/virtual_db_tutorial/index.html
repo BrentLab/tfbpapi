@@ -18,7 +18,7 @@
         <link rel="prev" href="../cache_manager_tutorial/">
       
       
-        <link rel="next" href="../../virtual_database_concepts/">
+        <link rel="next" href="../../virtual_db/">
       
       
         
@@ -29,7 +29,7 @@
     
     
       
-        <title>VirtualDB Tutorial: Unified Cross-Dataset Queries - tfbpapi</title>
+        <title>VirtualDB Tutorial: SQL-First Cross-Dataset Queries - tfbpapi</title>
       
     
     
@@ -84,7 +84,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#virtualdb-tutorial-unified-cross-dataset-queries" class="md-skip">
+        <a href="#virtualdb-tutorial-sql-first-cross-dataset-queries" class="md-skip">
           Skip to content
         </a>
       
@@ -122,7 +122,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              VirtualDB Tutorial: Unified Cross-Dataset Queries
+              VirtualDB Tutorial: SQL-First Cross-Dataset Queries
             
           </span>
         </div>
@@ -294,26 +294,6 @@
   
     
     
-      <li class="md-tabs__item">
-        <a href="../../virtual_database_concepts/" class="md-tabs__link">
-          
-  
-  
-  Concepts
-
-        </a>
-      </li>
-    
-  
-
-      
-        
-  
-  
-  
-  
-    
-    
       
   
   
@@ -354,6 +334,25 @@
         </a>
       </li>
     
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../virtual_db_configuration/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  VirtualDB Configuration
+
+      </a>
+    </li>
   
 
       
@@ -687,7 +686,7 @@
   <span class="md-ellipsis">
     
   
-    VirtualDB Tutorial: Unified Cross-Dataset Queries
+    VirtualDB Tutorial: SQL-First Cross-Dataset Queries
   
 
     
@@ -705,7 +704,7 @@
   <span class="md-ellipsis">
     
   
-    VirtualDB Tutorial: Unified Cross-Dataset Queries
+    VirtualDB Tutorial: SQL-First Cross-Dataset Queries
   
 
     
@@ -733,10 +732,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#creating-a-virtualdb-specification" class="md-nav__link">
+  <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Creating a VirtualDB Specification
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#initializing-virtualdb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Initializing VirtualDB
       
     </span>
   </a>
@@ -752,141 +762,13 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Schema Discovery">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#discovering-valid-values" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Discovering Valid Values
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-simple-queries" class="md-nav__link">
+  <a href="#querying-virtualdb" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Simple Queries
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. Simple Queries">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#basic-query-all-samples-with-glucose" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Basic Query: All Samples with Glucose
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#query-specific-datasets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Query Specific Datasets
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#select-specific-fields" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Select Specific Fields
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-advanced-queries" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Advanced Queries
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="5. Advanced Queries">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#multiple-filter-conditions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Multiple Filter Conditions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#numeric-range-queries" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Numeric Range Queries
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#factor-alias-expansion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Factor Alias Expansion
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#complete-data-retrieval" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Complete Data Retrieval
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example analysis
+        Querying VirtualDB
       
     </span>
   </a>
@@ -894,10 +776,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#querying-comparative-datasets" class="md-nav__link">
+  <a href="#5-parameterized-queries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Querying Comparative Datasets
+        5. Parameterized Queries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prepared-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prepared Queries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-comparative-dataset-views" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Comparative Dataset Views
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-realistic-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A realistic example
       
     </span>
   </a>
@@ -960,7 +875,7 @@
   <span class="md-ellipsis">
     
   
-    Concepts
+    API Reference
   
 
     
@@ -976,95 +891,6 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Concepts
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../virtual_database_concepts/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Virtual Database Design
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    API Reference
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
     API Reference
   
 
@@ -1093,10 +919,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_1" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_1" >
         
           
-          <label class="md-nav__link" for="__nav_4_1" id="__nav_4_1_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_1" id="__nav_3_1_label" tabindex="0">
             
   
   
@@ -1114,8 +940,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_1_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_1">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_1">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1239,10 +1065,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_2" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_2" >
         
           
-          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_2" id="__nav_3_2_label" tabindex="0">
             
   
   
@@ -1260,8 +1086,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_2">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_2">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1357,10 +1183,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_3" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_3" >
         
           
-          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_3_3" id="__nav_3_3_label" tabindex="0">
             
   
   
@@ -1378,8 +1204,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_4_3">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_3">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1454,10 +1280,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
             
   
   
@@ -1475,8 +1301,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1549,6 +1375,33 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../virtual_db_configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    VirtualDB Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -1578,10 +1431,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#creating-a-virtualdb-specification" class="md-nav__link">
+  <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Creating a VirtualDB Specification
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#initializing-virtualdb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Initializing VirtualDB
       
     </span>
   </a>
@@ -1597,141 +1461,13 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Schema Discovery">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#discovering-valid-values" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Discovering Valid Values
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-simple-queries" class="md-nav__link">
+  <a href="#querying-virtualdb" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Simple Queries
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="4. Simple Queries">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#basic-query-all-samples-with-glucose" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Basic Query: All Samples with Glucose
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#query-specific-datasets" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Query Specific Datasets
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#select-specific-fields" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Select Specific Fields
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#5-advanced-queries" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        5. Advanced Queries
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="5. Advanced Queries">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#multiple-filter-conditions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Multiple Filter Conditions
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#numeric-range-queries" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Numeric Range Queries
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#factor-alias-expansion" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Factor Alias Expansion
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#complete-data-retrieval" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Complete Data Retrieval
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#example-analysis" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example analysis
+        Querying VirtualDB
       
     </span>
   </a>
@@ -1739,10 +1475,43 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#querying-comparative-datasets" class="md-nav__link">
+  <a href="#5-parameterized-queries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Querying Comparative Datasets
+        5. Parameterized Queries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#prepared-queries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Prepared Queries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-comparative-dataset-views" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Comparative Dataset Views
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-realistic-example" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A realistic example
       
     </span>
   </a>
@@ -2292,40 +2061,32 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </style>
 <!-- End of mermaid configuration --><div class="jupyter-wrapper">
 <div class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="virtualdb-tutorial-unified-cross-dataset-queries">VirtualDB Tutorial: Unified Cross-Dataset Queries<a class="anchor-link" href="#virtualdb-tutorial-unified-cross-dataset-queries">¶</a></h1><p>The <code>VirtualDB</code> class provides a unified query interface across heterogeneous datasets with different experimental condition structures and terminologies. Each dataset defines conditions in its own way, with properties at different hierarchy levels and using different naming conventions. VirtualDB uses external YAML configuration to:</p>
-<ul>
-<li>Map varying structures to a common schema</li>
-<li>Normalize factor level names (e.g., "D-glucose", "dextrose", "glu" all become "glucose")</li>
-<li>Enable cross-dataset queries with standardized field names and values</li>
-</ul>
-<p>In this tutorial, we'll explore how to use VirtualDB to query and compare data across multiple datasets.</p>
+<h1 id="virtualdb-tutorial-sql-first-cross-dataset-queries">VirtualDB Tutorial: SQL-First Cross-Dataset Queries<a class="anchor-link" href="#virtualdb-tutorial-sql-first-cross-dataset-queries">¶</a></h1><p>The <code>VirtualDB</code> class provides a SQL query interface across heterogeneous
+Huggingface datasets stored in Parquet format. See the <a href="../virtual_db_configuration.md">VirtualDB configuration
+documentation</a> for more details on how to set up your
+datasets for use with <code>VirtualDB</code>.</p>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-1">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="creating-a-virtualdb-specification">Creating a VirtualDB Specification<a class="anchor-link" href="#creating-a-virtualdb-specification">¶</a></h2><p>VirtualDB requires a YAML configuration file that defines:</p>
-<ul>
-<li>Which datasets to include</li>
-<li>How to map their fields to common names</li>
-<li>How to normalize factor levels</li>
-</ul>
+<h2 id="configuration">Configuration<a class="anchor-link" href="#configuration">¶</a></h2><p>The configuration for <code>VirtualDB</code> is defined in a YAML file that specifies the datasets to include, their locations, and any relevant metadata or mappings. Below is an example configuration:</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cell-2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2343,13 +2104,12 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># For this tutorial, we'll create a sample configuration</span>
-<span class="c1"># In practice, you'd load this from a YAML file</span>
-<span class="n">config_yaml</span> <span class="o">=</span> <span class="s2">"""</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">config_yaml</span> <span class="o">=</span> <span class="s2">"""</span>
 <span class="s2">repositories:</span>
 <span class="s2">  BrentLab/harbison_2004:</span>
 <span class="s2">    dataset:</span>
 <span class="s2">      harbison_2004:</span>
+<span class="s2">        db_name: harbison</span>
 <span class="s2">        sample_id:</span>
 <span class="s2">          field: sample_id</span>
 <span class="s2">        carbon_source:</span>
@@ -2359,29 +2119,56 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <span class="s2">          field: condition</span>
 <span class="s2">          path: temperature_celsius</span>
 <span class="s2">          dtype: numeric</span>
-<span class="s2">        environmental_condition:</span>
-<span class="s2">          field: condition</span>
-
-<span class="s2">        comparative_analyses:</span>
-<span class="s2">          - repo: BrentLab/yeast_comparative_analysis</span>
-<span class="s2">            dataset: dto</span>
-<span class="s2">            via_field: binding_id</span>
+<span class="s2">        regulator_locus_tag:</span>
+<span class="s2">          field: regulator_locus_tag</span>
+<span class="s2">        regulator_symbol:</span>
+<span class="s2">          field: regulator_symbol</span>
 
 <span class="s2">  BrentLab/kemmeren_2014:</span>
 <span class="s2">    dataset:</span>
 <span class="s2">      kemmeren_2014:</span>
+<span class="s2">        db_name: kemmeren</span>
 <span class="s2">        sample_id:</span>
 <span class="s2">          field: sample_id</span>
 <span class="s2">        carbon_source:</span>
-<span class="s2">          path: media.carbon_source.compound</span>
+<span class="s2">          path: experimental_conditions.media.carbon_source.compound</span>
 <span class="s2">        temperature_celsius:</span>
-<span class="s2">          path: temperature_celsius</span>
+<span class="s2">          path: experimental_conditions.temperature_celsius</span>
 <span class="s2">          dtype: numeric</span>
+<span class="s2">        regulator_locus_tag:</span>
+<span class="s2">          field: regulator_locus_tag</span>
+<span class="s2">        regulator_symbol:</span>
+<span class="s2">          field: regulator_symbol</span>
 
-<span class="s2">        comparative_analyses:</span>
-<span class="s2">          - repo: BrentLab/yeast_comparative_analysis</span>
-<span class="s2">            dataset: dto</span>
-<span class="s2">            via_field: perturbation_id</span>
+<span class="s2">  BrentLab/hackett_2020:</span>
+<span class="s2">    dataset:</span>
+<span class="s2">      hackett_2020:</span>
+<span class="s2">        db_name: hackett</span>
+<span class="s2">        sample_id:</span>
+<span class="s2">          field: sample_id</span>
+<span class="s2">        carbon_source:</span>
+<span class="s2">          path: experimental_conditions.media.carbon_source.compound</span>
+<span class="s2">        temperature_celsius:</span>
+<span class="s2">          path: experimental_conditions.temperature_celsius</span>
+<span class="s2">          dtype: numeric</span>
+<span class="s2">        regulator_locus_tag:</span>
+<span class="s2">          field: regulator_locus_tag</span>
+<span class="s2">        regulator_symbol:</span>
+<span class="s2">          field: regulator_symbol</span>
+
+<span class="s2">  BrentLab/yeast_comparative_analysis:</span>
+<span class="s2">    dataset:</span>
+<span class="s2">      dto:</span>
+<span class="s2">        dto_pvalue:</span>
+<span class="s2">          field: dto_empirical_pvalue</span>
+<span class="s2">        dto_fdr:</span>
+<span class="s2">          field: dto_fdr</span>
+<span class="s2">        links:</span>
+<span class="s2">          binding_id:</span>
+<span class="s2">            - [BrentLab/harbison_2004, harbison_2004]</span>
+<span class="s2">          perturbation_id:</span>
+<span class="s2">            - [BrentLab/kemmeren_2014, kemmeren_2014]</span>
+<span class="s2">            - [BrentLab/hackett_2020, hackett_2020]</span>
 
 <span class="s2">factor_aliases:</span>
 <span class="s2">  carbon_source:</span>
@@ -2390,30 +2177,26 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <span class="s2">    raffinose: [D-raffinose]</span>
 
 <span class="s2">missing_value_labels:</span>
-<span class="s2">  carbon_source: "unspecified"</span>
+<span class="s2">  carbon_source: unspecified</span>
 
 <span class="s2">description:</span>
 <span class="s2">  carbon_source: The carbon source provided during growth</span>
 <span class="s2">  temperature_celsius: Growth temperature in degrees Celsius</span>
-<span class="s2">  environmental_condition: Named environmental condition</span>
 <span class="s2">"""</span>
 
-<span class="c1"># Save config to temporary file</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 
 <span class="n">temp_config</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">())</span> <span class="o">/</span> <span class="s2">"vdb_config.yaml"</span>
 <span class="n">temp_config</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">config_yaml</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Configuration saved to: </span><span class="si">{</span><span class="n">temp_config</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Config saved to: </span><span class="si">{</span><span class="n">temp_config</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1"># For this tutorial, we'll create a sample configuration
-# In practice, you'd load this from a YAML file
-config_yaml = """
+<div class="clipboard-copy-txt" id="cell-1">config_yaml = """
 repositories:
   BrentLab/harbison_2004:
     dataset:
       harbison_2004:
+        db_name: harbison
         sample_id:
           field: sample_id
         carbon_source:
@@ -2423,29 +2206,56 @@ repositories:
           field: condition
           path: temperature_celsius
           dtype: numeric
-        environmental_condition:
-          field: condition
-
-        comparative_analyses:
-          - repo: BrentLab/yeast_comparative_analysis
-            dataset: dto
-            via_field: binding_id
+        regulator_locus_tag:
+          field: regulator_locus_tag
+        regulator_symbol:
+          field: regulator_symbol
 
   BrentLab/kemmeren_2014:
     dataset:
       kemmeren_2014:
+        db_name: kemmeren
         sample_id:
           field: sample_id
         carbon_source:
-          path: media.carbon_source.compound
+          path: experimental_conditions.media.carbon_source.compound
         temperature_celsius:
-          path: temperature_celsius
+          path: experimental_conditions.temperature_celsius
           dtype: numeric
+        regulator_locus_tag:
+          field: regulator_locus_tag
+        regulator_symbol:
+          field: regulator_symbol
 
-        comparative_analyses:
-          - repo: BrentLab/yeast_comparative_analysis
-            dataset: dto
-            via_field: perturbation_id
+  BrentLab/hackett_2020:
+    dataset:
+      hackett_2020:
+        db_name: hackett
+        sample_id:
+          field: sample_id
+        carbon_source:
+          path: experimental_conditions.media.carbon_source.compound
+        temperature_celsius:
+          path: experimental_conditions.temperature_celsius
+          dtype: numeric
+        regulator_locus_tag:
+          field: regulator_locus_tag
+        regulator_symbol:
+          field: regulator_symbol
+
+  BrentLab/yeast_comparative_analysis:
+    dataset:
+      dto:
+        dto_pvalue:
+          field: dto_empirical_pvalue
+        dto_fdr:
+          field: dto_fdr
+        links:
+          binding_id:
+            - [BrentLab/harbison_2004, harbison_2004]
+          perturbation_id:
+            - [BrentLab/kemmeren_2014, kemmeren_2014]
+            - [BrentLab/hackett_2020, hackett_2020]
 
 factor_aliases:
   carbon_source:
@@ -2454,22 +2264,19 @@ factor_aliases:
     raffinose: [D-raffinose]
 
 missing_value_labels:
-  carbon_source: "unspecified"
+  carbon_source: unspecified
 
 description:
   carbon_source: The carbon source provided during growth
   temperature_celsius: Growth temperature in degrees Celsius
-  environmental_condition: Named environmental condition
 """
 
-# Save config to temporary file
 import tempfile
 from pathlib import Path
 
 temp_config = Path(tempfile.mkdtemp()) / "vdb_config.yaml"
 temp_config.write_text(config_yaml)
-
-print(f"Configuration saved to: {temp_config}")</div>
+print(f"Config saved to: {temp_config}")</div>
 </div>
 </div>
 </div>
@@ -2481,15 +2288,28 @@ print(f"Configuration saved to: {temp_config}")</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Configuration saved to: /tmp/tmpnetd9hv1/vdb_config.yaml
+<pre>Config saved to: /tmp/tmpf610qghb/vdb_config.yaml
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-3">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="initializing-virtualdb">Initializing VirtualDB<a class="anchor-link" href="#initializing-virtualdb">¶</a></h2><p>Creating a VirtualDB instance loads and validates the config but does
+<strong>not</strong> download any data yet. Views are registered lazily on the first
+<code>query()</code>, <code>tables()</code>, or <code>describe()</code> call.</p>
+</div>
+</div>
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cell-4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2509,19 +2329,17 @@ print(f"Configuration saved to: {temp_config}")</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tfbpapi.virtual_db</span><span class="w"> </span><span class="kn">import</span> <span class="n">VirtualDB</span>
 
-<span class="c1"># Initialize VirtualDB with the configuration</span>
+<span class="c1"># Pass an HF token if the repos are private:</span>
+<span class="c1"># vdb = VirtualDB(str(temp_config), token="hf_...")</span>
 <span class="n">vdb</span> <span class="o">=</span> <span class="n">VirtualDB</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">temp_config</span><span class="p">))</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">"VirtualDB initialized successfully!"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Configured repositories: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">vdb</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">repositories</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">vdb</span><span class="p">))</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-2">from tfbpapi.virtual_db import VirtualDB
 
-# Initialize VirtualDB with the configuration
+# Pass an HF token if the repos are private:
+# vdb = VirtualDB(str(temp_config), token="hf_...")
 vdb = VirtualDB(str(temp_config))
-
-print("VirtualDB initialized successfully!")
-print(f"Configured repositories: {len(vdb.config.repositories)}")</div>
+print(repr(vdb))</div>
 </div>
 </div>
 </div>
@@ -2541,8 +2359,7 @@ print(f"Configured repositories: {len(vdb.config.repositories)}")</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>VirtualDB initialized successfully!
-Configured repositories: 2
+<pre>VirtualDB(4 repos, 4 datasets, views not yet registered)
 </pre>
 </div>
 </div>
@@ -2550,19 +2367,25 @@ Configured repositories: 2
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-5">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="schema-discovery">Schema Discovery<a class="anchor-link" href="#schema-discovery">¶</a></h2><p>The VirtualDB class provides methods to inspect the unified schema after loading the
-configuration.</p>
+<h2 id="schema-discovery">Schema Discovery<a class="anchor-link" href="#schema-discovery">¶</a></h2><p>Use <code>tables()</code>, <code>describe()</code>, <code>get_fields()</code>, and <code>get_common_fields()</code>
+to explore the registered views before writing SQL.</p>
+<p>Note that primary datasets get <strong>two</strong> views each:</p>
+<ul>
+<li><code>&lt;db_name&gt;</code> -- the full measurement-level data (one row per sample-target pair)</li>
+<li><code>&lt;db_name&gt;_meta</code> -- deduplicated sample-level metadata (one row per sample),
+including derived columns from config property mappings (e.g., <code>carbon_source</code> resolved from DataCard field definitions, with factor aliases applied).</li>
+</ul>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cell-6">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2580,19 +2403,15 @@ configuration.</p>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Get all fields defined in any dataset</span>
-<span class="n">all_fields</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">get_fields</span><span class="p">()</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">"All available fields:"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">all_fields</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># List all registered views</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Registered views:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">vdb</span><span class="o">.</span><span class="n">tables</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-3"># Get all fields defined in any dataset
-all_fields = vdb.get_fields()
-
-print("All available fields:")
-for field in sorted(all_fields):
-    print(f"  - {field}")</div>
+<div class="clipboard-copy-txt" id="cell-3"># List all registered views
+print("Registered views:")
+for name in vdb.tables():
+    print(f"  {name}")</div>
 </div>
 </div>
 </div>
@@ -2604,11 +2423,34 @@ for field in sorted(all_fields):
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>All available fields:
-  - carbon_source
-  - environmental_condition
-  - sample_id
-  - temperature_celsius
+<pre>Registered views:
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
+<pre>Fetching 1 files: 100%|██████████| 1/1 [00:00&lt;00:00, 6374.32it/s]
+Fetching 1 files: 100%|██████████| 1/1 [00:00&lt;00:00, 12264.05it/s]
+Fetching 1 files: 100%|██████████| 1/1 [00:00&lt;00:00, 9731.56it/s]
+Fetching 6 files: 100%|██████████| 6/6 [00:00&lt;00:00, 21883.33it/s]
+Key 'carbon_source' not found at path 'media.carbon_source' (current keys: ['name'])
+Key 'carbon_source' not found at path 'media.carbon_source' (current keys: ['name'])
+Key 'carbon_source' not found at path 'media.carbon_source' (current keys: ['name'])
+Key 'temperature_celsius' not found at path 'temperature_celsius' (current keys: ['description', 'initial_temperature_celsius', 'temperature_shift_celsius', 'temperature_shift_duration_minutes', 'growth_phase_at_harvest', 'media'])
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>  dto_expanded
+  hackett
+  hackett_meta
+  harbison
+  harbison_meta
+  kemmeren
+  kemmeren_meta
 </pre>
 </div>
 </div>
@@ -2616,7 +2458,7 @@ for field in sorted(all_fields):
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=pdebujnqb9q">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2634,19 +2476,13 @@ for field in sorted(all_fields):
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Get fields present in ALL datasets (common fields)</span>
-<span class="n">common_fields</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">get_common_fields</span><span class="p">()</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Common fields (present in all datasets):"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">common_fields</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># The _meta view has sample-level metadata plus derived columns</span>
+<span class="c1"># (carbon_source, temperature_celsius resolved from condition definitions)</span>
+<span class="n">vdb</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">"harbison_meta"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-4"># Get fields present in ALL datasets (common fields)
-common_fields = vdb.get_common_fields()
-
-print("Common fields (present in all datasets):")
-for field in sorted(common_fields):
-    print(f"  - {field}")</div>
+<div class="clipboard-copy-txt" id="cell-4"># The _meta view has sample-level metadata plus derived columns
+# (carbon_source, temperature_celsius resolved from condition definitions)
+vdb.describe("harbison_meta")</div>
 </div>
 </div>
 </div>
@@ -2655,20 +2491,107 @@ for field in sorted(common_fields):
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Common fields (present in all datasets):
-  - carbon_source
-  - temperature_celsius
-</pre>
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[4]:</div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>table</th>
+<th>column_name</th>
+<th>column_type</th>
+<th>null</th>
+<th>key</th>
+<th>default</th>
+<th>extra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>harbison_meta</td>
+<td>sample_id</td>
+<td>INTEGER</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<th>1</th>
+<td>harbison_meta</td>
+<td>regulator_locus_tag</td>
+<td>VARCHAR</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<th>2</th>
+<td>harbison_meta</td>
+<td>regulator_symbol</td>
+<td>VARCHAR</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<th>3</th>
+<td>harbison_meta</td>
+<td>condition</td>
+<td>VARCHAR</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<th>4</th>
+<td>harbison_meta</td>
+<td>carbon_source</td>
+<td>VARCHAR</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<th>5</th>
+<td>harbison_meta</td>
+<td>temperature_celsius</td>
+<td>DOUBLE</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 </div>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=9deee334">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2686,57 +2609,11 @@ for field in sorted(common_fields):
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Get fields that may be used to filter two or more datasets at a time</span>
-<span class="n">comp_info</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">get_comparative_analyses</span><span class="p">()</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Datasets with comparative data</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">primary_dataset</span><span class="p">,</span> <span class="n">comparatives</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">comp_info</span><span class="p">[</span><span class="s2">"primary_to_comparative"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">primary_dataset</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">comp</span> <span class="ow">in</span> <span class="n">comparatives</span><span class="p">:</span>
-        <span class="n">comp_key</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">comp</span><span class="p">[</span><span class="s1">'comparative_repo'</span><span class="p">]</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">comp</span><span class="p">[</span><span class="s1">'comparative_dataset'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">comp_key</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"     via field: </span><span class="si">{</span><span class="n">comp</span><span class="p">[</span><span class="s1">'via_field'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">num_fields</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">comp_info</span><span class="p">[</span><span class="s2">"comparative_fields"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">comp_key</span><span class="p">,</span> <span class="p">[]))</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"     fields available: </span><span class="si">{</span><span class="n">num_fields</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-<span class="c1"># Show fields available from comparative datasets</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Comparative data fields"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">comp_dataset</span><span class="p">,</span> <span class="n">fields</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">comp_info</span><span class="p">[</span><span class="s2">"comparative_fields"</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">comp_dataset</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">fields</span><span class="p">:</span>
-        <span class="c1"># Print in columns for better readability</span>
-        <span class="n">fields_sorted</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">fields_sorted</span><span class="p">),</span> <span class="mi">3</span><span class="p">):</span>
-            <span class="n">row_fields</span> <span class="o">=</span> <span class="n">fields_sorted</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span> <span class="o">+</span> <span class="mi">3</span><span class="p">]</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s2">"  "</span> <span class="o">+</span> <span class="s2">"  "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">f</span><span class="si">:</span><span class="s2">&lt;28</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">row_fields</span><span class="p">))</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">"  (no fields found)"</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># The full view has measurement-level data (one row per sample-target pair)</span>
+<span class="n">vdb</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">"harbison"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-5"># Get fields that may be used to filter two or more datasets at a time
-comp_info = vdb.get_comparative_analyses()
-
-print("Datasets with comparative data\n")
-for primary_dataset, comparatives in sorted(comp_info["primary_to_comparative"].items()):
-    print(f"\n{primary_dataset}:")
-    for comp in comparatives:
-        comp_key = f"{comp['comparative_repo']}/{comp['comparative_dataset']}"
-        print(f"  - {comp_key}")
-        print(f"     via field: {comp['via_field']}")
-        num_fields = len(comp_info["comparative_fields"].get(comp_key, []))
-        print(f"     fields available: {num_fields}")
-
-# Show fields available from comparative datasets
-print("Comparative data fields")
-for comp_dataset, fields in sorted(comp_info["comparative_fields"].items()):
-    print(f"\n{comp_dataset}:")
-    if fields:
-        # Print in columns for better readability
-        fields_sorted = sorted(fields)
-        for i in range(0, len(fields_sorted), 3):
-            row_fields = fields_sorted[i:i + 3]
-            print("  " + "  ".join(f"{f:&lt;28}" for f in row_fields))
-    else:
-        print("  (no fields found)")</div>
+<div class="clipboard-copy-txt" id="cell-5"># The full view has measurement-level data (one row per sample-target pair)
+vdb.describe("harbison")</div>
 </div>
 </div>
 </div>
@@ -2745,46 +2622,157 @@ for comp_dataset, fields in sorted(comp_info["comparative_fields"].items()):
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Datasets with comparative data
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[5]:</div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
 
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
 
-BrentLab/harbison_2004/harbison_2004:
-  - BrentLab/yeast_comparative_analysis/dto
-     via field: binding_id
-     fields available: 8
-
-BrentLab/kemmeren_2014/kemmeren_2014:
-  - BrentLab/yeast_comparative_analysis/dto
-     via field: perturbation_id
-     fields available: 8
-Comparative data fields
-
-BrentLab/yeast_comparative_analysis/dto:
-  binding_id                    binding_rank_threshold        binding_set_size            
-  dto_empirical_pvalue          dto_fdr                       perturbation_id             
-  perturbation_rank_threshold   perturbation_set_size       
-</pre>
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>table</th>
+<th>column_name</th>
+<th>column_type</th>
+<th>null</th>
+<th>key</th>
+<th>default</th>
+<th>extra</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>harbison</td>
+<td>sample_id</td>
+<td>INTEGER</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<th>1</th>
+<td>harbison</td>
+<td>db_id</td>
+<td>DOUBLE</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<th>2</th>
+<td>harbison</td>
+<td>regulator_locus_tag</td>
+<td>VARCHAR</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<th>3</th>
+<td>harbison</td>
+<td>regulator_symbol</td>
+<td>VARCHAR</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<th>4</th>
+<td>harbison</td>
+<td>condition</td>
+<td>VARCHAR</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<th>5</th>
+<td>harbison</td>
+<td>target_locus_tag</td>
+<td>VARCHAR</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<th>6</th>
+<td>harbison</td>
+<td>target_symbol</td>
+<td>VARCHAR</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<th>7</th>
+<td>harbison</td>
+<td>effect</td>
+<td>DOUBLE</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<th>8</th>
+<td>harbison</td>
+<td>pvalue</td>
+<td>DOUBLE</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<th>9</th>
+<td>harbison</td>
+<td>carbon_source</td>
+<td>VARCHAR</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<th>10</th>
+<td>harbison</td>
+<td>temperature_celsius</td>
+<td>DOUBLE</td>
+<td>YES</td>
+<td>None</td>
+<td>None</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="discovering-valid-values">Discovering Valid Values<a class="anchor-link" href="#discovering-valid-values">¶</a></h3><p>VirtualDB can tell you what values exist for each field.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cell-9">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2802,19 +2790,11 @@ BrentLab/yeast_comparative_analysis/dto:
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Get all unique values for a field (normalized)</span>
-<span class="n">carbon_source_factor_levels</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">get_unique_values</span><span class="p">(</span><span class="s2">"carbon_source"</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Unique carbon sources (normalized):"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">carbon_source_factor_levels</span><span class="p">):</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Columns common to ALL primary dataset views</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Common fields:"</span><span class="p">,</span> <span class="n">vdb</span><span class="o">.</span><span class="n">get_common_fields</span><span class="p">())</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-6"># Get all unique values for a field (normalized)
-carbon_source_factor_levels = vdb.get_unique_values("carbon_source")
-
-print("Unique carbon sources (normalized):")
-for source in sorted(carbon_source_factor_levels):
-    print(f"  - {source}")</div>
+<div class="clipboard-copy-txt" id="cell-6"># Columns common to ALL primary dataset views
+print("Common fields:", vdb.get_common_fields())</div>
 </div>
 </div>
 </div>
@@ -2826,19 +2806,30 @@ for source in sorted(carbon_source_factor_levels):
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Unique carbon sources (normalized):
-  - galactose
-  - glucose
-  - raffinose
-  - unspecified
+<pre>Common fields: ['carbon_source', 'regulator_locus_tag', 'regulator_symbol', 'sample_id', 'temperature_celsius']
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-10">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="querying-virtualdb">Querying VirtualDB<a class="anchor-link" href="#querying-virtualdb">¶</a></h2><p>The <code>.query()</code> method executes SQL queries against the registered views. You can write complex SQL queries that join across multiple datasets, filter based on metadata, and aggregate results as needed.</p>
+<p>You can also use parameterized queries to safely inject variables into your SQL statements, and prepared statements for repeated queries with different parameters.
+Named prepared statements can be passed to <code>.prepare()</code> and then executed with
+<code>.query()</code> with any parameterized values passed in as an arbitrary number of key/value
+arguments.</p>
+</div>
+</div>
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=1a705f1c">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2856,23 +2847,17 @@ for source in sorted(carbon_source_factor_levels):
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Get values broken down by dataset</span>
-<span class="n">carbon_by_dataset</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">get_unique_values</span><span class="p">(</span><span class="s2">"carbon_source"</span><span class="p">,</span> <span class="n">by_dataset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Carbon sources by dataset:"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">sources</span> <span class="ow">in</span> <span class="n">carbon_by_dataset</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="si">{</span><span class="n">dataset</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">sources</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  - </span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Query the _meta view for sample-level metadata (one row per sample)</span>
+<span class="c1"># Note: carbon_source is derived from the condition column's DataCard definitions</span>
+<span class="c1"># with factor aliases already applied (D-glucose -&gt; glucose)</span>
+<span class="n">df_meta</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"SELECT * FROM harbison_meta LIMIT 5"</span><span class="p">)</span>
+<span class="n">df_meta</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-7"># Get values broken down by dataset
-carbon_by_dataset = vdb.get_unique_values("carbon_source", by_dataset=True)
-
-print("Carbon sources by dataset:")
-for dataset, sources in carbon_by_dataset.items():
-    print(f"\n{dataset}:")
-    for source in sorted(sources):
-        print(f"  - {source}")</div>
+<div class="clipboard-copy-txt" id="cell-7"># Query the _meta view for sample-level metadata (one row per sample)
+# Note: carbon_source is derived from the condition column's DataCard definitions
+# with factor aliases already applied (D-glucose -&gt; glucose)
+df_meta = vdb.query("SELECT * FROM harbison_meta LIMIT 5")
+df_meta</div>
 </div>
 </div>
 </div>
@@ -2881,49 +2866,103 @@ for dataset, sources in carbon_by_dataset.items():
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Carbon sources by dataset:
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[7]:</div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
 
-BrentLab/harbison_2004/harbison_2004:
-  - galactose
-  - glucose
-  - raffinose
-  - unspecified
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
 
-BrentLab/kemmeren_2014/kemmeren_2014:
-  - glucose
-</pre>
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>sample_id</th>
+<th>regulator_locus_tag</th>
+<th>regulator_symbol</th>
+<th>condition</th>
+<th>carbon_source</th>
+<th>temperature_celsius</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>166</td>
+<td>YIL131C</td>
+<td>FKH1</td>
+<td>YPD</td>
+<td>glucose</td>
+<td>30.0</td>
+</tr>
+<tr>
+<th>1</th>
+<td>3</td>
+<td>YBL005W</td>
+<td>PDR3</td>
+<td>YPD</td>
+<td>glucose</td>
+<td>30.0</td>
+</tr>
+<tr>
+<th>2</th>
+<td>173</td>
+<td>YIR023W</td>
+<td>DAL81</td>
+<td>YPD</td>
+<td>glucose</td>
+<td>30.0</td>
+</tr>
+<tr>
+<th>3</th>
+<td>220</td>
+<td>YLR014C</td>
+<td>PPR1</td>
+<td>YPD</td>
+<td>glucose</td>
+<td>30.0</td>
+</tr>
+<tr>
+<th>4</th>
+<td>83</td>
+<td>YEL009C</td>
+<td>GCN4</td>
+<td>YPD</td>
+<td>glucose</td>
+<td>30.0</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-16">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="4-simple-queries">4. Simple Queries<a class="anchor-link" href="#4-simple-queries">¶</a></h2><p>Now let's start querying data. The <code>query()</code> method is the primary interface.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="basic-query-all-samples-with-glucose">Basic Query: All Samples with Glucose<a class="anchor-link" href="#basic-query-all-samples-with-glucose">¶</a></h3><p>By default, queries return sample-level data (one row per sample) with all configured fields.</p>
+<h2 id="5-parameterized-queries">5. Parameterized Queries<a class="anchor-link" href="#5-parameterized-queries">¶</a></h2><p>Pass keyword arguments to <code>query()</code> and reference them with
+DuckDB's <code>$name</code> syntax.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cell-17">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -2941,21 +2980,23 @@ BrentLab/kemmeren_2014/kemmeren_2014:
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Query all datasets for samples grown on glucose</span>
-<span class="n">glucose_samples</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="p">{</span><span class="s2">"carbon_source"</span><span class="p">:</span> <span class="s2">"glucose"</span><span class="p">})</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># A parameterized query has the following form, where `$reg` is a placeholder</span>
+<span class="c1"># that gets replaced with the value provided in the `reg` argument.</span>
+<span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
+    <span class="s2">"SELECT * FROM harbison WHERE regulator_symbol = $reg LIMIT 5"</span><span class="p">,</span>
+    <span class="n">reg</span><span class="o">=</span><span class="s2">"REB1"</span><span class="p">,</span>
+<span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">glucose_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples with glucose"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Columns: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">glucose_samples</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">First few rows:"</span><span class="p">)</span>
-<span class="n">glucose_samples</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="c1"># A parameterized query can be saved for future use with the `.prepare()` method</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-8"># Query all datasets for samples grown on glucose
-glucose_samples = vdb.query(filters={"carbon_source": "glucose"})
+<div class="clipboard-copy-txt" id="cell-8"># A parameterized query has the following form, where `$reg` is a placeholder
+# that gets replaced with the value provided in the `reg` argument.
+vdb.query(
+    "SELECT * FROM harbison WHERE regulator_symbol = $reg LIMIT 5",
+    reg="REB1",
+)
 
-print(f"Found {len(glucose_samples)} samples with glucose")
-print(f"\nColumns: {list(glucose_samples.columns)}")
-print(f"\nFirst few rows:")
-glucose_samples.head()</div>
+# A parameterized query can be saved for future use with the `.prepare()` method</div>
 </div>
 </div>
 </div>
@@ -2964,17 +3005,6 @@ glucose_samples.head()</div>
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Found 1797 samples with glucose
-
-Columns: ['sample_id', 'regulator_locus_tag', 'regulator_symbol', 'condition', 'carbon_source', 'temperature_celsius', 'dataset_id']
-
-First few rows:
-</pre>
-</div>
-</div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[8]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
@@ -2997,64 +3027,88 @@ First few rows:
 <tr style="text-align: right;">
 <th></th>
 <th>sample_id</th>
+<th>db_id</th>
 <th>regulator_locus_tag</th>
 <th>regulator_symbol</th>
 <th>condition</th>
+<th>target_locus_tag</th>
+<th>target_symbol</th>
+<th>effect</th>
+<th>pvalue</th>
 <th>carbon_source</th>
 <th>temperature_celsius</th>
-<th>dataset_id</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <th>0</th>
-<td>1</td>
-<td>YSC0017</td>
-<td>MATA1</td>
-<td>YPD</td>
+<td>14</td>
+<td>13.0</td>
+<td>YBR049C</td>
+<td>REB1</td>
+<td>H2O2Lo</td>
+<td>YPR204W</td>
+<td>YPR204W</td>
+<td>0.784496</td>
+<td>0.535665</td>
 <td>glucose</td>
 <td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
 </tr>
 <tr>
 <th>1</th>
-<td>2</td>
-<td>YAL051W</td>
-<td>OAF1</td>
-<td>YPD</td>
+<td>14</td>
+<td>13.0</td>
+<td>YBR049C</td>
+<td>REB1</td>
+<td>H2O2Lo</td>
+<td>YPR203W</td>
+<td>YPR203W</td>
+<td>1.450915</td>
+<td>0.959556</td>
 <td>glucose</td>
 <td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
 </tr>
 <tr>
 <th>2</th>
-<td>3</td>
-<td>YBL005W</td>
-<td>PDR3</td>
-<td>YPD</td>
+<td>14</td>
+<td>13.0</td>
+<td>YBR049C</td>
+<td>REB1</td>
+<td>H2O2Lo</td>
+<td>YPR202W</td>
+<td>YPR202W</td>
+<td>1.450915</td>
+<td>0.959556</td>
 <td>glucose</td>
 <td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
 </tr>
 <tr>
 <th>3</th>
-<td>4</td>
-<td>YBL008W</td>
-<td>HIR1</td>
-<td>YPD</td>
+<td>14</td>
+<td>13.0</td>
+<td>YBR049C</td>
+<td>REB1</td>
+<td>H2O2Lo</td>
+<td>YPR201W</td>
+<td>ARR3</td>
+<td>0.925863</td>
+<td>0.453672</td>
 <td>glucose</td>
 <td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
 </tr>
 <tr>
 <th>4</th>
-<td>5</td>
-<td>YBL021C</td>
-<td>HAP3</td>
-<td>YPD</td>
+<td>14</td>
+<td>13.0</td>
+<td>YBR049C</td>
+<td>REB1</td>
+<td>H2O2Lo</td>
+<td>YPR200C</td>
+<td>ARR2</td>
+<td>0.925863</td>
+<td>0.453672</td>
 <td>glucose</td>
 <td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
 </tr>
 </tbody>
 </table>
@@ -3065,18 +3119,19 @@ First few rows:
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-18">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="query-specific-datasets">Query Specific Datasets<a class="anchor-link" href="#query-specific-datasets">¶</a></h3><p>Limit your query to specific datasets using the <code>datasets</code> parameter.</p>
+<h2 id="prepared-queries">Prepared Queries<a class="anchor-link" href="#prepared-queries">¶</a></h2><p>Use <code>prepare()</code> to register a named, reusable query template.
+Then call it by name via <code>query()</code>.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cell-19">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3094,23 +3149,33 @@ First few rows:
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Query only harbison_2004</span>
-<span class="n">harbison_glucose</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-    <span class="n">filters</span><span class="o">=</span><span class="p">{</span><span class="s2">"carbon_source"</span><span class="p">:</span> <span class="s2">"glucose"</span><span class="p">},</span>
-    <span class="n">datasets</span><span class="o">=</span><span class="p">[(</span><span class="s2">"BrentLab/harbison_2004"</span><span class="p">,</span> <span class="s2">"harbison_2004"</span><span class="p">)]</span>
-<span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Register a prepared query</span>
+<span class="n">vdb</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span><span class="s2">"glucose_regs"</span><span class="p">,</span> <span class="s2">"""</span>
+<span class="s2">    SELECT regulator_symbol, COUNT(*) AS n</span>
+<span class="s2">    FROM harbison_meta</span>
+<span class="s2">    WHERE carbon_source = $cs</span>
+<span class="s2">    GROUP BY regulator_symbol</span>
+<span class="s2">    HAVING n &gt;= $min_n</span>
+<span class="s2">    ORDER BY n DESC</span>
+<span class="s2">"""</span><span class="p">)</span>
 
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">harbison_glucose</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples from harbison_2004"</span><span class="p">)</span>
-<span class="n">harbison_glucose</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<span class="c1"># note that rather than a SQL statement, we pass in the name of the prepared query</span>
+<span class="c1"># and provide the appropriate parameters</span>
+<span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"glucose_regs"</span><span class="p">,</span> <span class="n">cs</span><span class="o">=</span><span class="s2">"glucose"</span><span class="p">,</span> <span class="n">min_n</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-9"># Query only harbison_2004
-harbison_glucose = vdb.query(
-    filters={"carbon_source": "glucose"},
-    datasets=[("BrentLab/harbison_2004", "harbison_2004")]
-)
+<div class="clipboard-copy-txt" id="cell-9"># Register a prepared query
+vdb.prepare("glucose_regs", """
+    SELECT regulator_symbol, COUNT(*) AS n
+    FROM harbison_meta
+    WHERE carbon_source = $cs
+    GROUP BY regulator_symbol
+    HAVING n &gt;= $min_n
+    ORDER BY n DESC
+""")
 
-print(f"Found {len(harbison_glucose)} samples from harbison_2004")
-harbison_glucose.head()</div>
+# note that rather than a SQL statement, we pass in the name of the prepared query
+# and provide the appropriate parameters
+vdb.query("glucose_regs", cs="glucose", min_n=2)</div>
 </div>
 </div>
 </div>
@@ -3119,13 +3184,6 @@ harbison_glucose.head()</div>
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Found 310 samples from harbison_2004
-</pre>
-</div>
-</div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[9]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
@@ -3147,68 +3205,69 @@ harbison_glucose.head()</div>
 <thead>
 <tr style="text-align: right;">
 <th></th>
-<th>sample_id</th>
-<th>regulator_locus_tag</th>
 <th>regulator_symbol</th>
-<th>condition</th>
-<th>carbon_source</th>
-<th>temperature_celsius</th>
-<th>dataset_id</th>
+<th>n</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <th>0</th>
-<td>1</td>
-<td>YSC0017</td>
-<td>MATA1</td>
-<td>YPD</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
+<td>MSN2</td>
+<td>6</td>
 </tr>
 <tr>
 <th>1</th>
-<td>2</td>
-<td>YAL051W</td>
-<td>OAF1</td>
-<td>YPD</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
+<td>MSN4</td>
+<td>5</td>
 </tr>
 <tr>
 <th>2</th>
-<td>3</td>
-<td>YBL005W</td>
-<td>PDR3</td>
-<td>YPD</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
+<td>HSF1</td>
+<td>4</td>
 </tr>
 <tr>
 <th>3</th>
+<td>STE12</td>
 <td>4</td>
-<td>YBL008W</td>
-<td>HIR1</td>
-<td>YPD</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
 </tr>
 <tr>
 <th>4</th>
-<td>5</td>
-<td>YBL021C</td>
-<td>HAP3</td>
-<td>YPD</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
+<td>RTG3</td>
+<td>4</td>
+</tr>
+<tr>
+<th>...</th>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<th>58</th>
+<td>DAL82</td>
+<td>2</td>
+</tr>
+<tr>
+<th>59</th>
+<td>DAL80</td>
+<td>2</td>
+</tr>
+<tr>
+<th>60</th>
+<td>HAP4</td>
+<td>2</td>
+</tr>
+<tr>
+<th>61</th>
+<td>PDR1</td>
+<td>2</td>
+</tr>
+<tr>
+<th>62</th>
+<td>RLM1</td>
+<td>2</td>
 </tr>
 </tbody>
 </table>
+<p>63 rows × 2 columns</p>
 </div>
 </div>
 </div>
@@ -3216,18 +3275,26 @@ harbison_glucose.head()</div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-20">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="select-specific-fields">Select Specific Fields<a class="anchor-link" href="#select-specific-fields">¶</a></h3><p>Return only the fields you need with the <code>fields</code> parameter.</p>
+<h2 id="7-comparative-dataset-views">7. Comparative Dataset Views<a class="anchor-link" href="#7-comparative-dataset-views">¶</a></h2><p>Comparative datasets (those with <code>links</code>) get an extra view type:</p>
+<p><strong><code>&lt;name&gt;_expanded</code></strong>: For each composite ID field, adds two parsed columns:</p>
+<ul>
+<li><code>&lt;link_field&gt;_source</code> -- the source dataset, aliased to <code>db_name</code> when
+the <code>repo_id;config_name</code> pair is in the VirtualDB config.</li>
+<li><code>&lt;link_field&gt;_id</code> -- the sample_id component.</li>
+</ul>
+<p>This makes it easy to join or filter by source dataset without manually
+parsing composite IDs.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cell-21">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3245,23 +3312,11 @@ harbison_glucose.head()</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Get just sample_id, carbon_source, and temperature</span>
-<span class="n">minimal_data</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-    <span class="n">filters</span><span class="o">=</span><span class="p">{</span><span class="s2">"carbon_source"</span><span class="p">:</span> <span class="s2">"glucose"</span><span class="p">},</span>
-    <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"sample_id"</span><span class="p">,</span> <span class="s2">"carbon_source"</span><span class="p">,</span> <span class="s2">"temperature_celsius"</span><span class="p">]</span>
-<span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Columns: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">minimal_data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="n">minimal_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># The expanded view has parsed _source and _id columns for each link field</span>
+<span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"SELECT * FROM dto_expanded LIMIT 3"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-10"># Get just sample_id, carbon_source, and temperature
-minimal_data = vdb.query(
-    filters={"carbon_source": "glucose"},
-    fields=["sample_id", "carbon_source", "temperature_celsius"]
-)
-
-print(f"Columns: {list(minimal_data.columns)}")
-minimal_data.head()</div>
+<div class="clipboard-copy-txt" id="cell-10"># The expanded view has parsed _source and _id columns for each link field
+vdb.query("SELECT * FROM dto_expanded LIMIT 3")</div>
 </div>
 </div>
 </div>
@@ -3270,13 +3325,6 @@ minimal_data.head()</div>
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Columns: ['sample_id', 'carbon_source', 'temperature_celsius', 'dataset_id']
-</pre>
-</div>
-</div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[10]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
@@ -3298,47 +3346,73 @@ minimal_data.head()</div>
 <thead>
 <tr style="text-align: right;">
 <th></th>
-<th>sample_id</th>
-<th>carbon_source</th>
-<th>temperature_celsius</th>
-<th>dataset_id</th>
+<th>binding_id</th>
+<th>perturbation_id</th>
+<th>binding_rank_threshold</th>
+<th>perturbation_rank_threshold</th>
+<th>binding_set_size</th>
+<th>perturbation_set_size</th>
+<th>dto_fdr</th>
+<th>dto_empirical_pvalue</th>
+<th>binding_repo_dataset</th>
+<th>perturbation_repo_dataset</th>
+<th>binding_id_id</th>
+<th>binding_id_source</th>
+<th>perturbation_id_id</th>
+<th>perturbation_id_source</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <th>0</th>
-<td>1</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
+<td>BrentLab/harbison_2004;harbison_2004;3</td>
+<td>BrentLab/Hackett_2020;hackett_2020;85</td>
+<td>2.0</td>
+<td>2.0</td>
+<td>3.0</td>
+<td>2.0</td>
+<td>0.000225</td>
+<td>0.004</td>
+<td>harbison_2004-harbison_2004</td>
+<td>Hackett_2020-hackett_2020</td>
+<td>3</td>
+<td>harbison</td>
+<td>85</td>
+<td>BrentLab/Hackett_2020;hackett_2020</td>
 </tr>
 <tr>
 <th>1</th>
-<td>2</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
+<td>BrentLab/harbison_2004;harbison_2004;3</td>
+<td>BrentLab/Hackett_2020;hackett_2020;83</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>harbison_2004-harbison_2004</td>
+<td>Hackett_2020-hackett_2020</td>
+<td>3</td>
+<td>harbison</td>
+<td>83</td>
+<td>BrentLab/Hackett_2020;hackett_2020</td>
 </tr>
 <tr>
 <th>2</th>
+<td>BrentLab/harbison_2004;harbison_2004;3</td>
+<td>BrentLab/Hackett_2020;hackett_2020;84</td>
+<td>2.0</td>
+<td>1.0</td>
+<td>3.0</td>
+<td>1.0</td>
+<td>0.000000</td>
+<td>0.011</td>
+<td>harbison_2004-harbison_2004</td>
+<td>Hackett_2020-hackett_2020</td>
 <td>3</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>3</th>
-<td>4</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>4</th>
-<td>5</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
+<td>harbison</td>
+<td>84</td>
+<td>BrentLab/Hackett_2020;hackett_2020</td>
 </tr>
 </tbody>
 </table>
@@ -3348,30 +3422,8 @@ minimal_data.head()</div>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="5-advanced-queries">5. Advanced Queries<a class="anchor-link" href="#5-advanced-queries">¶</a></h2><p>VirtualDB supports more sophisticated query patterns.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="multiple-filter-conditions">Multiple Filter Conditions<a class="anchor-link" href="#multiple-filter-conditions">¶</a></h3>
-</div>
-</div>
-</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cell-22">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3389,27 +3441,29 @@ minimal_data.head()</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Samples with glucose at 30C</span>
-<span class="n">glucose_30c</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-    <span class="n">filters</span><span class="o">=</span><span class="p">{</span>
-        <span class="s2">"carbon_source"</span><span class="p">:</span> <span class="s2">"glucose"</span><span class="p">,</span>
-        <span class="s2">"temperature_celsius"</span><span class="p">:</span> <span class="mi">30</span>
-    <span class="p">}</span>
-<span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">glucose_30c</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples with glucose at 30C"</span><span class="p">)</span>
-<span class="n">glucose_30c</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Join harbison metadata to dto via the expanded view's parsed columns</span>
+<span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"""</span>
+<span class="s2">    SELECT h.*, d.dto_empirical_pvalue, d.dto_fdr</span>
+<span class="s2">    FROM harbison_meta h</span>
+<span class="s2">    JOIN dto_expanded d</span>
+<span class="s2">        ON CAST(h.sample_id AS VARCHAR) = d.binding_id_id</span>
+<span class="s2">        AND d.binding_id_source = 'harbison'</span>
+<span class="s2">    WHERE d.dto_empirical_pvalue &lt;= 0.01</span>
+<span class="s2">    ORDER BY d.dto_empirical_pvalue</span>
+<span class="s2">    LIMIT 10</span>
+<span class="s2">"""</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-11"># Samples with glucose at 30C
-glucose_30c = vdb.query(
-    filters={
-        "carbon_source": "glucose",
-        "temperature_celsius": 30
-    }
-)
-
-print(f"Found {len(glucose_30c)} samples with glucose at 30C")
-glucose_30c.head()</div>
+<div class="clipboard-copy-txt" id="cell-11"># Join harbison metadata to dto via the expanded view's parsed columns
+vdb.query("""
+    SELECT h.*, d.dto_empirical_pvalue, d.dto_fdr
+    FROM harbison_meta h
+    JOIN dto_expanded d
+        ON CAST(h.sample_id AS VARCHAR) = d.binding_id_id
+        AND d.binding_id_source = 'harbison'
+    WHERE d.dto_empirical_pvalue &lt;= 0.01
+    ORDER BY d.dto_empirical_pvalue
+    LIMIT 10
+""")</div>
 </div>
 </div>
 </div>
@@ -3418,13 +3472,6 @@ glucose_30c.head()</div>
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Found 1791 samples with glucose at 30C
-</pre>
-</div>
-</div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[11]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
@@ -3452,59 +3499,120 @@ glucose_30c.head()</div>
 <th>condition</th>
 <th>carbon_source</th>
 <th>temperature_celsius</th>
-<th>dataset_id</th>
+<th>dto_empirical_pvalue</th>
+<th>dto_fdr</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <th>0</th>
-<td>1</td>
-<td>YSC0017</td>
-<td>MATA1</td>
-<td>YPD</td>
+<td>50</td>
+<td>YDR043C</td>
+<td>NRG1</td>
+<td>H2O2Lo</td>
 <td>glucose</td>
 <td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
+<td>0.0</td>
+<td>0.081863</td>
 </tr>
 <tr>
 <th>1</th>
-<td>2</td>
-<td>YAL051W</td>
-<td>OAF1</td>
+<td>213</td>
+<td>YKL222C</td>
+<td>YKL222C</td>
 <td>YPD</td>
 <td>glucose</td>
 <td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
+<td>0.0</td>
+<td>0.000000</td>
 </tr>
 <tr>
 <th>2</th>
-<td>3</td>
-<td>YBL005W</td>
-<td>PDR3</td>
+<td>18</td>
+<td>YBR083W</td>
+<td>TEC1</td>
 <td>YPD</td>
 <td>glucose</td>
 <td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
+<td>0.0</td>
+<td>0.062067</td>
 </tr>
 <tr>
 <th>3</th>
-<td>4</td>
-<td>YBL008W</td>
-<td>HIR1</td>
-<td>YPD</td>
+<td>7</td>
+<td>YBL103C</td>
+<td>RTG3</td>
+<td>H2O2Hi</td>
 <td>glucose</td>
 <td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
+<td>0.0</td>
+<td>0.157723</td>
 </tr>
 <tr>
 <th>4</th>
-<td>5</td>
-<td>YBL021C</td>
-<td>HAP3</td>
+<td>277</td>
+<td>YNL103W</td>
+<td>MET4</td>
 <td>YPD</td>
 <td>glucose</td>
 <td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
+<td>0.0</td>
+<td>0.016282</td>
+</tr>
+<tr>
+<th>5</th>
+<td>281</td>
+<td>YNL199C</td>
+<td>GCR2</td>
+<td>SM</td>
+<td>unspecified</td>
+<td>30.0</td>
+<td>0.0</td>
+<td>0.029635</td>
+</tr>
+<tr>
+<th>6</th>
+<td>86</td>
+<td>YER040W</td>
+<td>GLN3</td>
+<td>SM</td>
+<td>unspecified</td>
+<td>30.0</td>
+<td>0.0</td>
+<td>0.229889</td>
+</tr>
+<tr>
+<th>7</th>
+<td>225</td>
+<td>YLR176C</td>
+<td>RFX1</td>
+<td>YPD</td>
+<td>glucose</td>
+<td>30.0</td>
+<td>0.0</td>
+<td>0.014456</td>
+</tr>
+<tr>
+<th>8</th>
+<td>86</td>
+<td>YER040W</td>
+<td>GLN3</td>
+<td>SM</td>
+<td>unspecified</td>
+<td>30.0</td>
+<td>0.0</td>
+<td>0.096117</td>
+</tr>
+<tr>
+<th>9</th>
+<td>225</td>
+<td>YLR176C</td>
+<td>RFX1</td>
+<td>YPD</td>
+<td>glucose</td>
+<td>30.0</td>
+<td>0.0</td>
+<td>0.033526</td>
 </tr>
 </tbody>
 </table>
@@ -3514,19 +3622,8 @@ glucose_30c.head()</div>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="numeric-range-queries">Numeric Range Queries<a class="anchor-link" href="#numeric-range-queries">¶</a></h3>
-</div>
-</div>
-</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cell-23">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3544,33 +3641,39 @@ glucose_30c.head()</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Samples at temperature &gt;= 30C</span>
-<span class="n">warm_samples</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-    <span class="n">filters</span><span class="o">=</span><span class="p">{</span><span class="s2">"temperature_celsius"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"&gt;="</span><span class="p">,</span> <span class="mi">30</span><span class="p">)}</span>
-<span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">warm_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples at &gt;= 30C"</span><span class="p">)</span>
-
-<span class="c1"># Samples between 28C and 32C</span>
-<span class="n">moderate_temp</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-    <span class="n">filters</span><span class="o">=</span><span class="p">{</span><span class="s2">"temperature_celsius"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"between"</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">32</span><span class="p">)}</span>
-<span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">moderate_temp</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples between 28-32C"</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Cross-dataset join: harbison binding with hackett perturbation data</span>
+<span class="c1"># via the DTO comparative dataset</span>
+<span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"""</span>
+<span class="s2">    SELECT</span>
+<span class="s2">        h.sample_id        AS harbison_sample_id,</span>
+<span class="s2">        h.regulator_symbol,</span>
+<span class="s2">        d.dto_empirical_pvalue,</span>
+<span class="s2">        d.perturbation_id_id AS hackett_sample_id</span>
+<span class="s2">    FROM harbison_meta h</span>
+<span class="s2">    JOIN dto_expanded d</span>
+<span class="s2">        ON CAST(h.sample_id AS VARCHAR) = d.binding_id_id</span>
+<span class="s2">        AND d.binding_id_source = 'harbison'</span>
+<span class="s2">    WHERE d.dto_empirical_pvalue &lt;= 0.01</span>
+<span class="s2">    ORDER BY d.dto_empirical_pvalue</span>
+<span class="s2">    LIMIT 10</span>
+<span class="s2">"""</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-12"># Samples at temperature &gt;= 30C
-warm_samples = vdb.query(
-    filters={"temperature_celsius": ("&gt;=", 30)}
-)
-
-print(f"Found {len(warm_samples)} samples at &gt;= 30C")
-
-# Samples between 28C and 32C
-moderate_temp = vdb.query(
-    filters={"temperature_celsius": ("between", 28, 32)}
-)
-
-print(f"Found {len(moderate_temp)} samples between 28-32C")</div>
+<div class="clipboard-copy-txt" id="cell-12"># Cross-dataset join: harbison binding with hackett perturbation data
+# via the DTO comparative dataset
+vdb.query("""
+    SELECT
+        h.sample_id        AS harbison_sample_id,
+        h.regulator_symbol,
+        d.dto_empirical_pvalue,
+        d.perturbation_id_id AS hackett_sample_id
+    FROM harbison_meta h
+    JOIN dto_expanded d
+        ON CAST(h.sample_id AS VARCHAR) = d.binding_id_id
+        AND d.binding_id_source = 'harbison'
+    WHERE d.dto_empirical_pvalue &lt;= 0.01
+    ORDER BY d.dto_empirical_pvalue
+    LIMIT 10
+""")</div>
 </div>
 </div>
 </div>
@@ -3579,30 +3682,127 @@ print(f"Found {len(moderate_temp)} samples between 28-32C")</div>
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Found 1833 samples at &gt;= 30C
-Found 1833 samples between 28-32C
-</pre>
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[12]:</div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>harbison_sample_id</th>
+<th>regulator_symbol</th>
+<th>dto_empirical_pvalue</th>
+<th>hackett_sample_id</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>289</td>
+<td>DAL82</td>
+<td>0.0</td>
+<td>1208</td>
+</tr>
+<tr>
+<th>1</th>
+<td>251</td>
+<td>MAC1</td>
+<td>0.0</td>
+<td>1103</td>
+</tr>
+<tr>
+<th>2</th>
+<td>321</td>
+<td>DIG1</td>
+<td>0.0</td>
+<td>1372</td>
+</tr>
+<tr>
+<th>3</th>
+<td>238</td>
+<td>YAP1</td>
+<td>0.0</td>
+<td>996</td>
+</tr>
+<tr>
+<th>4</th>
+<td>303</td>
+<td>CIN5</td>
+<td>0.0</td>
+<td>1365</td>
+</tr>
+<tr>
+<th>5</th>
+<td>245</td>
+<td>ARG81</td>
+<td>0.0</td>
+<td>1023</td>
+</tr>
+<tr>
+<th>6</th>
+<td>184</td>
+<td>CBF1</td>
+<td>0.0</td>
+<td>754</td>
+</tr>
+<tr>
+<th>7</th>
+<td>252</td>
+<td>MAC1</td>
+<td>0.0</td>
+<td>1103</td>
+</tr>
+<tr>
+<th>8</th>
+<td>200</td>
+<td>PHD1</td>
+<td>0.0</td>
+<td>890</td>
+</tr>
+<tr>
+<th>9</th>
+<td>251</td>
+<td>MAC1</td>
+<td>0.0</td>
+<td>1110</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-24">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="factor-alias-expansion">Factor Alias Expansion<a class="anchor-link" href="#factor-alias-expansion">¶</a></h3><p>When you query for a normalized value, VirtualDB automatically expands to all original aliases.</p>
+<h2 id="a-realistic-example">A realistic example<a class="anchor-link" href="#a-realistic-example">¶</a></h2><p>Hackett has multiple experimental conditions that are unique to that dataset. There are
+some regulators which have replicates within those conditions. We need to find those
+regulators and design a query which returns only 1 sample per condition set.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f03e942a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3620,15 +3820,25 @@ Found 1833 samples between 28-32C
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Query for "galactose" matches "D-galactose", "gal", and "galactose"</span>
-<span class="n">galactose_samples</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="p">{</span><span class="s2">"carbon_source"</span><span class="p">:</span> <span class="s2">"galactose"</span><span class="p">})</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="n">galactose_samples</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Query hackett to find regulators with multiple samples in the same (time, mechanism)</span>
+<span class="c1"># condition</span>
+<span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"""</span>
+<span class="s2">    SELECT regulator_symbol, time, mechanism, restriction, COUNT(*) AS n</span>
+<span class="s2">    FROM hackett_meta</span>
+<span class="s2">    GROUP BY regulator_symbol, time, mechanism, restriction</span>
+<span class="s2">    HAVING n &gt; 1</span>
+<span class="s2">    ORDER BY n DESC</span>
+<span class="s2">"""</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-13"># Query for "galactose" matches "D-galactose", "gal", and "galactose"
-galactose_samples = vdb.query(filters={"carbon_source": "galactose"})
-
-print(galactose_samples)</div>
+<div class="clipboard-copy-txt" id="cell-13"># Query hackett to find regulators with multiple samples in the same (time, mechanism)
+# condition
+vdb.query("""
+    SELECT regulator_symbol, time, mechanism, restriction, COUNT(*) AS n
+    FROM hackett_meta
+    GROUP BY regulator_symbol, time, mechanism, restriction
+    HAVING n &gt; 1
+    ORDER BY n DESC
+""")</div>
 </div>
 </div>
 </div>
@@ -3637,40 +3847,325 @@ print(galactose_samples)</div>
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>   sample_id regulator_locus_tag regulator_symbol condition carbon_source  \
-0         68             YDR277C             MTH1       GAL     galactose   
-1        112             YGL035C             MIG1       GAL     galactose   
-2        197             YKL038W             RGT1       GAL     galactose   
-3        335             YPL248C             GAL4       GAL     galactose   
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[13]:</div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
 
-   temperature_celsius                            dataset_id  
-0                 30.0  BrentLab/harbison_2004/harbison_2004  
-1                 30.0  BrentLab/harbison_2004/harbison_2004  
-2                 30.0  BrentLab/harbison_2004/harbison_2004  
-3                 30.0  BrentLab/harbison_2004/harbison_2004  
-</pre>
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>regulator_symbol</th>
+<th>time</th>
+<th>mechanism</th>
+<th>restriction</th>
+<th>n</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>SWI1</td>
+<td>15.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>3</td>
+</tr>
+<tr>
+<th>1</th>
+<td>SWI1</td>
+<td>30.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>3</td>
+</tr>
+<tr>
+<th>2</th>
+<td>SWI1</td>
+<td>45.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>3</td>
+</tr>
+<tr>
+<th>3</th>
+<td>SWI1</td>
+<td>5.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>3</td>
+</tr>
+<tr>
+<th>4</th>
+<td>SWI1</td>
+<td>0.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>3</td>
+</tr>
+<tr>
+<th>5</th>
+<td>SWI1</td>
+<td>90.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>3</td>
+</tr>
+<tr>
+<th>6</th>
+<td>SWI1</td>
+<td>10.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>3</td>
+</tr>
+<tr>
+<th>7</th>
+<td>SWI1</td>
+<td>20.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>3</td>
+</tr>
+<tr>
+<th>8</th>
+<td>GCN4</td>
+<td>0.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>9</th>
+<td>GCN4</td>
+<td>30.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>10</th>
+<td>MAC1</td>
+<td>0.0</td>
+<td>GEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>11</th>
+<td>RDS2</td>
+<td>5.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>12</th>
+<td>RDS2</td>
+<td>45.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>13</th>
+<td>Z3EV</td>
+<td>30.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>14</th>
+<td>GCN4</td>
+<td>90.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>15</th>
+<td>Z3EV</td>
+<td>15.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>16</th>
+<td>GCN4</td>
+<td>45.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>17</th>
+<td>MAC1</td>
+<td>5.0</td>
+<td>GEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>18</th>
+<td>MAC1</td>
+<td>90.0</td>
+<td>GEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>19</th>
+<td>Z3EV</td>
+<td>45.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>20</th>
+<td>RDS2</td>
+<td>10.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>21</th>
+<td>GCN4</td>
+<td>15.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>22</th>
+<td>RDS2</td>
+<td>90.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>23</th>
+<td>RDS2</td>
+<td>0.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>24</th>
+<td>Z3EV</td>
+<td>5.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>25</th>
+<td>Z3EV</td>
+<td>90.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>26</th>
+<td>Z3EV</td>
+<td>20.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>27</th>
+<td>RDS2</td>
+<td>30.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>28</th>
+<td>Z3EV</td>
+<td>0.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>29</th>
+<td>RDS2</td>
+<td>15.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>30</th>
+<td>Z3EV</td>
+<td>10.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>31</th>
+<td>RDS2</td>
+<td>20.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>32</th>
+<td>MAC1</td>
+<td>45.0</td>
+<td>GEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>33</th>
+<td>MAC1</td>
+<td>15.0</td>
+<td>GEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>34</th>
+<td>MAC1</td>
+<td>30.0</td>
+<td>GEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="complete-data-retrieval">Complete Data Retrieval<a class="anchor-link" href="#complete-data-retrieval">¶</a></h3><p>By default, <code>query()</code> returns sample-level metadata (one row per sample).
-Set <code>complete=True</code> to get all measurements (many rows per sample).</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4d869036">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3688,29 +4183,23 @@ Set <code>complete=True</code> to get all measurements (many rows per sample).</
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Get complete data with measurements</span>
-<span class="n">complete_data</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-    <span class="n">filters</span><span class="o">=</span><span class="p">{</span><span class="s2">"carbon_source"</span><span class="p">:</span> <span class="s2">"glucose"</span><span class="p">},</span>
-    <span class="n">datasets</span><span class="o">=</span><span class="p">[(</span><span class="s2">"BrentLab/harbison_2004"</span><span class="p">,</span> <span class="s2">"harbison_2004"</span><span class="p">)],</span>
-    <span class="n">complete</span><span class="o">=</span><span class="kc">True</span>
-<span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Complete data: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">complete_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> rows"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Columns: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">complete_data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">First few measurements:"</span><span class="p">)</span>
-<span class="n">complete_data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># SWI1 has 3 samples at time=20, mechanism=ZEV. Let's look at just those samples</span>
+<span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"""</span>
+<span class="s2">    SELECT *</span>
+<span class="s2">    FROM hackett_meta</span>
+<span class="s2">    WHERE regulator_symbol = 'SWI1'</span>
+<span class="s2">      AND time = 20</span>
+<span class="s2">      AND mechanism = 'ZEV'</span>
+<span class="s2">"""</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-14"># Get complete data with measurements
-complete_data = vdb.query(
-    filters={"carbon_source": "glucose"},
-    datasets=[("BrentLab/harbison_2004", "harbison_2004")],
-    complete=True
-)
-
-print(f"Complete data: {len(complete_data)} rows")
-print(f"Columns: {list(complete_data.columns)}")
-print("\nFirst few measurements:")
-complete_data.head()</div>
+<div class="clipboard-copy-txt" id="cell-14"># SWI1 has 3 samples at time=20, mechanism=ZEV. Let's look at just those samples
+vdb.query("""
+    SELECT *
+    FROM hackett_meta
+    WHERE regulator_symbol = 'SWI1'
+      AND time = 20
+      AND mechanism = 'ZEV'
+""")</div>
 </div>
 </div>
 </div>
@@ -3719,16 +4208,6 @@ complete_data.head()</div>
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Complete data: 1930060 rows
-Columns: ['sample_id', 'db_id', 'target_locus_tag', 'target_symbol', 'effect', 'pvalue', 'regulator_locus_tag', 'regulator_symbol', 'condition', 'carbon_source', 'temperature_celsius', 'dataset_id']
-
-First few measurements:
-</pre>
-</div>
-</div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
 <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[14]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
@@ -3751,94 +4230,56 @@ First few measurements:
 <tr style="text-align: right;">
 <th></th>
 <th>sample_id</th>
-<th>db_id</th>
-<th>target_locus_tag</th>
-<th>target_symbol</th>
-<th>effect</th>
-<th>pvalue</th>
 <th>regulator_locus_tag</th>
 <th>regulator_symbol</th>
-<th>condition</th>
+<th>time</th>
+<th>mechanism</th>
+<th>restriction</th>
+<th>date</th>
+<th>strain</th>
 <th>carbon_source</th>
 <th>temperature_celsius</th>
-<th>dataset_id</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <th>0</th>
-<td>1</td>
-<td>0.0</td>
-<td>YAL001C</td>
-<td>TFC3</td>
-<td>1.697754</td>
-<td>0.068705</td>
-<td>YSC0017</td>
-<td>MATA1</td>
-<td>YPD</td>
+<td>1620</td>
+<td>YPL016W</td>
+<td>SWI1</td>
+<td>20.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>20161117</td>
+<td>SMY2266a</td>
 <td>glucose</td>
 <td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
 </tr>
 <tr>
 <th>1</th>
-<td>1</td>
-<td>0.0</td>
-<td>YAL002W</td>
-<td>VPS8</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>YSC0017</td>
-<td>MATA1</td>
-<td>YPD</td>
+<td>1628</td>
+<td>YPL016W</td>
+<td>SWI1</td>
+<td>20.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>20161117</td>
+<td>SMY2266b</td>
 <td>glucose</td>
 <td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
 </tr>
 <tr>
 <th>2</th>
-<td>1</td>
-<td>0.0</td>
-<td>YAL003W</td>
-<td>EFB1</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>YSC0017</td>
-<td>MATA1</td>
-<td>YPD</td>
+<td>1636</td>
+<td>YPL016W</td>
+<td>SWI1</td>
+<td>20.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>20161117</td>
+<td>SMY2266c</td>
 <td>glucose</td>
 <td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>3</th>
-<td>1</td>
-<td>0.0</td>
-<td>YAL004W</td>
-<td>YAL004W</td>
-<td>0.745342</td>
-<td>0.835929</td>
-<td>YSC0017</td>
-<td>MATA1</td>
-<td>YPD</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>4</th>
-<td>1</td>
-<td>0.0</td>
-<td>YAL005C</td>
-<td>SSA1</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>YSC0017</td>
-<td>MATA1</td>
-<td>YPD</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
 </tr>
 </tbody>
 </table>
@@ -3849,7 +4290,7 @@ First few measurements:
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=89408d2b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3867,29 +4308,29 @@ First few measurements:
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># You can combine complete=True with field selection</span>
-<span class="c1"># Get just the binding data columns</span>
-<span class="n">binding_data</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-    <span class="n">filters</span><span class="o">=</span><span class="p">{</span><span class="s2">"carbon_source"</span><span class="p">:</span> <span class="s2">"glucose"</span><span class="p">},</span>
-    <span class="n">datasets</span><span class="o">=</span><span class="p">[(</span><span class="s2">"BrentLab/harbison_2004"</span><span class="p">,</span> <span class="s2">"harbison_2004"</span><span class="p">)],</span>
-    <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"sample_id"</span><span class="p">,</span> <span class="s2">"regulator_symbol"</span><span class="p">,</span> <span class="s2">"target_symbol"</span><span class="p">,</span> <span class="s2">"effect"</span><span class="p">,</span> <span class="s2">"pvalue"</span><span class="p">],</span>
-    <span class="n">complete</span><span class="o">=</span><span class="kc">True</span>
-<span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Binding data: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">binding_data</span><span class="p">)</span><span class="si">}</span><span class="s2"> measurements"</span><span class="p">)</span>
-<span class="n">binding_data</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># In this case, there are three strains with otherwise the same experimental conditions.</span>
+<span class="c1"># Rather than trying to choose among these right now, we might just want to get a</span>
+<span class="c1"># unique list of the regulators with replicates in order to exclude them from an</span>
+<span class="c1"># analysis that doesn't expect replicates.</span>
+<span class="n">replicated_hackett_regulators</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"""</span>
+<span class="s2">    SELECT DISTINCT regulator_symbol</span>
+<span class="s2">    FROM hackett_meta</span>
+<span class="s2">    GROUP BY regulator_symbol, time, mechanism, restriction</span>
+<span class="s2">    HAVING COUNT(*) &gt; 1</span>
+<span class="s2">"""</span><span class="p">)</span><span class="o">.</span><span class="n">regulator_symbol</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">replicated_hackett_regulators</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-15"># You can combine complete=True with field selection
-# Get just the binding data columns
-binding_data = vdb.query(
-    filters={"carbon_source": "glucose"},
-    datasets=[("BrentLab/harbison_2004", "harbison_2004")],
-    fields=["sample_id", "regulator_symbol", "target_symbol", "effect", "pvalue"],
-    complete=True
-)
-
-print(f"Binding data: {len(binding_data)} measurements")
-binding_data.head(10)</div>
+<div class="clipboard-copy-txt" id="cell-15"># In this case, there are three strains with otherwise the same experimental conditions.
+# Rather than trying to choose among these right now, we might just want to get a
+# unique list of the regulators with replicates in order to exclude them from an
+# analysis that doesn't expect replicates.
+replicated_hackett_regulators = vdb.query("""
+    SELECT DISTINCT regulator_symbol
+    FROM hackett_meta
+    GROUP BY regulator_symbol, time, mechanism, restriction
+    HAVING COUNT(*) &gt; 1
+""").regulator_symbol.tolist()
+print(replicated_hackett_regulators)</div>
 </div>
 </div>
 </div>
@@ -3901,152 +4342,15 @@ binding_data.head(10)</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Binding data: 1930060 measurements
+<pre>['GCN4', 'MAC1', 'SWI1', 'Z3EV', 'RDS2']
 </pre>
 </div>
 </div>
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[15]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>sample_id</th>
-<th>regulator_symbol</th>
-<th>target_symbol</th>
-<th>effect</th>
-<th>pvalue</th>
-<th>dataset_id</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>0</th>
-<td>2</td>
-<td>OAF1</td>
-<td>TFC3</td>
-<td>1.589564</td>
-<td>0.088986</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>1</th>
-<td>2</td>
-<td>OAF1</td>
-<td>VPS8</td>
-<td>1.141321</td>
-<td>0.324805</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>2</th>
-<td>2</td>
-<td>OAF1</td>
-<td>EFB1</td>
-<td>0.729120</td>
-<td>0.878824</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>3</th>
-<td>2</td>
-<td>OAF1</td>
-<td>YAL004W</td>
-<td>1.167904</td>
-<td>0.282253</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>4</th>
-<td>2</td>
-<td>OAF1</td>
-<td>SSA1</td>
-<td>0.729120</td>
-<td>0.878824</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>5</th>
-<td>2</td>
-<td>OAF1</td>
-<td>ERP2</td>
-<td>1.050827</td>
-<td>0.430707</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>6</th>
-<td>2</td>
-<td>OAF1</td>
-<td>FUN14</td>
-<td>1.347876</td>
-<td>0.155511</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>7</th>
-<td>2</td>
-<td>OAF1</td>
-<td>SPO7</td>
-<td>0.939673</td>
-<td>0.578234</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>8</th>
-<td>2</td>
-<td>OAF1</td>
-<td>MDM10</td>
-<td>0.939673</td>
-<td>0.578234</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>9</th>
-<td>2</td>
-<td>OAF1</td>
-<td>SWC3</td>
-<td>0.865667</td>
-<td>0.671119</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="example-analysis">Example analysis<a class="anchor-link" href="#example-analysis">¶</a></h2><p>The following is an example of using VirtualDB to extract and summarize data across
-datasets.</p>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=5a3b802b">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4064,29 +4368,13 @@ datasets.</p>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Compare number of samples by carbon source across datasets</span>
-
-<span class="c1"># Get all samples</span>
-<span class="n">all_samples</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">()</span>
-
-<span class="c1"># Count by dataset and carbon source</span>
-<span class="n">summary</span> <span class="o">=</span> <span class="n">all_samples</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="s1">'dataset_id'</span><span class="p">,</span> <span class="s1">'carbon_source'</span><span class="p">])</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
-<span class="n">summary</span> <span class="o">=</span> <span class="n">summary</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">'num_samples'</span><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Sample counts by dataset and carbon source:"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">summary</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># GEV is another "regulator" we want to exclude</span>
+<span class="n">replicated_hackett_regulators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"GEV"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">replicated_hackett_regulators</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-16"># Compare number of samples by carbon source across datasets
-
-# Get all samples
-all_samples = vdb.query()
-
-# Count by dataset and carbon source
-summary = all_samples.groupby(['dataset_id', 'carbon_source']).size()
-summary = summary.reset_index(name='num_samples')
-
-print("Sample counts by dataset and carbon source:")
-print(summary.to_string(index=False))</div>
+<div class="clipboard-copy-txt" id="cell-16"># GEV is another "regulator" we want to exclude
+replicated_hackett_regulators.append("GEV")
+print(replicated_hackett_regulators)</div>
 </div>
 </div>
 </div>
@@ -4098,13 +4386,7 @@ print(summary.to_string(index=False))</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Sample counts by dataset and carbon source:
-                          dataset_id carbon_source  num_samples
-BrentLab/harbison_2004/harbison_2004     galactose            4
-BrentLab/harbison_2004/harbison_2004       glucose          310
-BrentLab/harbison_2004/harbison_2004     raffinose            1
-BrentLab/harbison_2004/harbison_2004   unspecified           37
-BrentLab/kemmeren_2014/kemmeren_2014       glucose         1487
+<pre>['GCN4', 'MAC1', 'SWI1', 'Z3EV', 'RDS2', 'GEV']
 </pre>
 </div>
 </div>
@@ -4112,12 +4394,12 @@ BrentLab/kemmeren_2014/kemmeren_2014       glucose         1487
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=abed8bc2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-17">
@@ -4130,33 +4412,9 @@ BrentLab/kemmeren_2014/kemmeren_2014       glucose         1487
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Compare glucose experiments at different temperatures</span>
-
-<span class="n">glucose_by_temp</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-    <span class="n">filters</span><span class="o">=</span><span class="p">{</span><span class="s2">"carbon_source"</span><span class="p">:</span> <span class="s2">"glucose"</span><span class="p">},</span>
-    <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"sample_id"</span><span class="p">,</span> <span class="s2">"temperature_celsius"</span><span class="p">,</span> <span class="s2">"environmental_condition"</span><span class="p">]</span>
-<span class="p">)</span>
-
-<span class="c1"># Count samples by temperature</span>
-<span class="n">temp_counts</span> <span class="o">=</span> <span class="n">glucose_by_temp</span><span class="p">[</span><span class="s1">'temperature_celsius'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Glucose samples by temperature:"</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">temp</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">temp_counts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">temp</span><span class="si">}</span><span class="s2">C: </span><span class="si">{</span><span class="n">count</span><span class="si">}</span><span class="s2"> samples"</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"SELECT * FROM dto_expanded"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-17"># Compare glucose experiments at different temperatures
-
-glucose_by_temp = vdb.query(
-    filters={"carbon_source": "glucose"},
-    fields=["sample_id", "temperature_celsius", "environmental_condition"]
-)
-
-# Count samples by temperature
-temp_counts = glucose_by_temp['temperature_celsius'].value_counts().sort_index()
-
-print("Glucose samples by temperature:")
-for temp, count in temp_counts.items():
-    print(f"  {temp}C: {count} samples")</div>
+<div class="clipboard-copy-txt" id="cell-17">vdb.query("SELECT * FROM dto_expanded")</div>
 </div>
 </div>
 </div>
@@ -4165,24 +4423,247 @@ for temp, count in temp_counts.items():
 <div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Glucose samples by temperature:
-  30.0C: 1791 samples
-</pre>
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[19]:</div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>binding_id</th>
+<th>perturbation_id</th>
+<th>binding_rank_threshold</th>
+<th>perturbation_rank_threshold</th>
+<th>binding_set_size</th>
+<th>perturbation_set_size</th>
+<th>dto_fdr</th>
+<th>dto_empirical_pvalue</th>
+<th>binding_repo_dataset</th>
+<th>perturbation_repo_dataset</th>
+<th>binding_id_id</th>
+<th>binding_id_source</th>
+<th>perturbation_id_id</th>
+<th>perturbation_id_source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>BrentLab/harbison_2004;harbison_2004;3</td>
+<td>BrentLab/Hackett_2020;hackett_2020;85</td>
+<td>2.0</td>
+<td>2.0</td>
+<td>3.0</td>
+<td>2.0</td>
+<td>0.000225</td>
+<td>0.004</td>
+<td>harbison_2004-harbison_2004</td>
+<td>Hackett_2020-hackett_2020</td>
+<td>3</td>
+<td>harbison</td>
+<td>85</td>
+<td>BrentLab/Hackett_2020;hackett_2020</td>
+</tr>
+<tr>
+<th>1</th>
+<td>BrentLab/harbison_2004;harbison_2004;3</td>
+<td>BrentLab/Hackett_2020;hackett_2020;83</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>harbison_2004-harbison_2004</td>
+<td>Hackett_2020-hackett_2020</td>
+<td>3</td>
+<td>harbison</td>
+<td>83</td>
+<td>BrentLab/Hackett_2020;hackett_2020</td>
+</tr>
+<tr>
+<th>2</th>
+<td>BrentLab/harbison_2004;harbison_2004;3</td>
+<td>BrentLab/Hackett_2020;hackett_2020;84</td>
+<td>2.0</td>
+<td>1.0</td>
+<td>3.0</td>
+<td>1.0</td>
+<td>0.000000</td>
+<td>0.011</td>
+<td>harbison_2004-harbison_2004</td>
+<td>Hackett_2020-hackett_2020</td>
+<td>3</td>
+<td>harbison</td>
+<td>84</td>
+<td>BrentLab/Hackett_2020;hackett_2020</td>
+</tr>
+<tr>
+<th>3</th>
+<td>BrentLab/harbison_2004;harbison_2004;4</td>
+<td>BrentLab/Hackett_2020;hackett_2020;78</td>
+<td>487.0</td>
+<td>96.0</td>
+<td>479.0</td>
+<td>92.0</td>
+<td>0.412192</td>
+<td>0.576</td>
+<td>harbison_2004-harbison_2004</td>
+<td>Hackett_2020-hackett_2020</td>
+<td>4</td>
+<td>harbison</td>
+<td>78</td>
+<td>BrentLab/Hackett_2020;hackett_2020</td>
+</tr>
+<tr>
+<th>4</th>
+<td>BrentLab/harbison_2004;harbison_2004;3</td>
+<td>BrentLab/Hackett_2020;hackett_2020;81</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>NaN</td>
+<td>harbison_2004-harbison_2004</td>
+<td>Hackett_2020-hackett_2020</td>
+<td>3</td>
+<td>harbison</td>
+<td>81</td>
+<td>BrentLab/Hackett_2020;hackett_2020</td>
+</tr>
+<tr>
+<th>...</th>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+<tr>
+<th>9599</th>
+<td>BrentLab/callingcards;annotated_features;804</td>
+<td>BrentLab/kemmeren_2014;kemmeren_2014;901</td>
+<td>14.0</td>
+<td>39.0</td>
+<td>13.0</td>
+<td>39.0</td>
+<td>0.000879</td>
+<td>0.000</td>
+<td>callingcards-annotated_features</td>
+<td>kemmeren_2014-kemmeren_2014</td>
+<td>804</td>
+<td>BrentLab/callingcards;annotated_features</td>
+<td>901</td>
+<td>kemmeren</td>
+</tr>
+<tr>
+<th>9600</th>
+<td>BrentLab/callingcards;annotated_features;805</td>
+<td>BrentLab/kemmeren_2014;kemmeren_2014;1053</td>
+<td>18.0</td>
+<td>278.0</td>
+<td>17.0</td>
+<td>171.0</td>
+<td>0.001455</td>
+<td>0.000</td>
+<td>callingcards-annotated_features</td>
+<td>kemmeren_2014-kemmeren_2014</td>
+<td>805</td>
+<td>BrentLab/callingcards;annotated_features</td>
+<td>1053</td>
+<td>kemmeren</td>
+</tr>
+<tr>
+<th>9601</th>
+<td>BrentLab/callingcards;annotated_features;808</td>
+<td>BrentLab/kemmeren_2014;kemmeren_2014;218</td>
+<td>20.0</td>
+<td>57.0</td>
+<td>19.0</td>
+<td>27.0</td>
+<td>0.003116</td>
+<td>0.000</td>
+<td>callingcards-annotated_features</td>
+<td>kemmeren_2014-kemmeren_2014</td>
+<td>808</td>
+<td>BrentLab/callingcards;annotated_features</td>
+<td>218</td>
+<td>kemmeren</td>
+</tr>
+<tr>
+<th>9602</th>
+<td>BrentLab/callingcards;annotated_features;806</td>
+<td>BrentLab/kemmeren_2014;kemmeren_2014;1023</td>
+<td>10.0</td>
+<td>9.0</td>
+<td>11.0</td>
+<td>9.0</td>
+<td>0.000000</td>
+<td>0.000</td>
+<td>callingcards-annotated_features</td>
+<td>kemmeren_2014-kemmeren_2014</td>
+<td>806</td>
+<td>BrentLab/callingcards;annotated_features</td>
+<td>1023</td>
+<td>kemmeren</td>
+</tr>
+<tr>
+<th>9603</th>
+<td>BrentLab/callingcards;annotated_features;809</td>
+<td>BrentLab/kemmeren_2014;kemmeren_2014;913</td>
+<td>150.0</td>
+<td>221.0</td>
+<td>140.0</td>
+<td>206.0</td>
+<td>0.116890</td>
+<td>0.000</td>
+<td>callingcards-annotated_features</td>
+<td>kemmeren_2014-kemmeren_2014</td>
+<td>809</td>
+<td>BrentLab/callingcards;annotated_features</td>
+<td>913</td>
+<td>kemmeren</td>
+</tr>
+</tbody>
+</table>
+<p>9604 rows × 14 columns</p>
+</div>
 </div>
 </div>
 </div>
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cell-25">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-18">
@@ -4195,51 +4676,45 @@ for temp, count in temp_counts.items():
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Get binding data for a specific regulator across datasets</span>
-
-<span class="c1"># Query for FHL1 binding in glucose conditions</span>
-<span class="n">fhl1_binding</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-    <span class="n">filters</span><span class="o">=</span><span class="p">{</span>
-        <span class="s2">"carbon_source"</span><span class="p">:</span> <span class="s2">"glucose"</span><span class="p">,</span>
-        <span class="s2">"regulator_symbol"</span><span class="p">:</span> <span class="s2">"FHL1"</span>
-    <span class="p">},</span>
-    <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"sample_id"</span><span class="p">,</span> <span class="s2">"regulator_symbol"</span><span class="p">,</span> <span class="s2">"target_symbol"</span><span class="p">,</span> <span class="s2">"effect"</span><span class="p">,</span> <span class="s2">"pvalue"</span><span class="p">],</span>
-    <span class="n">complete</span><span class="o">=</span><span class="kc">True</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># We can remove those regulators from our query using a parameterized query</span>
+<span class="n">hackett_harbison_dto</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"""</span>
+<span class="s2">SELECT h.sample_id, h.regulator_symbol, h.time, h.mechanism,</span>
+<span class="s2">       dto.*</span>
+<span class="s2">FROM hackett_meta h</span>
+<span class="s2">LEFT JOIN (</span>
+<span class="s2">    SELECT *</span>
+<span class="s2">    FROM dto_expanded</span>
+<span class="s2">) AS dto</span>
+<span class="s2">ON CAST(h.sample_id AS VARCHAR) = dto.perturbation_id_id</span>
+<span class="s2">WHERE h.regulator_symbol NOT IN $replicated_hacket_regulators</span>
+<span class="s2">    AND h.mechanism = 'ZEV'</span>
+<span class="s2">    AND h.restriction = 'P'</span>
+<span class="s2">    AND h.time = 15</span>
+<span class="s2">ORDER BY h.regulator_symbol, h.time, h.mechanism</span>
+<span class="s2">"""</span><span class="p">,</span>
+    <span class="n">replicated_hacket_regulators</span><span class="o">=</span><span class="n">replicated_hackett_regulators</span>
 <span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">fhl1_binding</span><span class="p">)</span><span class="si">}</span><span class="s2"> FHL1 binding measurements in glucose"</span><span class="p">)</span>
-
-<span class="c1"># Find significant targets (p &lt; 0.001)</span>
-<span class="n">significant</span> <span class="o">=</span> <span class="n">fhl1_binding</span><span class="p">[</span><span class="n">fhl1_binding</span><span class="p">[</span><span class="s1">'pvalue'</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">0.001</span><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Significant targets: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">significant</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-<span class="c1"># Top 10 by effect size</span>
-<span class="n">top_targets</span> <span class="o">=</span> <span class="n">significant</span><span class="o">.</span><span class="n">nlargest</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="s1">'effect'</span><span class="p">)[[</span><span class="s1">'target_symbol'</span><span class="p">,</span> <span class="s1">'effect'</span><span class="p">,</span> <span class="s1">'pvalue'</span><span class="p">]]</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Top 10 targets by effect size:"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">top_targets</span><span class="o">.</span><span class="n">to_string</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">hackett_harbison_dto</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-18"># Get binding data for a specific regulator across datasets
-
-# Query for FHL1 binding in glucose conditions
-fhl1_binding = vdb.query(
-    filters={
-        "carbon_source": "glucose",
-        "regulator_symbol": "FHL1"
-    },
-    fields=["sample_id", "regulator_symbol", "target_symbol", "effect", "pvalue"],
-    complete=True
+<div class="clipboard-copy-txt" id="cell-18"># We can remove those regulators from our query using a parameterized query
+hackett_harbison_dto = vdb.query("""
+SELECT h.sample_id, h.regulator_symbol, h.time, h.mechanism,
+       dto.*
+FROM hackett_meta h
+LEFT JOIN (
+    SELECT *
+    FROM dto_expanded
+) AS dto
+ON CAST(h.sample_id AS VARCHAR) = dto.perturbation_id_id
+WHERE h.regulator_symbol NOT IN $replicated_hacket_regulators
+    AND h.mechanism = 'ZEV'
+    AND h.restriction = 'P'
+    AND h.time = 15
+ORDER BY h.regulator_symbol, h.time, h.mechanism
+""",
+    replicated_hacket_regulators=replicated_hackett_regulators
 )
-
-print(f"Found {len(fhl1_binding)} FHL1 binding measurements in glucose")
-
-# Find significant targets (p &lt; 0.001)
-significant = fhl1_binding[fhl1_binding['pvalue'] &lt; 0.001]
-print(f"Significant targets: {len(significant)}")
-
-# Top 10 by effect size
-top_targets = significant.nlargest(10, 'effect')[['target_symbol', 'effect', 'pvalue']]
-print("\nTop 10 targets by effect size:")
-print(top_targets.to_string(index=False))</div>
+print(hackett_harbison_dto.head())</div>
 </div>
 </div>
 </div>
@@ -4251,45 +4726,74 @@ print(top_targets.to_string(index=False))</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Found 18678 FHL1 binding measurements in glucose
-Significant targets: 379
+<pre>   sample_id regulator_symbol  time mechanism  \
+0        448             ACA1  15.0       ZEV   
+1        448             ACA1  15.0       ZEV   
+2        448             ACA1  15.0       ZEV   
+3        448             ACA1  15.0       ZEV   
+4        448             ACA1  15.0       ZEV   
 
-Top 10 targets by effect size:
-target_symbol    effect       pvalue
-         RPS5 24.145013 9.739702e-09
-       RPL11A 20.585725 1.232356e-08
-         PRE2 20.585725 1.232356e-08
-         SRF1 20.342898 1.226799e-08
-         SLX8 20.057080 1.513076e-08
-       RPL23B 20.057080 1.513076e-08
-       RPL40A 19.262139 1.761808e-08
-         MLP2 19.262139 1.761808e-08
-        RPS6A 18.704379 1.544172e-08
-       RPL22A 17.926705 1.560357e-08
+                                     binding_id  \
+0  BrentLab/callingcards;annotated_features;803   
+1  BrentLab/callingcards;annotated_features;156   
+2  BrentLab/callingcards;annotated_features;126   
+3  BrentLab/callingcards;annotated_features;189   
+4  BrentLab/callingcards;annotated_features;146   
+
+                          perturbation_id  binding_rank_threshold  \
+0  BrentLab/Hackett_2020;hackett_2020;448                   112.0   
+1  BrentLab/Hackett_2020;hackett_2020;448                    31.0   
+2  BrentLab/Hackett_2020;hackett_2020;448                    21.0   
+3  BrentLab/Hackett_2020;hackett_2020;448                   164.0   
+4  BrentLab/Hackett_2020;hackett_2020;448                    23.0   
+
+   perturbation_rank_threshold  binding_set_size  perturbation_set_size  \
+0                         98.0             108.0                   90.0   
+1                         98.0              26.0                   90.0   
+2                         98.0              17.0                   90.0   
+3                        154.0             150.0                  144.0   
+4                         98.0              18.0                   90.0   
+
+    dto_fdr  dto_empirical_pvalue             binding_repo_dataset  \
+0  0.187319                 0.074  callingcards-annotated_features   
+1  0.072561                 0.047  callingcards-annotated_features   
+2  0.061941                 0.071  callingcards-annotated_features   
+3  0.213716                 0.011  callingcards-annotated_features   
+4  0.066616                 0.171  callingcards-annotated_features   
+
+   perturbation_repo_dataset binding_id_id  \
+0  Hackett_2020-hackett_2020           803   
+1  Hackett_2020-hackett_2020           156   
+2  Hackett_2020-hackett_2020           126   
+3  Hackett_2020-hackett_2020           189   
+4  Hackett_2020-hackett_2020           146   
+
+                          binding_id_source perturbation_id_id  \
+0  BrentLab/callingcards;annotated_features                448   
+1  BrentLab/callingcards;annotated_features                448   
+2  BrentLab/callingcards;annotated_features                448   
+3  BrentLab/callingcards;annotated_features                448   
+4  BrentLab/callingcards;annotated_features                448   
+
+               perturbation_id_source  
+0  BrentLab/Hackett_2020;hackett_2020  
+1  BrentLab/Hackett_2020;hackett_2020  
+2  BrentLab/Hackett_2020;hackett_2020  
+3  BrentLab/Hackett_2020;hackett_2020  
+4  BrentLab/Hackett_2020;hackett_2020  
 </pre>
 </div>
 </div>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="querying-comparative-datasets">Querying Comparative Datasets<a class="anchor-link" href="#querying-comparative-datasets">¶</a></h2><p>Comparative datasets like DTO (Direct Target Overlap) contain analysis results that relate samples across multiple datasets. These datasets can be queried directly to find significant cross-dataset relationships.</p>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=cell-26">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [24]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-19">
@@ -4302,502 +4806,11 @@ target_symbol    effect       pvalue
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Query harbison_2004 binding data enriched with DTO metrics</span>
-<span class="c1"># This demonstrates field-based joins: requesting dto_fdr field</span>
-<span class="c1"># while querying the primary binding dataset</span>
-
-<span class="n">binding_with_dto</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-    <span class="n">datasets</span><span class="o">=</span><span class="p">[(</span><span class="s2">"BrentLab/harbison_2004"</span><span class="p">,</span> <span class="s2">"harbison_2004"</span><span class="p">)],</span>
-    <span class="n">filters</span><span class="o">=</span><span class="p">{</span><span class="s2">"regulator_symbol"</span><span class="p">:</span> <span class="s2">"FHL1"</span><span class="p">},</span>
-    <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"sample_id"</span><span class="p">,</span> <span class="s2">"regulator_symbol"</span><span class="p">,</span> <span class="s2">"condition"</span><span class="p">,</span> <span class="s2">"dto_fdr"</span><span class="p">,</span> <span class="s2">"binding_id"</span><span class="p">,</span> <span class="s2">"perturbation_id"</span><span class="p">],</span>
-<span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">binding_with_dto</span><span class="p">)</span><span class="si">}</span><span class="s2"> FHL1 binding measurements"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Columns: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">binding_with_dto</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Rows with DTO data: </span><span class="si">{</span><span class="n">binding_with_dto</span><span class="p">[</span><span class="s1">'dto_fdr'</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="se">\n</span><span class="s2">First few results:"</span><span class="p">)</span>
-<span class="n">binding_with_dto</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Clean up temp file</span>
+<span class="n">temp_config</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-19"># Query harbison_2004 binding data enriched with DTO metrics
-# This demonstrates field-based joins: requesting dto_fdr field
-# while querying the primary binding dataset
-
-binding_with_dto = vdb.query(
-    datasets=[("BrentLab/harbison_2004", "harbison_2004")],
-    filters={"regulator_symbol": "FHL1"},
-    fields=["sample_id", "regulator_symbol", "condition", "dto_fdr", "binding_id", "perturbation_id"],
-)
-
-print(f"Found {len(binding_with_dto)} FHL1 binding measurements")
-print(f"\nColumns: {list(binding_with_dto.columns)}")
-print(f"\nRows with DTO data: {binding_with_dto['dto_fdr'].notna().sum()}")
-print(f"\nFirst few results:")
-binding_with_dto</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>Fetching 6 files: 100%|██████████| 6/6 [00:00&lt;00:00, 65536.00it/s]
-Fetching 6 files: 100%|██████████| 6/6 [00:00&lt;00:00, 57325.34it/s]</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Found 32 FHL1 binding measurements
-
-Columns: ['sample_id', 'regulator_symbol', 'condition', 'dto_fdr', 'perturbation_id', 'dataset_id']
-
-Rows with DTO data: 4
-
-First few results:
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[24]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>sample_id</th>
-<th>regulator_symbol</th>
-<th>condition</th>
-<th>dto_fdr</th>
-<th>perturbation_id</th>
-<th>dataset_id</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>0</th>
-<td>345</td>
-<td>FHL1</td>
-<td>H2O2Hi</td>
-<td>0.454909</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1666</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>1</th>
-<td>345</td>
-<td>FHL1</td>
-<td>H2O2Hi</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1665</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>2</th>
-<td>345</td>
-<td>FHL1</td>
-<td>H2O2Hi</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1667</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>3</th>
-<td>345</td>
-<td>FHL1</td>
-<td>H2O2Hi</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1669</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>4</th>
-<td>345</td>
-<td>FHL1</td>
-<td>H2O2Hi</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1663</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>5</th>
-<td>345</td>
-<td>FHL1</td>
-<td>H2O2Hi</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1664</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>6</th>
-<td>345</td>
-<td>FHL1</td>
-<td>H2O2Hi</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1670</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>7</th>
-<td>345</td>
-<td>FHL1</td>
-<td>H2O2Hi</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1668</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>8</th>
-<td>346</td>
-<td>FHL1</td>
-<td>RAPA</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1667</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>9</th>
-<td>346</td>
-<td>FHL1</td>
-<td>RAPA</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1663</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>10</th>
-<td>346</td>
-<td>FHL1</td>
-<td>RAPA</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1670</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>11</th>
-<td>346</td>
-<td>FHL1</td>
-<td>RAPA</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1668</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>12</th>
-<td>346</td>
-<td>FHL1</td>
-<td>RAPA</td>
-<td>0.000000</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1666</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>13</th>
-<td>346</td>
-<td>FHL1</td>
-<td>RAPA</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1669</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>14</th>
-<td>346</td>
-<td>FHL1</td>
-<td>RAPA</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1664</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>15</th>
-<td>346</td>
-<td>FHL1</td>
-<td>RAPA</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1665</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>16</th>
-<td>347</td>
-<td>FHL1</td>
-<td>SM</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1667</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>17</th>
-<td>347</td>
-<td>FHL1</td>
-<td>SM</td>
-<td>0.022196</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1666</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>18</th>
-<td>347</td>
-<td>FHL1</td>
-<td>SM</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1669</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>19</th>
-<td>347</td>
-<td>FHL1</td>
-<td>SM</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1664</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>20</th>
-<td>347</td>
-<td>FHL1</td>
-<td>SM</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1663</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>21</th>
-<td>347</td>
-<td>FHL1</td>
-<td>SM</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1670</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>22</th>
-<td>347</td>
-<td>FHL1</td>
-<td>SM</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1668</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>23</th>
-<td>347</td>
-<td>FHL1</td>
-<td>SM</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1665</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>24</th>
-<td>348</td>
-<td>FHL1</td>
-<td>YPD</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1664</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>25</th>
-<td>348</td>
-<td>FHL1</td>
-<td>YPD</td>
-<td>0.089578</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1666</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>26</th>
-<td>348</td>
-<td>FHL1</td>
-<td>YPD</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1663</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>27</th>
-<td>348</td>
-<td>FHL1</td>
-<td>YPD</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1667</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>28</th>
-<td>348</td>
-<td>FHL1</td>
-<td>YPD</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1669</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>29</th>
-<td>348</td>
-<td>FHL1</td>
-<td>YPD</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1665</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>30</th>
-<td>348</td>
-<td>FHL1</td>
-<td>YPD</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1670</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-<tr>
-<th>31</th>
-<td>348</td>
-<td>FHL1</td>
-<td>YPD</td>
-<td>NaN</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1668</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-20">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># You can also filter on comparative dataset fields</span>
-<span class="c1"># This returns only binding measurements with significant DTO results</span>
-
-<span class="n">significant_dtos</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span>
-    <span class="n">datasets</span><span class="o">=</span><span class="p">[(</span><span class="s2">"BrentLab/harbison_2004"</span><span class="p">,</span> <span class="s2">"harbison_2004"</span><span class="p">)],</span>
-    <span class="n">filters</span><span class="o">=</span><span class="p">{</span>
-        <span class="s2">"regulator_symbol"</span><span class="p">:</span> <span class="s2">"FHL1"</span><span class="p">,</span>
-        <span class="c1"># the threshold is high here b/c FHL1 didn't have significant results in harbison</span>
-        <span class="s2">"dto_empirical_pvalue"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"&lt;"</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
-    <span class="p">},</span>
-    <span class="n">fields</span><span class="o">=</span><span class="p">[</span><span class="s2">"sample_id"</span><span class="p">,</span> <span class="s2">"regulator_symbol"</span><span class="p">,</span> <span class="s2">"target_symbol"</span><span class="p">,</span> <span class="s2">"perturbation_id"</span><span class="p">,</span> <span class="s2">"dto_empirical_pvalue"</span><span class="p">],</span>
-<span class="p">)</span>
-
-<span class="n">significant_dtos</span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-20"># You can also filter on comparative dataset fields
-# This returns only binding measurements with significant DTO results
-
-significant_dtos = vdb.query(
-    datasets=[("BrentLab/harbison_2004", "harbison_2004")],
-    filters={
-        "regulator_symbol": "FHL1",
-        # the threshold is high here b/c FHL1 didn't have significant results in harbison
-        "dto_empirical_pvalue": ("&lt;", 0.5)
-    },
-    fields=["sample_id", "regulator_symbol", "target_symbol", "perturbation_id", "dto_empirical_pvalue"],
-)
-
-significant_dtos</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child">
-<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
-<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>Fetching 6 files: 100%|██████████| 6/6 [00:00&lt;00:00, 122760.12it/s]
-Fetching 6 files: 100%|██████████| 6/6 [00:00&lt;00:00, 35951.18it/s]
-</pre>
-</div>
-</div>
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>sample_id</th>
-<th>regulator_symbol</th>
-<th>perturbation_id</th>
-<th>dto_empirical_pvalue</th>
-<th>dataset_id</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>0</th>
-<td>347</td>
-<td>FHL1</td>
-<td>BrentLab/Hackett_2020;hackett_2020;1666</td>
-<td>0.297</td>
-<td>BrentLab/harbison_2004/harbison_2004</td>
-</tr>
-</tbody>
-</table>
-</div>
+<div class="clipboard-copy-txt" id="cell-19"># Clean up temp file
+temp_config.unlink(missing_ok=True)</div>
 </div>
 </div>
 </div>
