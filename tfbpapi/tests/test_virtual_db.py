@@ -1,732 +1,782 @@
 """
-Tests for VirtualDB unified query interface.
+Tests for the SQL-first VirtualDB interface.
 
-Tests configuration loading, schema discovery, querying, filtering, and caching.
+Uses local Parquet fixtures and monkeypatches ``_resolve_parquet_files``
+and ``_cached_datacard`` so no network access is needed.
 
 """
 
-import tempfile
 from pathlib import Path
+from unittest.mock import MagicMock
 
+import duckdb
 import pandas as pd
 import pytest
 import yaml  # type: ignore
 
-from tfbpapi.virtual_db import VirtualDB, get_nested_value, normalize_value
+from tfbpapi.virtual_db import VirtualDB
+
+# ------------------------------------------------------------------
+# Fixtures
+# ------------------------------------------------------------------
 
 
-class TestHelperFunctions:
-    """Tests for helper functions."""
+def _write_parquet(path: Path, df: pd.DataFrame) -> str:
+    """Write a DataFrame to a Parquet file using DuckDB."""
+    conn = duckdb.connect(":memory:")
+    conn.execute(f"COPY (SELECT * FROM df) TO '{path}' (FORMAT PARQUET)")
+    conn.close()
+    return str(path)
 
-    def test_get_nested_value_simple(self):
-        """Test simple nested dict navigation."""
-        data = {"media": {"name": "YPD"}}
-        result = get_nested_value(data, "media.name")
-        assert result == "YPD"
 
-    def test_get_nested_value_missing_key(self):
-        """Test that missing keys return None."""
-        data = {"media": {"name": "YPD"}}
-        result = get_nested_value(data, "media.carbon_source")
-        assert result is None
+@pytest.fixture()
+def parquet_dir(tmp_path):
+    """
+    Create Parquet files for two primary datasets and one comparative.
 
-    def test_get_nested_value_list_extraction(self):
-        """Test extracting property from list of dicts."""
-        data = {
-            "media": {
-                "carbon_source": [{"compound": "glucose"}, {"compound": "galactose"}]
-            }
+    harbison has a ``condition`` column (like the real dataset) rather
+    than ``carbon_source`` / ``temperature_celsius`` as raw columns.
+    Those are derived from DataCard field definitions via config
+    property mappings.
+
+    kemmeren has no ``condition`` column; carbon_source and
+    temperature_celsius come from config-level (path-only) mappings
+    that resolve to constants from the DataCard.
+
+    Returns dict mapping (repo_id, config_name) -> [parquet_path].
+
+    """
+    # harbison: 4 samples; samples 1-3 have 2 target measurements each,
+    # sample 4 has 2 targets but condition "Unknown" has no definition
+    # for carbon_source (tests missing_value_labels fallback)
+    harbison_df = pd.DataFrame(
+        {
+            "sample_id": [1, 1, 2, 2, 3, 3, 4, 4],
+            "regulator_locus_tag": [
+                "YBR049C",
+                "YBR049C",
+                "YDR463W",
+                "YDR463W",
+                "YBR049C",
+                "YBR049C",
+                "YDR463W",
+                "YDR463W",
+            ],
+            "regulator_symbol": [
+                "REB1",
+                "REB1",
+                "STP1",
+                "STP1",
+                "REB1",
+                "REB1",
+                "STP1",
+                "STP1",
+            ],
+            "condition": [
+                "YPD",
+                "YPD",
+                "Galactose",
+                "Galactose",
+                "Acid",
+                "Acid",
+                "Unknown",
+                "Unknown",
+            ],
+            "target_locus_tag": [
+                "YAL001C",
+                "YAL002W",
+                "YAL001C",
+                "YAL003W",
+                "YAL002W",
+                "YAL003W",
+                "YAL001C",
+                "YAL002W",
+            ],
+            "effect": [1.5, 0.8, 2.1, 0.3, 1.2, 0.9, 0.6, 1.0],
+            "pvalue": [0.01, 0.4, 0.001, 0.9, 0.05, 0.3, 0.2, 0.7],
         }
-        result = get_nested_value(data, "media.carbon_source.compound")
-        assert result == ["glucose", "galactose"]
+    )
+    # kemmeren: 2 samples, each with 2 targets = 4 rows
+    # No condition column; carbon_source comes from path-only mapping
+    kemmeren_df = pd.DataFrame(
+        {
+            "sample_id": [10, 10, 11, 11],
+            "regulator_locus_tag": [
+                "YBR049C",
+                "YBR049C",
+                "YDR463W",
+                "YDR463W",
+            ],
+            "regulator_symbol": [
+                "REB1",
+                "REB1",
+                "STP1",
+                "STP1",
+            ],
+            "target_locus_tag": [
+                "YAL001C",
+                "YAL002W",
+                "YAL001C",
+                "YAL003W",
+            ],
+            "effect": [1.1, 0.7, 1.8, 0.5],
+            "pvalue": [0.02, 0.5, 0.003, 0.7],
+        }
+    )
+    dto_df = pd.DataFrame(
+        {
+            "binding_id": [
+                "BrentLab/harbison;harbison_2004;1",
+                "BrentLab/harbison;harbison_2004;2",
+                "BrentLab/harbison;harbison_2004;3",
+            ],
+            "perturbation_id": [
+                "BrentLab/kemmeren;kemmeren_2014;10",
+                "BrentLab/kemmeren;kemmeren_2014;11",
+                "BrentLab/kemmeren;kemmeren_2014;10",
+            ],
+            "dto_empirical_pvalue": [0.001, 0.05, 0.8],
+            "dto_fdr": [0.01, 0.1, 0.9],
+        }
+    )
 
-    def test_get_nested_value_non_dict(self):
-        """Test that non-dict input returns None."""
-        result = get_nested_value("not a dict", "path")  # type: ignore
-        assert result is None
+    files = {}
+    h_path = tmp_path / "harbison.parquet"
+    files[("BrentLab/harbison", "harbison_2004")] = [
+        _write_parquet(h_path, harbison_df)
+    ]
 
-    def test_normalize_value_exact_match(self):
-        """Test exact alias match."""
-        aliases = {"glucose": ["D-glucose", "dextrose"]}
-        result = normalize_value("D-glucose", aliases)
-        assert result == "glucose"
+    k_path = tmp_path / "kemmeren.parquet"
+    files[("BrentLab/kemmeren", "kemmeren_2014")] = [
+        _write_parquet(k_path, kemmeren_df)
+    ]
 
-    def test_normalize_value_case_insensitive(self):
-        """Test case-insensitive matching."""
-        aliases = {"glucose": ["D-glucose", "dextrose"]}
-        result = normalize_value("DEXTROSE", aliases)
-        assert result == "glucose"
+    d_path = tmp_path / "dto.parquet"
+    files[("BrentLab/comp", "dto")] = [_write_parquet(d_path, dto_df)]
 
-    def test_normalize_value_no_match(self):
-        """Test pass-through when no alias matches."""
-        aliases = {"glucose": ["D-glucose"]}
-        result = normalize_value("maltose", aliases)
-        assert result == "maltose"
+    return files
 
-    def test_normalize_value_no_aliases(self):
-        """Test pass-through when no aliases provided."""
-        result = normalize_value("D-glucose", None)
-        assert result == "D-glucose"
 
-    def test_normalize_value_missing_value_label(self):
-        """Test missing value handling."""
-        result = normalize_value(None, None, "unspecified")
-        assert result == "unspecified"
+@pytest.fixture()
+def config_path(tmp_path):
+    """Create a YAML config file for the test datasets."""
+    config = {
+        "factor_aliases": {
+            "carbon_source": {
+                "glucose": ["D-glucose", "dextrose"],
+                "galactose": ["D-galactose"],
+            }
+        },
+        "missing_value_labels": {"carbon_source": "unspecified"},
+        "repositories": {
+            "BrentLab/harbison": {
+                "dataset": {
+                    "harbison_2004": {
+                        "db_name": "harbison",
+                        "sample_id": {"field": "sample_id"},
+                        "regulator_locus_tag": {
+                            "field": "regulator_locus_tag",
+                        },
+                        "regulator_symbol": {
+                            "field": "regulator_symbol",
+                        },
+                        # field+path: derive from condition definitions
+                        "carbon_source": {
+                            "field": "condition",
+                            "path": "media.carbon_source.compound",
+                        },
+                        "temperature_celsius": {
+                            "field": "condition",
+                            "path": "temperature_celsius",
+                            "dtype": "numeric",
+                        },
+                        # field-only rename
+                        "environmental_condition": {
+                            "field": "condition",
+                        },
+                    }
+                }
+            },
+            "BrentLab/kemmeren": {
+                # repo-level path-only mappings (constants)
+                # Paths include experimental_conditions prefix
+                # to match real datacard model_extra structure
+                "carbon_source": {
+                    "path": ("experimental_conditions" ".media.carbon_source.compound"),
+                },
+                "temperature_celsius": {
+                    "path": ("experimental_conditions" ".temperature_celsius"),
+                    "dtype": "numeric",
+                },
+                "dataset": {
+                    "kemmeren_2014": {
+                        "db_name": "kemmeren",
+                        "sample_id": {"field": "sample_id"},
+                        "regulator_locus_tag": {
+                            "field": "regulator_locus_tag",
+                        },
+                        "regulator_symbol": {
+                            "field": "regulator_symbol",
+                        },
+                    }
+                },
+            },
+            "BrentLab/comp": {
+                "dataset": {
+                    "dto": {
+                        "dto_pvalue": {"field": "dto_empirical_pvalue"},
+                        "dto_fdr": {"field": "dto_fdr"},
+                        "links": {
+                            "binding_id": [
+                                [
+                                    "BrentLab/harbison",
+                                    "harbison_2004",
+                                ],
+                            ],
+                            "perturbation_id": [
+                                [
+                                    "BrentLab/kemmeren",
+                                    "kemmeren_2014",
+                                ],
+                            ],
+                        },
+                    }
+                }
+            },
+        },
+    }
+    p = tmp_path / "config.yaml"
+    with open(p, "w") as f:
+        yaml.dump(config, f)
+    return p
 
-    def test_normalize_value_missing_value_no_label(self):
-        """Test missing value without label."""
-        result = normalize_value(None, None)
-        assert result == "None"
+
+# metadata_fields per dataset (mirrors what the DataCard would return)
+METADATA_FIELDS = {
+    "harbison_2004": [
+        "regulator_locus_tag",
+        "regulator_symbol",
+        "condition",
+    ],
+    "kemmeren_2014": [
+        "regulator_locus_tag",
+        "regulator_symbol",
+    ],
+}
+
+# Field definitions from DataCard (condition field for harbison)
+HARBISON_CONDITION_DEFS = {
+    "YPD": {
+        "temperature_celsius": 30,
+        "media": {
+            "carbon_source": [
+                {"compound": "D-glucose"},
+            ],
+        },
+    },
+    "Galactose": {
+        "temperature_celsius": 30,
+        "media": {
+            "carbon_source": [
+                {"compound": "D-galactose"},
+            ],
+        },
+    },
+    "Acid": {
+        "temperature_celsius": 30,
+        "media": {
+            "carbon_source": [
+                {"compound": "D-glucose"},
+            ],
+        },
+    },
+}
+
+# Experimental conditions from DataCard (kemmeren -- config-level)
+KEMMEREN_EXP_CONDITIONS = {
+    "temperature_celsius": 30,
+    "media": {
+        "carbon_source": [
+            {"compound": "D-glucose"},
+        ],
+    },
+}
+
+
+def _make_mock_datacard(repo_id):
+    """Create a mock DataCard for testing."""
+    card = MagicMock()
+
+    if repo_id == "BrentLab/harbison":
+        config_mock = MagicMock()
+        config_mock.metadata_fields = METADATA_FIELDS["harbison_2004"]
+        card.get_config.return_value = config_mock
+        card.get_field_definitions.return_value = HARBISON_CONDITION_DEFS
+        card.get_experimental_conditions.return_value = {}
+    elif repo_id == "BrentLab/kemmeren":
+        config_mock = MagicMock()
+        config_mock.metadata_fields = METADATA_FIELDS["kemmeren_2014"]
+        # model_extra at config level (no experimental_conditions
+        # at this level for kemmeren)
+        config_mock.model_extra = {}
+        card.get_config.return_value = config_mock
+        card.get_field_definitions.return_value = {}
+        # model_extra at top level with experimental_conditions
+        # wrapper -- matches real DataCard structure
+        dataset_card_mock = MagicMock()
+        dataset_card_mock.model_extra = {
+            "experimental_conditions": KEMMEREN_EXP_CONDITIONS,
+        }
+        card.dataset_card = dataset_card_mock
+    else:
+        config_mock = MagicMock()
+        config_mock.metadata_fields = None
+        card.get_config.return_value = config_mock
+        card.get_field_definitions.return_value = {}
+        card.get_experimental_conditions.return_value = {}
+
+    return card
+
+
+@pytest.fixture()
+def vdb(config_path, parquet_dir, monkeypatch):
+    """Return a VirtualDB with _resolve_parquet_files and _cached_datacard monkeypatched
+    for local testing."""
+    import tfbpapi.virtual_db as vdb_module
+
+    v = VirtualDB(config_path)
+
+    def _fake_resolve(self, repo_id, config_name):
+        return parquet_dir.get((repo_id, config_name), [])
+
+    monkeypatch.setattr(VirtualDB, "_resolve_parquet_files", _fake_resolve)
+    monkeypatch.setattr(
+        vdb_module,
+        "_cached_datacard",
+        lambda repo_id, token=None: _make_mock_datacard(repo_id),
+    )
+    return v
+
+
+# ------------------------------------------------------------------
+# Tests: Initialisation and config
+# ------------------------------------------------------------------
 
 
 class TestVirtualDBConfig:
     """Tests for VirtualDB configuration loading."""
 
-    def create_test_config(self, **overrides):
-        """Helper to create test configuration file."""
-        config = {
-            "factor_aliases": {
-                "carbon_source": {
-                    "glucose": ["D-glucose", "dextrose"],
-                    "galactose": ["D-galactose", "Galactose"],
-                }
-            },
-            "missing_value_labels": {"carbon_source": "unspecified"},
-            "description": {"carbon_source": "Carbon source in growth media"},
-            "repositories": {
-                "BrentLab/test_repo": {
-                    # Repo-level: explicit path from datacard root
-                    "temperature_celsius": {
-                        "path": "experimental_conditions.temperature_celsius"
-                    },
-                    "dataset": {
-                        "test_dataset": {
-                            # Field-level: path relative to field definitions
-                            "carbon_source": {
-                                "field": "condition",
-                                "path": "media.carbon_source.compound",
-                            }
-                        }
-                    },
-                }
-            },
-        }
-        config.update(overrides)
-        return config
+    def test_init_loads_config(self, config_path, monkeypatch):
+        """Test that config loads without error."""
+        v = VirtualDB(config_path)
+        assert v.config is not None
+        assert v.token is None
 
-    def test_init_with_valid_config(self):
-        """Test VirtualDB initialization with valid config."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            yaml.dump(self.create_test_config(), f)
-            config_path = f.name
+    def test_init_with_token(self, config_path, monkeypatch):
+        """Test token is stored."""
+        v = VirtualDB(config_path, token="tok123")
+        assert v.token == "tok123"
 
-        try:
-            vdb = VirtualDB(config_path)
-            assert vdb.config is not None
-            assert vdb.token is None
-            assert len(vdb.cache) == 0
-        finally:
-            Path(config_path).unlink()
-
-    def test_init_with_token(self):
-        """Test VirtualDB initialization with HF token."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            yaml.dump(self.create_test_config(), f)
-            config_path = f.name
-
-        try:
-            vdb = VirtualDB(config_path, token="test_token")
-            assert vdb.token == "test_token"
-        finally:
-            Path(config_path).unlink()
-
-    def test_init_missing_config_file(self):
-        """Test error when config file doesn't exist."""
+    def test_init_missing_file(self):
+        """Test FileNotFoundError for missing config."""
         with pytest.raises(FileNotFoundError):
             VirtualDB("/nonexistent/path.yaml")
 
-    def test_repr(self):
-        """Test string representation."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            yaml.dump(self.create_test_config(), f)
-            config_path = f.name
+    def test_repr_before_views(self, config_path):
+        """Test repr before views are registered."""
+        v = VirtualDB(config_path)
+        r = repr(v)
+        assert "VirtualDB" in r
+        assert "views not yet registered" in r
 
-        try:
-            vdb = VirtualDB(config_path)
-            repr_str = repr(vdb)
-            assert "VirtualDB" in repr_str
-            assert "1 repositories" in repr_str
-            assert "1 datasets configured" in repr_str
-            assert "0 views cached" in repr_str
-        finally:
-            Path(config_path).unlink()
+    def test_repr_after_views(self, vdb):
+        """Test repr after views are registered."""
+        vdb.tables()  # triggers view registration
+        r = repr(vdb)
+        assert "VirtualDB" in r
+        assert "views)" in r
 
-
-class TestSchemaDiscovery:
-    """Tests for schema discovery methods."""
-
-    def create_multi_dataset_config(self):
-        """Create config with multiple datasets."""
-        return {
-            "factor_aliases": {},
-            "repositories": {
-                "BrentLab/repo1": {
-                    # Repo-level: explicit path from datacard root
-                    "temperature_celsius": {
-                        "path": "experimental_conditions.temperature_celsius"
-                    },
-                    "dataset": {
-                        "dataset1": {
-                            # Field-level: path relative to field definitions
-                            "carbon_source": {
-                                "field": "condition",
-                                "path": "media.carbon_source",
-                            }
-                        }
-                    },
-                },
-                "BrentLab/repo2": {
-                    # Repo-level: explicit path from datacard root
-                    "nitrogen_source": {
-                        "path": "experimental_conditions.media.nitrogen_source"
-                    },
-                    "dataset": {
-                        "dataset2": {
-                            # Config-level: explicit path from datacard root
-                            "carbon_source": {
-                                "path": "experimental_conditions.media.carbon_source"
-                            },
-                            "temperature_celsius": {
-                                "path": "experimental_conditions.temperature_celsius"
-                            },
-                        }
-                    },
-                },
-            },
-        }
-
-    def test_get_fields_all_datasets(self):
-        """Test getting all fields across all datasets."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            yaml.dump(self.create_multi_dataset_config(), f)
-            config_path = f.name
-
-        try:
-            vdb = VirtualDB(config_path)
-            fields = vdb.get_fields()
-            assert "carbon_source" in fields
-            assert "temperature_celsius" in fields
-            assert "nitrogen_source" in fields
-            assert fields == sorted(fields)  # Should be sorted
-        finally:
-            Path(config_path).unlink()
-
-    def test_get_fields_specific_dataset(self):
-        """Test getting fields for specific dataset."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            yaml.dump(self.create_multi_dataset_config(), f)
-            config_path = f.name
-
-        try:
-            vdb = VirtualDB(config_path)
-            fields = vdb.get_fields("BrentLab/repo1", "dataset1")
-            assert "carbon_source" in fields
-            assert "temperature_celsius" in fields
-            # nitrogen_source is in repo2, not repo1
-            assert "nitrogen_source" not in fields
-        finally:
-            Path(config_path).unlink()
-
-    def test_get_fields_invalid_partial_args(self):
-        """Test error when only one of repo_id/config_name provided."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            yaml.dump(self.create_multi_dataset_config(), f)
-            config_path = f.name
-
-        try:
-            vdb = VirtualDB(config_path)
-            with pytest.raises(ValueError, match="Both repo_id and config_name"):
-                vdb.get_fields(repo_id="BrentLab/repo1")
-        finally:
-            Path(config_path).unlink()
-
-    def test_get_common_fields(self):
-        """Test getting fields common to all datasets."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            yaml.dump(self.create_multi_dataset_config(), f)
-            config_path = f.name
-
-        try:
-            vdb = VirtualDB(config_path)
-            common = vdb.get_common_fields()
-            # Both datasets have carbon_source and temperature_celsius
-            assert "carbon_source" in common
-            assert "temperature_celsius" in common
-            # nitrogen_source is only in repo2
-            assert "nitrogen_source" not in common
-        finally:
-            Path(config_path).unlink()
-
-
-class TestCaching:
-    """Tests for view materialization and caching."""
-
-    def create_simple_config(self):
-        """Create simple config for testing."""
-        return {
-            "factor_aliases": {},
-            "repositories": {
-                "BrentLab/test_repo": {
-                    "dataset": {
-                        "test_dataset": {
-                            # Config-level: explicit path from datacard root
-                            "carbon_source": {
-                                "path": "experimental_conditions.media.carbon_source"
-                            }
-                        }
-                    }
-                }
-            },
-        }
-
-    def test_invalidate_cache_all(self):
-        """Test invalidating all cache."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            yaml.dump(self.create_simple_config(), f)
-            config_path = f.name
-
-        try:
-            vdb = VirtualDB(config_path)
-            # Manually add to cache
-            vdb.cache[("BrentLab/test_repo", "test_dataset")] = pd.DataFrame()
-            assert len(vdb.cache) == 1
-
-            vdb.invalidate_cache()
-            assert len(vdb.cache) == 0
-        finally:
-            Path(config_path).unlink()
-
-    def test_invalidate_cache_specific(self):
-        """Test invalidating specific dataset cache."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            yaml.dump(self.create_simple_config(), f)
-            config_path = f.name
-
-        try:
-            vdb = VirtualDB(config_path)
-            # Add multiple entries to cache
-            vdb.cache[("BrentLab/test_repo", "test_dataset")] = pd.DataFrame()
-            vdb.cache[("BrentLab/other_repo", "other_dataset")] = pd.DataFrame()
-            assert len(vdb.cache) == 2
-
-            vdb.invalidate_cache([("BrentLab/test_repo", "test_dataset")])
-            assert len(vdb.cache) == 1
-            assert ("BrentLab/other_repo", "other_dataset") in vdb.cache
-        finally:
-            Path(config_path).unlink()
-
-
-class TestFiltering:
-    """Tests for filter application logic."""
-
-    def test_apply_filters_exact_match(self):
-        """Test exact value matching in filters."""
-        df = pd.DataFrame(
-            {
-                "sample_id": ["s1", "s2", "s3"],
-                "carbon_source": ["glucose", "galactose", "glucose"],
-            }
+    def test_db_name_map(self, config_path):
+        """Test that _db_name_map resolves db_name correctly."""
+        v = VirtualDB(config_path)
+        assert "harbison" in v._db_name_map
+        assert "kemmeren" in v._db_name_map
+        assert "dto" in v._db_name_map
+        assert v._db_name_map["harbison"] == (
+            "BrentLab/harbison",
+            "harbison_2004",
         )
 
-        # Create minimal VirtualDB instance
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            config = {
-                "repositories": {
-                    "BrentLab/test": {
-                        "dataset": {
-                            "test": {
-                                "carbon_source": {
-                                    "path": "experimental_conditions.media.carbon_source"  # noqa: E501
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            yaml.dump(config, f)
-            config_path = f.name
 
-        try:
-            vdb = VirtualDB(config_path)
-            filtered = vdb._apply_filters(
-                df, {"carbon_source": "glucose"}, "BrentLab/test", "test"
-            )
-            assert len(filtered) == 2
-            assert all(filtered["carbon_source"] == "glucose")
-        finally:
-            Path(config_path).unlink()
+# ------------------------------------------------------------------
+# Tests: View registration
+# ------------------------------------------------------------------
 
-    def test_apply_filters_numeric_range(self):
-        """Test numeric range filtering."""
-        df = pd.DataFrame(
-            {"sample_id": ["s1", "s2", "s3"], "temperature_celsius": [25, 30, 37]}
+
+class TestViewRegistration:
+    """Tests for lazy view creation."""
+
+    def test_raw_views_created(self, vdb):
+        """Test that raw per-dataset views exist."""
+        views = vdb.tables()
+        assert "harbison" in views
+        assert "kemmeren" in views
+        # Comparative datasets only get _expanded, not a bare view
+        assert "dto" not in views
+        assert "dto_expanded" in views
+
+    def test_raw_view_has_all_rows(self, vdb):
+        """Test raw view returns measurement-level data."""
+        df = vdb.query("SELECT COUNT(*) AS n FROM harbison")
+        # 4 samples x 2 targets each = 8 rows
+        assert df["n"].iloc[0] == 8
+
+    def test_raw_view_has_measurement_columns(self, vdb):
+        """Test raw view includes measurement columns."""
+        fields = vdb.get_fields("harbison")
+        assert "target_locus_tag" in fields
+        assert "effect" in fields
+        assert "pvalue" in fields
+
+    def test_raw_view_has_condition_column(self, vdb):
+        """Test harbison raw view has condition and derived columns."""
+        fields = vdb.get_fields("harbison")
+        assert "condition" in fields
+        # Derived columns are available via join to _meta
+        assert "carbon_source" in fields
+        assert "temperature_celsius" in fields
+
+    def test_meta_views_created(self, vdb):
+        """Test that _meta views exist for primary datasets."""
+        views = vdb.tables()
+        assert "harbison_meta" in views
+        assert "kemmeren_meta" in views
+        # Comparative datasets should NOT have _meta views
+        assert "dto_meta" not in views
+
+    def test_meta_view_one_row_per_sample(self, vdb):
+        """Test _meta view has one row per sample_id."""
+        df = vdb.query("SELECT COUNT(*) AS n FROM harbison_meta")
+        # 4 distinct samples
+        assert df["n"].iloc[0] == 4
+
+    def test_meta_view_excludes_measurement_columns(self, vdb):
+        """Test _meta view has only metadata columns."""
+        fields = vdb.get_fields("harbison_meta")
+        assert "sample_id" in fields
+        assert "regulator_locus_tag" in fields
+        # Measurement columns should NOT be in _meta
+        assert "target_locus_tag" not in fields
+        assert "effect" not in fields
+        assert "pvalue" not in fields
+
+    def test_meta_view_has_derived_carbon_source(self, vdb):
+        """Test harbison_meta has carbon_source from field+path."""
+        fields = vdb.get_fields("harbison_meta")
+        assert "carbon_source" in fields
+        df = vdb.query(
+            "SELECT sample_id, carbon_source " "FROM harbison_meta ORDER BY sample_id"
         )
+        values = dict(zip(df["sample_id"], df["carbon_source"]))
+        # YPD -> D-glucose -> glucose (aliased)
+        assert values[1] == "glucose"
+        # Galactose -> D-galactose -> galactose (aliased)
+        assert values[2] == "galactose"
+        # Acid -> D-glucose -> glucose (aliased)
+        assert values[3] == "glucose"
+        # Unknown -> no definition -> missing_value_labels fallback
+        assert values[4] == "unspecified"
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            config = {
-                "repositories": {
-                    "BrentLab/test": {
-                        "dataset": {
-                            "test": {
-                                "temperature_celsius": {
-                                    "path": "experimental_conditions.temperature_celsius"  # noqa: E501
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            yaml.dump(config, f)
-            config_path = f.name
-
-        try:
-            vdb = VirtualDB(config_path)
-
-            # Test >= operator
-            filtered = vdb._apply_filters(
-                df, {"temperature_celsius": (">=", 30)}, "BrentLab/test", "test"
-            )
-            assert len(filtered) == 2
-            assert all(filtered["temperature_celsius"] >= 30)
-
-            # Test between operator
-            filtered = vdb._apply_filters(
-                df,
-                {"temperature_celsius": ("between", 28, 32)},
-                "BrentLab/test",
-                "test",
-            )
-            assert len(filtered) == 1
-            assert filtered.iloc[0]["temperature_celsius"] == 30
-        finally:
-            Path(config_path).unlink()
-
-    def test_apply_filters_with_alias_expansion(self):
-        """Test filter with alias expansion."""
-        df = pd.DataFrame(
-            {
-                "sample_id": ["s1", "s2", "s3"],
-                "carbon_source": ["glucose", "D-glucose", "galactose"],
-            }
+    def test_meta_view_has_derived_temperature(self, vdb):
+        """Test harbison_meta has temperature_celsius from field+path."""
+        fields = vdb.get_fields("harbison_meta")
+        assert "temperature_celsius" in fields
+        df = vdb.query(
+            "SELECT DISTINCT temperature_celsius "
+            "FROM harbison_meta "
+            "WHERE temperature_celsius IS NOT NULL"
         )
+        # Conditions with definitions have temperature_celsius=30;
+        # "Unknown" has no definition so gets NULL
+        assert len(df) == 1
+        assert df["temperature_celsius"].iloc[0] == 30.0
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            config = {
-                "factor_aliases": {
-                    "carbon_source": {"glucose": ["D-glucose", "dextrose", "glucose"]}
-                },
-                "repositories": {
-                    "BrentLab/test": {
-                        "dataset": {
-                            "test": {
-                                "carbon_source": {
-                                    "path": "experimental_conditions.media.carbon_source"  # noqa: E501
-                                }
-                            }
-                        }
-                    }
-                },
-            }
-            yaml.dump(config, f)
-            config_path = f.name
+    def test_meta_view_has_field_rename(self, vdb):
+        """Test harbison_meta has environmental_condition alias."""
+        fields = vdb.get_fields("harbison_meta")
+        assert "environmental_condition" in fields
+        df = vdb.query(
+            "SELECT DISTINCT environmental_condition "
+            "FROM harbison_meta ORDER BY environmental_condition"
+        )
+        values = sorted(df["environmental_condition"].tolist())
+        assert values == ["Acid", "Galactose", "Unknown", "YPD"]
 
-        try:
-            vdb = VirtualDB(config_path)
-            filtered = vdb._apply_filters(
-                df, {"carbon_source": "glucose"}, "BrentLab/test", "test"
-            )
-            # Should match both "glucose" and "D-glucose" due to alias expansion
-            assert len(filtered) == 2
-        finally:
-            Path(config_path).unlink()
+    def test_meta_view_path_only_constant(self, vdb):
+        """Test kemmeren_meta has carbon_source from path-only."""
+        fields = vdb.get_fields("kemmeren_meta")
+        assert "carbon_source" in fields
+        df = vdb.query("SELECT DISTINCT carbon_source FROM kemmeren_meta")
+        # Constant resolved from experimental_conditions
+        # D-glucose -> glucose (aliased)
+        assert len(df) == 1
+        assert df["carbon_source"].iloc[0] == "glucose"
+
+    def test_meta_view_path_only_numeric(self, vdb):
+        """Test kemmeren_meta has temperature_celsius as numeric."""
+        df = vdb.query("SELECT DISTINCT temperature_celsius " "FROM kemmeren_meta")
+        assert len(df) == 1
+        assert df["temperature_celsius"].iloc[0] == 30.0
+
+    def test_comparative_expanded_view(self, vdb):
+        """Test that dto_expanded view is created."""
+        views = vdb.tables()
+        assert "dto_expanded" in views
+
+    def test_expanded_view_has_parsed_columns(self, vdb):
+        """Test that expanded view has _source and _id columns."""
+        df = vdb.query("SELECT * FROM dto_expanded LIMIT 1")
+        assert "binding_id_source" in df.columns
+        assert "binding_id_id" in df.columns
+        assert "perturbation_id_source" in df.columns
+        assert "perturbation_id_id" in df.columns
+
+    def test_expanded_view_source_aliased(self, vdb):
+        """Test that _source columns use db_name aliases."""
+        df = vdb.query("SELECT DISTINCT binding_id_source " "FROM dto_expanded")
+        assert "harbison" in df["binding_id_source"].tolist()
+
+    def test_expanded_view_perturbation_source_aliased(self, vdb):
+        """Test that perturbation_id_source uses db_name alias."""
+        df = vdb.query("SELECT DISTINCT perturbation_id_source " "FROM dto_expanded")
+        assert "kemmeren" in df["perturbation_id_source"].tolist()
+
+    def test_expanded_view_id_values(self, vdb):
+        """Test that _id columns contain the sample_id component."""
+        df = vdb.query(
+            "SELECT DISTINCT binding_id_id " "FROM dto_expanded ORDER BY binding_id_id"
+        )
+        assert set(df["binding_id_id"]) == {"1", "2", "3"}
 
 
-class TestExtraction:
-    """Tests for metadata extraction methods."""
+# ------------------------------------------------------------------
+# Tests: Factor aliases in _meta views
+# ------------------------------------------------------------------
 
-    def test_add_field_metadata(self):
-        """Test adding field-level metadata to DataFrame."""
-        df = pd.DataFrame({"sample_id": ["s1", "s2"], "condition": ["YPD", "YPG"]})
 
-        field_metadata = {
-            "YPD": {"carbon_source": ["glucose"], "growth_media": ["YPD"]},
-            "YPG": {"carbon_source": ["glycerol"], "growth_media": ["YPG"]},
-        }
+class TestFactorAliases:
+    """Tests that factor aliases are applied in _meta views."""
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            config = {
-                "repositories": {
-                    "BrentLab/test": {
-                        "dataset": {
-                            "test": {
-                                "carbon_source": {
-                                    "path": "experimental_conditions.media.carbon_source"  # noqa: E501
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            yaml.dump(config, f)
-            config_path = f.name
+    def test_alias_applied_in_meta(self, vdb):
+        """Test that aliases are applied at _meta level too."""
+        df = vdb.query(
+            "SELECT DISTINCT carbon_source " "FROM harbison_meta ORDER BY carbon_source"
+        )
+        values = df["carbon_source"].tolist()
+        assert "glucose" in values
+        assert "galactose" in values
+        assert "D-glucose" not in values
 
-        try:
-            vdb = VirtualDB(config_path)
-            result = vdb._add_field_metadata(df, field_metadata)
 
-            assert "carbon_source" in result.columns
-            assert "growth_media" in result.columns
-            assert (
-                result.loc[result["condition"] == "YPD", "carbon_source"].iloc[0]
-                == "glucose"
-            )
-            assert (
-                result.loc[result["condition"] == "YPG", "carbon_source"].iloc[0]
-                == "glycerol"
-            )
-        finally:
-            Path(config_path).unlink()
+# ------------------------------------------------------------------
+# Tests: query() public API
+# ------------------------------------------------------------------
 
 
 class TestQuery:
-    """Tests for query method - requires mocking HfQueryAPI."""
+    """Tests for the query() method."""
 
-    def test_query_empty_result(self):
-        """Test query with no matching datasets."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            config = {
-                "repositories": {
-                    "BrentLab/test": {
-                        "dataset": {
-                            "test": {
-                                "carbon_source": {
-                                    "path": "experimental_conditions.media.carbon_source"  # noqa: E501
-                                }
-                            }
+    def test_raw_sql(self, vdb):
+        """Test basic SQL execution."""
+        df = vdb.query("SELECT * FROM harbison WHERE sample_id = 1")
+        # 2 rows: sample 1 has two target measurements
+        assert len(df) == 2
+        assert all(df["sample_id"] == 1)
+
+    def test_parameterized_query(self, vdb):
+        """Test query with named parameters."""
+        df = vdb.query(
+            "SELECT * FROM harbison WHERE sample_id = $sid",
+            sid=1,
+        )
+        # 2 rows: sample 1 has two target measurements
+        assert len(df) == 2
+        assert all(df["sample_id"] == 1)
+
+    def test_query_returns_dataframe(self, vdb):
+        """Test that query always returns a DataFrame."""
+        df = vdb.query("SELECT 1 AS x")
+        assert isinstance(df, pd.DataFrame)
+
+
+# ------------------------------------------------------------------
+# Tests: prepare() and prepared queries
+# ------------------------------------------------------------------
+
+
+class TestPrepare:
+    """Tests for the prepare() method."""
+
+    def test_prepare_and_query(self, vdb):
+        """Test registering and using a prepared query."""
+        vdb.prepare(
+            "by_condition",
+            "SELECT * FROM harbison " "WHERE condition = $cond",
+        )
+        df = vdb.query("by_condition", cond="YPD")
+        # 2 rows: sample 1 with YPD has 2 targets
+        assert len(df) == 2
+        assert all(df["condition"] == "YPD")
+
+    def test_prepare_name_collision_with_view(self, vdb):
+        """Test that prepare rejects names colliding with views."""
+        with pytest.raises(ValueError, match="collides with"):
+            vdb.prepare("harbison", "SELECT 1")
+
+    def test_prepare_overwrite(self, vdb):
+        """Test that re-preparing the same name overwrites."""
+        vdb.prepare("q1", "SELECT 1 AS x")
+        vdb.prepare("q1", "SELECT 2 AS x")
+        df = vdb.query("q1")
+        assert df["x"].iloc[0] == 2
+
+
+# ------------------------------------------------------------------
+# Tests: tables() and describe()
+# ------------------------------------------------------------------
+
+
+class TestDiscovery:
+    """Tests for tables(), describe(), get_fields()."""
+
+    def test_tables_sorted(self, vdb):
+        """Test that tables() returns sorted view names."""
+        views = vdb.tables()
+        assert views == sorted(views)
+
+    def test_describe_single(self, vdb):
+        """Test describe for a single view."""
+        df = vdb.describe("harbison")
+        assert "column_name" in df.columns
+        assert "column_type" in df.columns
+        assert "table" in df.columns
+        assert all(df["table"] == "harbison")
+        col_names = df["column_name"].tolist()
+        assert "sample_id" in col_names
+        assert "condition" in col_names
+
+    def test_describe_all(self, vdb):
+        """Test describe for all views."""
+        df = vdb.describe()
+        tables = df["table"].unique().tolist()
+        assert "harbison" in tables
+        assert "kemmeren" in tables
+
+    def test_get_fields_single(self, vdb):
+        """Test get_fields for a specific view."""
+        fields = vdb.get_fields("harbison")
+        assert "sample_id" in fields
+        assert "condition" in fields
+        assert fields == sorted(fields)
+
+    def test_get_fields_all(self, vdb):
+        """Test get_fields across all views."""
+        fields = vdb.get_fields()
+        assert "sample_id" in fields
+        # comparative fields
+        assert "dto_empirical_pvalue" in fields
+
+    def test_get_common_fields(self, vdb):
+        """Test common fields across primary _meta views."""
+        common = vdb.get_common_fields()
+        # Both harbison_meta and kemmeren_meta share these
+        assert "sample_id" in common
+        assert "carbon_source" in common
+        assert "temperature_celsius" in common
+        assert "regulator_locus_tag" in common
+
+
+# ------------------------------------------------------------------
+# Tests: get_nested_value helper
+# ------------------------------------------------------------------
+
+
+class TestGetNestedValue:
+    """Tests for the get_nested_value module-level helper."""
+
+    def test_simple_path(self):
+        from tfbpapi.virtual_db import get_nested_value
+
+        data = {"media": {"name": "YPD"}}
+        assert get_nested_value(data, "media.name") == "YPD"
+
+    def test_list_extraction(self):
+        from tfbpapi.virtual_db import get_nested_value
+
+        data = {
+            "media": {
+                "carbon_source": [
+                    {"compound": "D-glucose"},
+                ],
+            },
+        }
+        result = get_nested_value(data, "media.carbon_source.compound")
+        assert result == ["D-glucose"]
+
+    def test_missing_key(self):
+        from tfbpapi.virtual_db import get_nested_value
+
+        assert get_nested_value({"a": 1}, "b") is None
+
+    def test_deep_missing(self):
+        from tfbpapi.virtual_db import get_nested_value
+
+        assert get_nested_value({"a": {"b": 1}}, "a.c") is None
+
+    def test_non_dict_input(self):
+        from tfbpapi.virtual_db import get_nested_value
+
+        assert get_nested_value("not a dict", "a.b") is None  # type: ignore
+
+
+# ------------------------------------------------------------------
+# Tests: edge cases
+# ------------------------------------------------------------------
+
+
+class TestEdgeCases:
+    """Edge case and error handling tests."""
+
+    def test_no_parquet_files(self, tmp_path, monkeypatch):
+        """Test graceful handling when no parquet files are found."""
+        config = {
+            "repositories": {
+                "BrentLab/empty": {
+                    "dataset": {
+                        "empty_data": {
+                            "sample_id": {"field": "sample_id"},
                         }
                     }
                 }
             }
+        }
+        p = tmp_path / "config.yaml"
+        with open(p, "w") as f:
             yaml.dump(config, f)
-            config_path = f.name
 
-        try:
-            vdb = VirtualDB(config_path)
-            # Query with non-configured dataset should return empty
-            result = vdb.query(datasets=[("BrentLab/other", "other")])
-            assert isinstance(result, pd.DataFrame)
-            assert result.empty
-        finally:
-            Path(config_path).unlink()
+        v = VirtualDB(p)
 
+        def _fake_resolve(self, repo_id, config_name):
+            return []
 
-class TestComparativeDatasets:
-    """Tests for comparative dataset field-based joins."""
+        monkeypatch.setattr(VirtualDB, "_resolve_parquet_files", _fake_resolve)
 
-    def test_parse_composite_identifier(self):
-        """Test parsing composite identifiers."""
-        composite_id = "BrentLab/harbison_2004;harbison_2004;sample_42"
-        repo, config, sample = VirtualDB._parse_composite_identifier(composite_id)
-        assert repo == "BrentLab/harbison_2004"
-        assert config == "harbison_2004"
-        assert sample == "sample_42"
+        # Should not raise; just have no views
+        views = v.tables()
+        assert "empty_data" not in views
 
-    def test_parse_composite_identifier_invalid(self):
-        """Test that invalid composite IDs raise errors."""
-        with pytest.raises(ValueError, match="Invalid composite ID format"):
-            VirtualDB._parse_composite_identifier("invalid:format")
-
-    def test_get_comparative_fields_for_dataset(self):
-        """Test getting comparative fields mapping."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            config = {
-                "repositories": {
-                    "BrentLab/primary": {
-                        "dataset": {
-                            "primary_data": {
-                                "sample_id": {"field": "sample_id"},
-                                "comparative_analyses": [
-                                    {
-                                        "repo": "BrentLab/comparative",
-                                        "dataset": "comp_data",
-                                        "via_field": "binding_id",
-                                    }
-                                ],
-                            }
-                        }
-                    },
-                    "BrentLab/comparative": {
-                        "dataset": {
-                            "comp_data": {
-                                "dto_fdr": {"field": "dto_fdr"},
-                                "dto_pvalue": {"field": "dto_empirical_pvalue"},
-                            }
-                        }
-                    },
-                }
-            }
-            yaml.dump(config, f)
-            config_path = f.name
-
-        try:
-            vdb = VirtualDB(config_path)
-            field_mapping = vdb._get_comparative_fields_for_dataset(
-                "BrentLab/primary", "primary_data"
-            )
-
-            # Should have dto_fdr and dto_pvalue, but NOT binding_id (via_field)
-            assert "dto_fdr" in field_mapping
-            assert "dto_pvalue" in field_mapping
-            assert "binding_id" not in field_mapping
-
-            # Check mapping structure
-            assert field_mapping["dto_fdr"]["comp_repo"] == "BrentLab/comparative"
-            assert field_mapping["dto_fdr"]["comp_dataset"] == "comp_data"
-            assert field_mapping["dto_fdr"]["via_field"] == "binding_id"
-        finally:
-            Path(config_path).unlink()
-
-    def test_get_comparative_fields_no_links(self):
-        """Test that datasets without comparative links return empty mapping."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            config = {
-                "repositories": {
-                    "BrentLab/primary": {
-                        "dataset": {
-                            "primary_data": {"sample_id": {"field": "sample_id"}}
-                        }
-                    }
-                }
-            }
-            yaml.dump(config, f)
-            config_path = f.name
-
-        try:
-            vdb = VirtualDB(config_path)
-            field_mapping = vdb._get_comparative_fields_for_dataset(
-                "BrentLab/primary", "primary_data"
-            )
-            assert field_mapping == {}
-        finally:
-            Path(config_path).unlink()
-
-    def test_get_comparative_analyses(self):
-        """Test getting comparative analysis relationships."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            config = {
-                "repositories": {
-                    "BrentLab/primary": {
-                        "dataset": {
-                            "primary_data": {
-                                "sample_id": {"field": "sample_id"},
-                                "comparative_analyses": [
-                                    {
-                                        "repo": "BrentLab/comparative",
-                                        "dataset": "comp_data",
-                                        "via_field": "binding_id",
-                                    }
-                                ],
-                            }
-                        }
-                    },
-                    "BrentLab/comparative": {
-                        "dataset": {"comp_data": {"dto_fdr": {"field": "dto_fdr"}}}
-                    },
-                }
-            }
-            yaml.dump(config, f)
-            config_path = f.name
-
-        try:
-            vdb = VirtualDB(config_path)
-            info = vdb.get_comparative_analyses()
-
-            # Check primary to comparative mapping
-            assert "BrentLab/primary/primary_data" in info["primary_to_comparative"]
-            links = info["primary_to_comparative"]["BrentLab/primary/primary_data"]
-            assert len(links) == 1
-            assert links[0]["comparative_repo"] == "BrentLab/comparative"
-            assert links[0]["comparative_dataset"] == "comp_data"
-            assert links[0]["via_field"] == "binding_id"
-
-            # Check comparative fields
-            assert "BrentLab/comparative/comp_data" in info["comparative_fields"]
-            assert (
-                "dto_fdr"
-                in info["comparative_fields"]["BrentLab/comparative/comp_data"]
-            )
-        finally:
-            Path(config_path).unlink()
-
-    def test_get_comparative_analyses_filtered(self):
-        """Test filtering comparative analyses by repo and config."""
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-            config = {
-                "repositories": {
-                    "BrentLab/primary1": {
-                        "dataset": {
-                            "data1": {
-                                "sample_id": {"field": "sample_id"},
-                                "comparative_analyses": [
-                                    {
-                                        "repo": "BrentLab/comp",
-                                        "dataset": "comp_data",
-                                        "via_field": "id1",
-                                    }
-                                ],
-                            }
-                        }
-                    },
-                    "BrentLab/primary2": {
-                        "dataset": {
-                            "data2": {
-                                "sample_id": {"field": "sample_id"},
-                                "comparative_analyses": [
-                                    {
-                                        "repo": "BrentLab/comp",
-                                        "dataset": "comp_data",
-                                        "via_field": "id2",
-                                    }
-                                ],
-                            }
-                        }
-                    },
-                }
-            }
-            yaml.dump(config, f)
-            config_path = f.name
-
-        try:
-            vdb = VirtualDB(config_path)
-
-            # Get all
-            all_info = vdb.get_comparative_analyses()
-            assert len(all_info["primary_to_comparative"]) == 2
-
-            # Filter by repo and config
-            filtered = vdb.get_comparative_analyses("BrentLab/primary1", "data1")
-            assert len(filtered["primary_to_comparative"]) == 1
-            assert "BrentLab/primary1/data1" in filtered["primary_to_comparative"]
-
-            # Filter by repo only
-            repo_filtered = vdb.get_comparative_analyses("BrentLab/primary2")
-            assert len(repo_filtered["primary_to_comparative"]) == 1
-            assert "BrentLab/primary2/data2" in repo_filtered["primary_to_comparative"]
-        finally:
-            Path(config_path).unlink()
-
-
-# Note: Full integration tests with real HuggingFace datasets would go here
-# but are excluded as they require network access and specific test datasets.
-# These tests cover the core logic and would be supplemented with integration
-# tests using the actual sample config and real datasets like harbison_2004.
+    def test_lazy_init(self, config_path):
+        """Test that DuckDB connection is not created until needed."""
+        v = VirtualDB(config_path)
+        assert v._conn is None
+        assert not v._views_registered

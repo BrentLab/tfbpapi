@@ -315,40 +315,6 @@ class MetadataRelationship(BaseModel):
 # ============================================================================
 
 
-class ComparativeAnalysis(BaseModel):
-    """
-    Reference to a comparative dataset that includes this dataset.
-
-    Comparative datasets relate samples across multiple source datasets.
-    This model specifies which comparative dataset references the current
-    dataset and through which field (via_field).
-
-    :ivar repo: HuggingFace repository ID of the comparative dataset
-    :ivar dataset: Config name of the comparative dataset
-    :ivar via_field: Field in the comparative dataset containing composite
-        identifiers that reference this dataset's samples.
-        Format: "repo_id;config_name;sample_id"
-
-    Example::
-
-        # In BrentLab/callingcards config
-        ComparativeAnalysis(
-            repo="BrentLab/yeast_comparative_analysis",
-            dataset="dto",
-            via_field="binding_id"
-        )
-        # Means: dto dataset has a binding_id field with values like:
-        # "BrentLab/callingcards;annotated_features;123"
-
-    """
-
-    repo: str = Field(..., description="Comparative dataset repository ID")
-    dataset: str = Field(..., description="Comparative dataset config name")
-    via_field: str = Field(
-        ..., description="Field containing composite sample identifiers"
-    )
-
-
 class PropertyMapping(BaseModel):
     """
     Mapping specification for a single property.
@@ -446,35 +412,102 @@ class DatasetVirtualDBConfig(BaseModel):
 
     :ivar sample_id: Mapping for the sample identifier field (required for
         primary datasets)
-    :ivar comparative_analyses: Optional list of comparative datasets that
-        reference this dataset
+    :ivar links: For comparative datasets, map link_field -> list of
+        [repo_id, config_name] pairs specifying which primary datasets
+        are linked through each link field.
 
-    Example::
+    Example - Primary dataset::
 
-        # In BrentLab/callingcards config
         annotated_features:
           sample_id:
             field: sample_id
-          comparative_analyses:
-            - repo: BrentLab/yeast_comparative_analysis
-              dataset: dto
-              via_field: binding_id
           regulator_locus_tag:
             field: regulator_locus_tag
-          dto_fdr:  # Field from comparative dataset, optional renaming
+
+    Example - Comparative dataset::
+
+        dto:
+          # Field mappings - use this to rename fields
+          dto_fdr:
             field: dto_fdr
+          dto_pvalue:
+            field: empirical_pvalue  # renames empirical_pvalue to dto_pvalue
+          # Links to primary datasets
+          links:
+            binding_id:
+              - [BrentLab/harbison_2004, harbison_2004]
+              - [BrentLab/callingcards, annotated_features]
+            perturbation_id:
+              - [BrentLab/kemmeren_2014, kemmeren_2014]
 
     """
 
     sample_id: PropertyMapping | None = Field(
         None, description="Mapping for sample identifier field"
     )
-    comparative_analyses: list[ComparativeAnalysis] = Field(
-        default_factory=list,
-        description="Comparative datasets referencing this dataset",
+    db_name: str | None = Field(
+        None,
+        description=(
+            "Short name for this dataset in the SQL interface. "
+            "Falls back to the config_name (YAML dict key) if not "
+            "specified. Must be a valid SQL identifier."
+        ),
+    )
+    links: dict[str, list[list[str]]] = Field(
+        default_factory=dict,
+        description="For comparative datasets: map link_field -> "
+        "[repo_id, config_name] pairs",
     )
 
     model_config = ConfigDict(extra="allow")
+
+    @field_validator("links", mode="after")
+    @classmethod
+    def validate_links(
+        cls, v: dict[str, list[list[str]]]
+    ) -> dict[str, list[list[str]]]:
+        """
+        Validate that each link is a [repo_id, config_name] pair.
+
+        :param v: Links dictionary
+        :return: Validated links
+        :raises ValueError: If any link is not a valid pair
+
+        """
+        for link_field, datasets in v.items():
+            for i, dataset_pair in enumerate(datasets):
+                if not isinstance(dataset_pair, list) or len(dataset_pair) != 2:
+                    raise ValueError(
+                        f"Link {i} for link_field '{link_field}' must be "
+                        f"[repo_id, config_name], got: {dataset_pair}"
+                    )
+        return v
+
+    @field_validator("db_name", mode="after")
+    @classmethod
+    def validate_db_name(cls, v: str | None) -> str | None:
+        """
+        Validate db_name is a valid SQL identifier and not reserved.
+
+        :param v: db_name value
+        :return: Validated db_name
+        :raises ValueError: If db_name is invalid
+
+        """
+        if v is None:
+            return None
+        import re
+
+        if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", v):
+            raise ValueError(
+                f"db_name '{v}' is not a valid SQL identifier. "
+                "Use only letters, digits, and underscores, "
+                "starting with a letter or underscore."
+            )
+        reserved = {"samples"}
+        if v.lower() in reserved:
+            raise ValueError(f"db_name '{v}' is reserved for internal use.")
+        return v
 
     @model_validator(mode="before")
     @classmethod
@@ -493,7 +526,7 @@ class DatasetVirtualDBConfig(BaseModel):
         result = {}
         for key, value in data.items():
             # Known typed fields - let Pydantic handle them
-            if key in ("sample_id", "comparative_analyses"):
+            if key in ("sample_id", "links", "db_name"):
                 result[key] = value
             # Dict values should be PropertyMappings
             elif isinstance(value, dict):
@@ -640,10 +673,17 @@ class MetadataConfig(BaseModel):
                 carbon_source:
                   path: media.carbon_source
 
-                comparative_analyses:
-                    - repo: BrentLab/yeast_comparative_analysis
-                        dataset: dto
-                        via_field: perturbation_id
+          # Comparative dataset with aliases and links
+          BrentLab/yeast_comparative_analysis:
+            dataset:
+              dto:
+                dto_fdr:
+                  field: dto_fdr
+                aliases:
+                  dto_pvalue: dto_empirical_pvalue
+                links:
+                  binding_id:
+                    - [BrentLab/harbison_2004, harbison_2004]
 
         factor_aliases:
           carbon_source:
@@ -708,6 +748,34 @@ class MetadataConfig(BaseModel):
                         f"have empty value list"
                     )
         return v
+
+    @model_validator(mode="after")
+    def validate_unique_db_names(self) -> "MetadataConfig":
+        """
+        Validate that all resolved db_names are unique across datasets.
+
+        Each dataset resolves to db_name or config_name. These must be unique to avoid
+        SQL view name collisions.
+
+        :return: The validated MetadataConfig instance
+        :raises ValueError: If duplicate db_names are found
+
+        """
+        seen: dict[str, str] = {}
+        for repo_id, repo_config in self.repositories.items():
+            if not repo_config.dataset:
+                continue
+            for config_name, dataset_config in repo_config.dataset.items():
+                resolved = dataset_config.db_name or config_name
+                key = resolved.lower()
+                if key in seen:
+                    raise ValueError(
+                        f"Duplicate db_name '{resolved}': used by "
+                        f"'{seen[key]}' and "
+                        f"'{repo_id}/{config_name}'"
+                    )
+                seen[key] = f"{repo_id}/{config_name}"
+        return self
 
     @model_validator(mode="before")
     @classmethod
