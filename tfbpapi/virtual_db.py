@@ -11,8 +11,8 @@ over Parquet files cached locally. For primary datasets, VirtualDB creates metad
 views (one row per sample with derived columns) and full data views (measurement-level
 data joined to metadata). For comparative analysis datasets, VirtualDB creates expanded
 views that parse composite ID fields into ``_source`` (aliased to the configured
-db_name) and ``_id`` (sample_id) columns. The expectation is that a developer will
-use this interface to write SQL queries against the views to provide an API to
+db_name) and ``_id`` (sample identifier) columns. The expectation is that a developer
+will use this interface to write SQL queries against the views to provide an API to
 downstream users and applications.
 
 Example Usage::
@@ -49,8 +49,9 @@ from typing import Any
 
 import duckdb
 import pandas as pd
+from duckdb import BinderException
 
-from tfbpapi.datacard import DataCard
+from tfbpapi.datacard import DataCard, DatasetSchema
 from tfbpapi.models import MetadataConfig
 
 logger = logging.getLogger(__name__)
@@ -414,6 +415,62 @@ class VirtualDB:
                 parquet_only=comparative,
             )
 
+        # 1b. Resolve external metadata parquet views.
+        # When a data config's metadata lives in a separate HF config
+        # (applies_to), register its parquet as __<db_name>_metadata_parquet.
+        # All information is derived from DataCard YAML -- no DuckDB
+        # introspection needed.
+        self._dataset_schemas: dict[str, DatasetSchema] = {}
+        self._external_meta_views: dict[str, str] = {}
+        for db_name, (repo_id, config_name) in self._db_name_map.items():
+            if self._is_comparative(repo_id, config_name):
+                continue
+            try:
+                card = _cached_datacard(repo_id, token=self.token)
+                schema = card.get_dataset_schema(config_name)
+            except Exception as exc:
+                logger.warning(
+                    "Could not get dataset schema for %s/%s: %s",
+                    repo_id,
+                    config_name,
+                    exc,
+                )
+                continue
+            if schema is not None:
+                self._dataset_schemas[db_name] = schema
+            if (
+                schema is None
+                or schema.metadata_source != "external"
+                or not schema.external_metadata_config
+            ):
+                continue
+            meta_view = f"__{db_name}_metadata_parquet"
+            files = self._resolve_parquet_files(
+                repo_id, schema.external_metadata_config
+            )
+            if not files:
+                logger.warning(
+                    "No parquet files for external metadata config "
+                    "'%s' in repo '%s'",
+                    schema.external_metadata_config,
+                    repo_id,
+                )
+                continue
+            files_sql = ", ".join(f"'{f}'" for f in files)
+            try:
+                self._db.execute(
+                    f"CREATE OR REPLACE VIEW {meta_view} AS "
+                    f"SELECT * FROM read_parquet([{files_sql}])"
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Failed to create external metadata view '%s': %s",
+                    meta_view,
+                    exc,
+                )
+                continue
+            self._external_meta_views[db_name] = meta_view
+
         # 2. Metadata views for primary datasets (<db_name>_meta)
         # This is based on the metadata defined in the datacard,
         # and includes any additional derived columns based on the
@@ -567,62 +624,150 @@ class VirtualDB:
 
     def _register_meta_view(self, db_name: str, repo_id: str, config_name: str) -> None:
         """
-        Register a ``<db_name>_meta`` view with one row per sample_id.
+        Register a ``<db_name>_meta`` view with one row per sample.
 
-        Includes raw metadata columns from the DataCard plus any derived columns from
-        config property mappings (resolved against DataCard definitions with factor
-        aliases applied).
+        Includes metadata columns from the DataCard plus any derived columns
+        from config property mappings (resolved against DataCard definitions
+        with factor aliases applied).
+
+        For datasets with external metadata (a separate HF config with
+        ``applies_to``), JOINs the data parquet to the metadata parquet
+        on the configured sample_id column. The actual columns in the metadata
+        parquet are determined by DuckDB introspection (``DESCRIBE``) rather
+        than the DataCard feature list, because DataCard feature lists are
+        conceptual schemas that may include columns not physically present
+        in the parquet files.
 
         :param db_name: Base view name for the primary dataset
         :param repo_id: Repository ID
         :param config_name: Configuration name
+
+        raises ValueError: If no metadata fields are found.
+        raises BinderException: If view creation fails, with SQL details.
 
         """
         parquet_view = f"__{db_name}_parquet"
         if not self._view_exists(parquet_view):
             return
 
-        meta_cols = self._resolve_metadata_fields(repo_id, config_name)
-        prop_result = self._resolve_property_columns(repo_id, config_name)
+        sample_col = self._get_sample_id_col(db_name)
 
+        # Pull ext_meta_view early -- needed for both meta_cols and
+        # FROM clause construction.
+        schema: DatasetSchema | None = getattr(self, "_dataset_schemas", {}).get(
+            db_name
+        )
+        ext_meta_view: str | None = getattr(self, "_external_meta_views", {}).get(
+            db_name
+        )
+
+        is_external = (
+            ext_meta_view is not None
+            and schema is not None
+            and schema.metadata_source == "external"
+        )
+
+        if is_external:
+            # DataCard feature lists are conceptual -- columns listed there
+            # may not be physically present in the parquet file. Use DuckDB
+            # introspection to get the actual columns in the metadata parquet.
+            assert ext_meta_view is not None
+            actual_meta_cols: set[str] = set(self._get_view_columns(ext_meta_view))
+            meta_cols: list[str] = sorted(actual_meta_cols)
+        elif schema is not None:
+            actual_meta_cols = schema.metadata_columns
+            meta_cols = sorted(actual_meta_cols)
+        else:
+            meta_cols = self._resolve_metadata_fields(repo_id, config_name) or []
+            actual_meta_cols = set(meta_cols)
+
+        if not meta_cols:
+            raise ValueError(
+                f"No metadata fields found for {repo_id}/{config_name}. "
+                f"Cannot create meta view '{db_name}_meta'."
+            )
+
+        # FROM clause: JOIN data + metadata parquets when external,
+        # plain parquet view otherwise.
+        if is_external:
+            assert ext_meta_view is not None
+            # Use the configured sample_id column as the join key.
+            # The DataCard feature intersection (schema.join_columns)
+            # is unreliable because a data config's feature list may
+            # document columns that are physically only in the metadata
+            # parquet (present conceptually after a join, not in the
+            # physical data parquet file).
+            from_clause = (
+                f"{parquet_view} d " f"JOIN {ext_meta_view} m " f"USING ({sample_col})"
+            )
+            is_join = True
+        else:
+            from_clause = parquet_view
+            is_join = False
+
+        def qualify(col: str) -> str:
+            """Return qualified column name for JOIN context."""
+            if not is_join:
+                return col
+            if col == sample_col:
+                return col  # USING makes join key unqualified
+            # Use the actual metadata parquet columns (from DuckDB
+            # introspection) to decide qualification, not the DataCard
+            # feature list which may be inaccurate.
+            if col in actual_meta_cols:
+                return f"m.{col}"
+            return f"d.{col}"
+
+        # Build SELECT: sample_id + metadata cols (deduplicated)
+        seen: set[str] = set()
+        select_parts: list[str] = []
+
+        def add_col(col: str) -> None:
+            if col not in seen:
+                seen.add(col)
+                select_parts.append(qualify(col))
+
+        add_col(sample_col)
+        for col in meta_cols:
+            add_col(col)
+
+        # Add derived property expressions from the VirtualDB config
+        prop_result = self._resolve_property_columns(repo_id, config_name)
         if prop_result is not None:
             derived_exprs, prop_raw_cols = prop_result
-            # Raw cols = metadata_fields + any source fields needed
-            # by property mappings
-            if meta_cols is not None:
-                raw = list(dict.fromkeys(["sample_id"] + meta_cols + prop_raw_cols))
-            else:
-                raw = list(dict.fromkeys(["sample_id"] + prop_raw_cols))
+            # Ensure source columns needed by expressions are selected
+            for col in prop_raw_cols:
+                add_col(col)
+            # Qualify source column references inside CASE WHEN expressions
+            if is_join:
+                qualified_exprs = []
+                for expr in derived_exprs:
+                    for raw_col in prop_raw_cols:
+                        q = qualify(raw_col)
+                        if q != raw_col:
+                            # Replace bare column name in CASE WHEN patterns
+                            expr = expr.replace(
+                                f"CASE {raw_col} ", f"CASE {q} "
+                            ).replace(f" {raw_col} = ", f" {q} = ")
+                    qualified_exprs.append(expr)
+                derived_exprs = qualified_exprs
+            select_parts.extend(derived_exprs)
 
-            raw_sql = ", ".join(raw)
-
-            # Outer SELECT: raw cols + derived expressions
-            outer_parts = list(raw) + derived_exprs
-            outer_sql = ", ".join(outer_parts)
-
-            self._db.execute(
-                f"CREATE OR REPLACE VIEW {db_name}_meta AS "
-                f"SELECT DISTINCT {outer_sql} "
-                f"FROM ("
-                f"SELECT DISTINCT {raw_sql} "
-                f"FROM {parquet_view}"
-                f") AS __raw"
-            )
-        elif meta_cols is not None:
-            # Fallback: metadata_fields only, no property mappings
-            cols = list(dict.fromkeys(["sample_id"] + meta_cols))
-            cols_sql = ", ".join(cols)
-            self._db.execute(
-                f"CREATE OR REPLACE VIEW {db_name}_meta AS "
-                f"SELECT DISTINCT {cols_sql} "
-                f"FROM {parquet_view}"
-            )
-        else:
-            # No metadata_fields at all -- all columns are metadata
-            self._db.execute(
-                f"CREATE OR REPLACE VIEW {db_name}_meta AS "
-                f"SELECT DISTINCT * FROM {parquet_view}"
-            )
+        cols_sql = ", ".join(select_parts)
+        sql = (
+            f"CREATE OR REPLACE VIEW {db_name}_meta AS "
+            f"SELECT DISTINCT {cols_sql} FROM {from_clause}"
+        )
+        try:
+            self._db.execute(sql)
+        except BinderException as exc:
+            raise BinderException(
+                f"Failed to create meta view '{db_name}_meta'.\n"
+                f"  schema: {schema}\n"
+                f"  from_clause: {from_clause}\n"
+                f"  SQL: {sql}\n"
+                f"  error: {exc}"
+            ) from exc
 
     def _enrich_raw_view(self, db_name: str) -> None:
         """
@@ -648,40 +793,58 @@ class VirtualDB:
         if not extra_cols:
             return
 
+        sample_col = self._get_sample_id_col(db_name)
         extra_select = ", ".join(f"m.{c}" for c in sorted(extra_cols))
         self._db.execute(
             f"CREATE OR REPLACE VIEW {db_name} AS "
             f"SELECT r.*, {extra_select} "
             f"FROM {parquet_name} r "
-            f"JOIN {meta_name} m USING (sample_id)"
+            f"JOIN {meta_name} m USING ({sample_col})"
         )
 
     def _get_view_columns(self, view: str) -> list[str]:
-        """Return column names for a view."""
-        df = self._db.execute(
-            f"SELECT column_name FROM information_schema.columns "
-            f"WHERE table_name = '{view}'"
-        ).fetchdf()
+        """
+        Return column names for a view.
+
+        Uses ``DESCRIBE`` rather than ``information_schema`` to force
+        eager schema resolution for ``read_parquet``-backed views,
+        which DuckDB may evaluate lazily.
+
+        """
+        df = self._db.execute(f"DESCRIBE {view}").fetchdf()
         return df["column_name"].tolist()
+
+    def _get_sample_id_col(self, db_name: str) -> str:
+        """
+        Resolve the sample identifier column name for a dataset.
+
+        :param db_name: Resolved database view name
+        :return: Actual column name for the sample identifier
+
+        """
+        repo_id, config_name = self._db_name_map[db_name]
+        return self.config.get_sample_id_field(repo_id, config_name)
 
     def _resolve_metadata_fields(
         self, repo_id: str, config_name: str
     ) -> list[str] | None:
         """
-        Get the metadata_fields list from the DataCard config.
+        Get metadata field names from the DataCard.
+
+        Delegates to ``DataCard.get_metadata_fields()`` which handles
+        both embedded metadata_fields and external metadata configs
+        (via applies_to).
 
         :param repo_id: Repository ID
         :param config_name: Configuration name
-        :return: List of metadata field names, or None if not specified
+        :return: List of metadata field names, or None if not found
 
         """
         try:
             card = _cached_datacard(repo_id, token=self.token)
-            config = card.get_config(config_name)
-            if config and config.metadata_fields:
-                return list(config.metadata_fields)
+            return card.get_metadata_fields(config_name)
         except Exception:
-            logger.debug(
+            logger.error(
                 "Could not resolve metadata_fields for %s/%s",
                 repo_id,
                 config_name,
@@ -975,7 +1138,7 @@ class VirtualDB:
 
         - ``<link_field>_source`` -- the ``repo_id;config_name`` prefix,
           aliased to the configured ``db_name`` when available.
-        - ``<link_field>_id`` -- the sample_id component.
+        - ``<link_field>_id`` -- the sample identifier component.
 
         :param db_name: Base view name for the comparative dataset
         :param ds_cfg: DatasetVirtualDBConfig with ``links``

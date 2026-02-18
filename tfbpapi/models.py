@@ -876,3 +876,32 @@ class MetadataConfig(BaseModel):
             mappings.update(dataset_config.property_mappings)
 
         return mappings
+
+    def get_sample_id_field(self, repo_id: str, config_name: str) -> str:
+        """
+        Resolve the actual column name for the sample identifier.
+
+        Checks dataset-level ``sample_id`` first, then repo-level,
+        falling back to ``"sample_id"`` if neither is configured.
+
+        :param repo_id: Repository ID
+        :param config_name: Dataset/config name
+        :return: Column name for the sample identifier
+
+        """
+        repo_cfg = self.get_repository_config(repo_id)
+        if not repo_cfg:
+            return "sample_id"
+
+        # Dataset-level takes precedence
+        if repo_cfg.dataset and config_name in repo_cfg.dataset:
+            ds_cfg = repo_cfg.dataset[config_name]
+            if ds_cfg.sample_id is not None and ds_cfg.sample_id.field:
+                return ds_cfg.sample_id.field
+
+        # Repo-level fallback
+        repo_sample_id = repo_cfg.properties.get("sample_id")
+        if repo_sample_id is not None and repo_sample_id.field is not None:
+            return repo_sample_id.field
+
+        return "sample_id"

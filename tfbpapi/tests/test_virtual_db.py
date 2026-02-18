@@ -14,6 +14,8 @@ import pandas as pd
 import pytest
 import yaml  # type: ignore
 
+from tfbpapi.datacard import DatasetSchema
+from tfbpapi.models import MetadataConfig
 from tfbpapi.virtual_db import VirtualDB
 
 # ------------------------------------------------------------------
@@ -313,27 +315,87 @@ def _make_mock_datacard(repo_id):
         card.get_config.return_value = config_mock
         card.get_field_definitions.return_value = HARBISON_CONDITION_DEFS
         card.get_experimental_conditions.return_value = {}
+        card.get_metadata_fields.return_value = METADATA_FIELDS["harbison_2004"]
+        card.get_metadata_config_name.return_value = None
+        # Harbison: embedded metadata, condition is data col used for
+        # derived properties; metadata_cols are the three metadata fields
+        harbison_meta_cols = set(METADATA_FIELDS["harbison_2004"])
+        harbison_data_cols = {
+            "sample_id",
+            "condition",
+            "target_locus_tag",
+            "effect",
+            "pvalue",
+        } - harbison_meta_cols
+        card.get_data_col_names.return_value = {
+            "sample_id",
+            "regulator_locus_tag",
+            "regulator_symbol",
+            "condition",
+            "target_locus_tag",
+            "effect",
+            "pvalue",
+        }
+        card.get_dataset_schema.return_value = DatasetSchema(
+            data_columns=harbison_data_cols
+            | {
+                "sample_id",
+                "condition",
+                "target_locus_tag",
+                "effect",
+                "pvalue",
+            },
+            metadata_columns=harbison_meta_cols,
+            join_columns=set(),
+            metadata_source="embedded",
+            external_metadata_config=None,
+            is_partitioned=False,
+        )
     elif repo_id == "BrentLab/kemmeren":
         config_mock = MagicMock()
         config_mock.metadata_fields = METADATA_FIELDS["kemmeren_2014"]
-        # model_extra at config level (no experimental_conditions
-        # at this level for kemmeren)
         config_mock.model_extra = {}
         card.get_config.return_value = config_mock
         card.get_field_definitions.return_value = {}
-        # model_extra at top level with experimental_conditions
-        # wrapper -- matches real DataCard structure
         dataset_card_mock = MagicMock()
         dataset_card_mock.model_extra = {
             "experimental_conditions": KEMMEREN_EXP_CONDITIONS,
         }
         card.dataset_card = dataset_card_mock
+        card.get_metadata_fields.return_value = METADATA_FIELDS["kemmeren_2014"]
+        card.get_metadata_config_name.return_value = None
+        kemmeren_meta_cols = set(METADATA_FIELDS["kemmeren_2014"])
+        card.get_data_col_names.return_value = {
+            "sample_id",
+            "regulator_locus_tag",
+            "regulator_symbol",
+            "target_locus_tag",
+            "effect",
+            "pvalue",
+        }
+        card.get_dataset_schema.return_value = DatasetSchema(
+            data_columns={
+                "sample_id",
+                "target_locus_tag",
+                "effect",
+                "pvalue",
+            },
+            metadata_columns=kemmeren_meta_cols,
+            join_columns=set(),
+            metadata_source="embedded",
+            external_metadata_config=None,
+            is_partitioned=False,
+        )
     else:
         config_mock = MagicMock()
         config_mock.metadata_fields = None
         card.get_config.return_value = config_mock
         card.get_field_definitions.return_value = {}
         card.get_experimental_conditions.return_value = {}
+        card.get_metadata_fields.return_value = None
+        card.get_metadata_config_name.return_value = None
+        card.get_data_col_names.return_value = set()
+        card.get_dataset_schema.return_value = None
 
     return card
 
@@ -780,3 +842,283 @@ class TestEdgeCases:
         v = VirtualDB(config_path)
         assert v._conn is None
         assert not v._views_registered
+
+
+# ------------------------------------------------------------------
+# Tests: dynamic sample_id column
+# ------------------------------------------------------------------
+
+
+class TestDynamicSampleId:
+    """Tests that the sample identifier column is resolved from config."""
+
+    def test_non_default_sample_id(self, tmp_path, monkeypatch):
+        """Views work when sample_id maps to a non-default column."""
+        import tfbpapi.virtual_db as vdb_module
+
+        # Config uses experiment_id as the sample identifier
+        config = {
+            "repositories": {
+                "TestOrg/custom_id": {
+                    "dataset": {
+                        "custom_data": {
+                            "db_name": "custom",
+                            "sample_id": {
+                                "field": "experiment_id",
+                            },
+                            "regulator": {
+                                "field": "regulator",
+                            },
+                        }
+                    }
+                }
+            }
+        }
+        config_path = tmp_path / "config.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config, f)
+
+        # Parquet uses experiment_id (not sample_id)
+        df = pd.DataFrame(
+            {
+                "experiment_id": [100, 100, 200, 200],
+                "regulator": ["TF1", "TF1", "TF2", "TF2"],
+                "target": ["G1", "G2", "G1", "G2"],
+                "score": [1.5, 0.8, 2.1, 0.3],
+            }
+        )
+        parquet_path = tmp_path / "custom.parquet"
+        files = {
+            ("TestOrg/custom_id", "custom_data"): [_write_parquet(parquet_path, df)],
+        }
+
+        # Mock datacard
+        mock_card = MagicMock()
+        mock_card.get_metadata_fields.return_value = [
+            "regulator",
+        ]
+        mock_card.get_field_definitions.return_value = {}
+        mock_card.get_experimental_conditions.return_value = {}
+        mock_card.get_dataset_schema.return_value = DatasetSchema(
+            data_columns={"experiment_id", "target", "score"},
+            metadata_columns={"regulator"},
+            join_columns=set(),
+            metadata_source="embedded",
+            external_metadata_config=None,
+            is_partitioned=False,
+        )
+
+        v = VirtualDB(config_path)
+
+        monkeypatch.setattr(
+            VirtualDB,
+            "_resolve_parquet_files",
+            lambda self, repo_id, cn: files.get((repo_id, cn), []),
+        )
+        monkeypatch.setattr(
+            vdb_module,
+            "_cached_datacard",
+            lambda repo_id, token=None: mock_card,
+        )
+
+        # Meta view should have experiment_id + regulator
+        meta_df = v.query("SELECT * FROM custom_meta")
+        assert "experiment_id" in meta_df.columns
+        assert len(meta_df) == 2  # 2 distinct samples
+
+        # Enriched raw view should JOIN on experiment_id
+        raw_df = v.query("SELECT * FROM custom")
+        assert "experiment_id" in raw_df.columns
+        assert len(raw_df) == 4  # all rows
+
+    def test_get_sample_id_field_dataset_level(self):
+        """Dataset-level sample_id takes precedence."""
+        config = MetadataConfig.model_validate(
+            {
+                "repositories": {
+                    "Org/repo": {
+                        "dataset": {
+                            "ds": {
+                                "sample_id": {
+                                    "field": "my_id",
+                                },
+                            }
+                        }
+                    }
+                }
+            }
+        )
+        assert config.get_sample_id_field("Org/repo", "ds") == "my_id"
+
+    def test_get_sample_id_field_repo_level(self):
+        """Repo-level sample_id used when dataset has none."""
+        config = MetadataConfig.model_validate(
+            {
+                "repositories": {
+                    "Org/repo": {
+                        "sample_id": {"field": "repo_sid"},
+                        "dataset": {"ds": {}},
+                    }
+                }
+            }
+        )
+        assert config.get_sample_id_field("Org/repo", "ds") == "repo_sid"
+
+    def test_get_sample_id_field_default(self):
+        """Falls back to 'sample_id' when not configured."""
+        config = MetadataConfig.model_validate(
+            {"repositories": {"Org/repo": {"dataset": {"ds": {}}}}}
+        )
+        assert config.get_sample_id_field("Org/repo", "ds") == "sample_id"
+
+    def test_get_sample_id_field_dataset_overrides_repo(self):
+        """Dataset-level overrides repo-level."""
+        config = MetadataConfig.model_validate(
+            {
+                "repositories": {
+                    "Org/repo": {
+                        "sample_id": {"field": "repo_id_col"},
+                        "dataset": {
+                            "ds": {
+                                "sample_id": {
+                                    "field": "ds_id_col",
+                                },
+                            }
+                        },
+                    }
+                }
+            }
+        )
+        assert config.get_sample_id_field("Org/repo", "ds") == "ds_id_col"
+
+
+class TestExternalMetadata:
+    """Tests for datasets with external metadata parquet files."""
+
+    def test_external_metadata_join(self, tmp_path, monkeypatch):
+        """Meta view JOINs data and metadata parquet when metadata is in a separate
+        config."""
+        import tfbpapi.virtual_db as vdb_module
+
+        # Data parquet: measurements with sample_id but no
+        # metadata columns like db_id or batch
+        data_df = pd.DataFrame(
+            {
+                "sample_id": [1, 1, 2, 2],
+                "target_locus_tag": [
+                    "YAL001C",
+                    "YAL002W",
+                    "YAL001C",
+                    "YAL002W",
+                ],
+                "effect": [1.5, 0.8, 2.1, 0.3],
+            }
+        )
+        # Metadata parquet: sample-level metadata
+        meta_df = pd.DataFrame(
+            {
+                "sample_id": [1, 2],
+                "db_id": [101, 102],
+                "regulator_locus_tag": ["YBR049C", "YDR463W"],
+                "background_hops": [500, 600],
+            }
+        )
+
+        data_path = _write_parquet(tmp_path / "data.parquet", data_df)
+        meta_path = _write_parquet(tmp_path / "meta.parquet", meta_df)
+
+        parquet_files = {
+            ("TestOrg/repo", "chip_data"): [data_path],
+            ("TestOrg/repo", "sample_metadata"): [meta_path],
+        }
+
+        config = {
+            "repositories": {
+                "TestOrg/repo": {
+                    "sample_id": {"field": "sample_id"},
+                    "dataset": {
+                        "chip_data": {
+                            "db_name": "chip",
+                            "regulator_locus_tag": {
+                                "field": "regulator_locus_tag",
+                            },
+                        }
+                    },
+                }
+            }
+        }
+        config_file = tmp_path / "config.yaml"
+        with open(config_file, "w") as f:
+            yaml.dump(config, f)
+
+        # Mock DataCard: external metadata via applies_to
+        card = MagicMock()
+        config_mock = MagicMock()
+        config_mock.metadata_fields = None  # no embedded
+        card.get_config.return_value = config_mock
+        card.get_metadata_fields.return_value = [
+            "sample_id",
+            "db_id",
+            "regulator_locus_tag",
+            "background_hops",
+        ]
+        card.get_metadata_config_name.return_value = "sample_metadata"
+        # Data parquet columns (from chip_data features)
+        card.get_data_col_names.return_value = {
+            "sample_id",
+            "target_locus_tag",
+            "effect",
+        }
+        card.get_field_definitions.return_value = {}
+        card.get_experimental_conditions.return_value = {}
+        # External metadata schema: data cols in data parquet,
+        # metadata cols in metadata parquet, joined on sample_id
+        card.get_dataset_schema.return_value = DatasetSchema(
+            data_columns={"sample_id", "target_locus_tag", "effect"},
+            metadata_columns={
+                "sample_id",
+                "db_id",
+                "regulator_locus_tag",
+                "background_hops",
+            },
+            join_columns={"sample_id"},
+            metadata_source="external",
+            external_metadata_config="sample_metadata",
+            is_partitioned=False,
+        )
+
+        v = VirtualDB(config_file)
+        monkeypatch.setattr(
+            VirtualDB,
+            "_resolve_parquet_files",
+            lambda self, repo_id, cfg: parquet_files.get((repo_id, cfg), []),
+        )
+        monkeypatch.setattr(
+            vdb_module,
+            "_cached_datacard",
+            lambda repo_id, token=None: card,
+        )
+
+        # Trigger view registration
+        tables = v.tables()
+        assert "chip" in tables
+        assert "chip_meta" in tables
+
+        # Meta view should have columns from both parquets
+        meta_result = v.query("SELECT * FROM chip_meta ORDER BY sample_id")
+        meta_cols = set(meta_result.columns)
+        assert "sample_id" in meta_cols
+        assert "db_id" in meta_cols
+        assert "regulator_locus_tag" in meta_cols
+        assert "background_hops" in meta_cols
+
+        # Verify data is correct (joined properly)
+        assert len(meta_result) == 2
+        row1 = meta_result[meta_result["sample_id"] == 1].iloc[0]
+        assert row1["db_id"] == 101
+        assert row1["regulator_locus_tag"] == "YBR049C"
+
+        # Enriched raw view should also work
+        raw_result = v.query("SELECT * FROM chip ORDER BY sample_id")
+        assert "db_id" in raw_result.columns
+        assert len(raw_result) == 4  # 4 data rows

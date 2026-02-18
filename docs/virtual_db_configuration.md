@@ -10,8 +10,10 @@ levels.
 repositories:
   # Each repository defines a "table" in the virtual database
   BrentLab/harbison_2004:
-    # REQUIRED: Specify which field is the sample identifier. At this level, it means
-    # that all datasets have a field `sample_id` that uniquely identifies samples.
+    # REQUIRED: Specify which column is the sample identifier. The `field`
+    # value is the actual column name in the parquet data. At the repo level,
+    # it applies to all datasets in this repository. If not specified at
+    # either level, the default column name "sample_id" is assumed.
     sample_id:
       field: sample_id
     # Repository-wide properties (apply to all datasets in this repository)
@@ -47,8 +49,9 @@ repositories:
       kemmeren_2014:
         # optional -- see the note for `db_name` in harbison above
         db_name: kemmeren
-        # REQUIRED: If `sample_id` isn't defined at the repo level, then it must be
-        # defined at the dataset level for each dataset in the repo
+        # REQUIRED: If `sample_id` isn't defined at the repo level, it must be
+        # defined at the dataset level. The `field` value is the actual column
+        # name in the parquet data (does not need to be literally "sample_id").
         sample_id:
           field: sample_id
         # Same logical fields, different physical paths
@@ -152,9 +155,10 @@ Each row relates 2+ samples from other datasets.
 
 ### Structure
 
-Comparative datasets use `source_sample` fields instead of a single `sample_id`:
+Comparative datasets use `source_sample` fields instead of a single sample
+identifier column:
 - Multiple fields with `role: source_sample`
-- Each contains composite identifier: `"repo_id;config_name;sample_id"`
+- Each contains composite identifier: `"repo_id;config_name;sample_id_value"`
 - Example: `binding_id = "BrentLab/harbison_2004;harbison_2004;42"`
 
 ### Fields
@@ -206,10 +210,11 @@ build on each other. Using `harbison` as an example primary dataset and
 
 **1. Metadata view**
 
-One row per unique `sample_id`. Derived columns from the configuration
-(e.g., `carbon_source`, `temperature_celsius`) are resolved here using
-datacard definitions, factor aliases, and missing value labels. This is
-the primary view for querying sample-level metadata.
+One row per unique sample identifier (the column configured via
+`sample_id: {field: <column_name>}`). Derived columns from the
+configuration (e.g., `carbon_source`, `temperature_celsius`) are resolved
+here using datacard definitions, factor aliases, and missing value labels.
+This is the primary view for querying sample-level metadata.
 
 **2. Raw data view**
 
@@ -239,7 +244,7 @@ or filter by source dataset without parsing composite IDs in SQL.
 ```
 __harbison_parquet  (raw parquet, not directly exposed)
   |
-  +-> harbison_meta  (deduplicated, one row per sample_id,
+  +-> harbison_meta  (deduplicated, one row per sample identifier,
   |                   with derived columns from config)
   |
   +-> harbison  (full parquet joined to harbison_meta)
