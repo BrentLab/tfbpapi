@@ -45,13 +45,15 @@ class DatasetSchema:
     Derived entirely from the DataCard YAML -- no DuckDB introspection needed. Used by
     VirtualDB to determine column partitioning between data and metadata parquets.
 
-    :ivar data_columns: Column names present in the data parquet :ivar metadata_columns:
-    Column names that are metadata :ivar join_columns: Columns common to both data and
-    metadata     parquets (used as JOIN keys for external metadata).     Empty for
-    embedded metadata (same parquet, no JOIN needed). :ivar metadata_source: One of
-    "embedded", "external", or "none" :ivar external_metadata_config: Config name of the
-    external     metadata config, or None if metadata is embedded or absent :ivar
-    is_partitioned: Whether the data parquet is partitioned
+    :ivar data_columns: Column names present in the data parquet.
+    :ivar metadata_columns: Column names that are metadata.
+    :ivar join_columns: Columns common to both data and metadata parquets (used as JOIN
+        keys for external metadata). Empty for embedded metadata (same parquet, no JOIN
+        needed).
+    :ivar metadata_source: One of ``"embedded"``, ``"external"``, or ``"none"``.
+    :ivar external_metadata_config: Config name of the external metadata config, or
+        ``None`` if metadata is embedded or absent.
+    :ivar is_partitioned: Whether the data parquet is partitioned.
 
     """
 
