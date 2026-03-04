@@ -23,6 +23,66 @@ For comparative analysis datasets, VirtualDB creates:
 See the [configuration guide](virtual_db_configuration.md) for setup details
 and the [tutorial](tutorials/virtual_db_tutorial.ipynb) for usage examples.
 
+## Advanced Usage
+
+After any public method is called (e.g. `vdb.tables()`), the underlying DuckDB
+connection is available as `vdb._db`. You can use `_db` to execute any SQL
+on the database, eg creating more views, or creating a table in memory
+
+Custom **views** created this way appear in `tables()`, `describe()`, and
+`get_fields()` automatically because those methods query DuckDB's
+`information_schema`. Custom **tables** do not appear in `tables()` (which
+only lists views), but are fully queryable via `vdb.query()`.
+
+Call at least one public method first to ensure the connection is initialized
+before accessing `_db` directly.
+
+Example -- create a materialized analysis table::
+
+    # Trigger view registration
+    vdb.tables()
+
+    # Create a persistent in-memory table from a complex query.
+    # This example selects one "best" Hackett-2020 sample per regulator
+    # using a priority system: ZEV+P > GEV+P > GEV+M.
+    vdb._db.execute("""
+        CREATE OR REPLACE TABLE hackett_analysis_set AS
+        WITH regulator_tiers AS (
+            SELECT
+                regulator_locus_tag,
+                CASE
+                    WHEN BOOL_OR(mechanism = 'ZEV' AND restriction = 'P') THEN 1
+                    WHEN BOOL_OR(mechanism = 'GEV' AND restriction = 'P') THEN 2
+                    ELSE 3
+                END AS tier
+            FROM hackett_meta
+            WHERE regulator_locus_tag NOT IN ('Z3EV', 'GEV')
+            GROUP BY regulator_locus_tag
+        ),
+        tier_filter AS (
+            SELECT
+                h.sample_id, h.regulator_locus_tag, h.regulator_symbol,
+                h.mechanism, h.restriction, h.date, h.strain, t.tier
+            FROM hackett_meta h
+            JOIN regulator_tiers t USING (regulator_locus_tag)
+            WHERE
+                (t.tier = 1 AND h.mechanism = 'ZEV' AND h.restriction = 'P')
+                OR (t.tier = 2 AND h.mechanism = 'GEV' AND h.restriction = 'P')
+                OR (t.tier = 3 AND h.mechanism = 'GEV' AND h.restriction = 'M')
+        )
+        SELECT DISTINCT
+            sample_id, regulator_locus_tag, regulator_symbol,
+            mechanism, restriction, date, strain
+        FROM tier_filter
+        WHERE regulator_symbol NOT IN ('GCN4', 'RDS2', 'SWI1', 'MAC1')
+        ORDER BY regulator_locus_tag, sample_id
+    """)
+
+    df = vdb.query("SELECT * FROM hackett_analysis_set")
+
+Tables and views created this way are in-memory only and do not persist across
+VirtualDB instances. They exist for the lifetime of the DuckDB connection.
+
 ## API Reference
 
 ::: tfbpapi.virtual_db.VirtualDB
