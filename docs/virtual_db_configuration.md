@@ -10,8 +10,10 @@ levels.
 repositories:
   # Each repository defines a "table" in the virtual database
   BrentLab/harbison_2004:
-    # REQUIRED: Specify which field is the sample identifier. At this level, it means
-    # that all datasets have a field `sample_id` that uniquely identifies samples.
+    # REQUIRED: Specify which column is the sample identifier. The `field`
+    # value is the actual column name in the parquet data. At the repo level,
+    # it applies to all datasets in this repository. If not specified at
+    # either level, the default column name "sample_id" is assumed.
     sample_id:
       field: sample_id
     # Repository-wide properties (apply to all datasets in this repository)
@@ -47,8 +49,9 @@ repositories:
       kemmeren_2014:
         # optional -- see the note for `db_name` in harbison above
         db_name: kemmeren
-        # REQUIRED: If `sample_id` isn't defined at the repo level, then it must be
-        # defined at the dataset level for each dataset in the repo
+        # REQUIRED: If `sample_id` isn't defined at the repo level, it must be
+        # defined at the dataset level. The `field` value is the actual column
+        # name in the parquet data (does not need to be literally "sample_id").
         sample_id:
           field: sample_id
         # Same logical fields, different physical paths
@@ -144,6 +147,62 @@ during metadata extraction and query filtering.
 2. **Type consistency**: When source data might be extracted with incorrect type
 3. **Performance**: Helps with query optimization and prevents type mismatches
 
+## Tags
+
+Tags are arbitrary string key/value pairs for annotating datasets. They follow
+the same hierarchy as property mappings: repo-level tags apply to all datasets
+in the repository, dataset-level tags apply only to that dataset, and
+dataset-level tags override repo-level tags with the same key.
+
+```yaml
+repositories:
+  BrentLab/harbison_2004:
+    # Repo-level tags apply to all datasets in this repository
+    tags:
+      assay: binding
+      organism: yeast
+    dataset:
+      harbison_2004:
+        sample_id:
+          field: sample_id
+        # Dataset-level tags override repo-level tags with the same key
+        tags:
+          assay: chip-chip
+
+  BrentLab/kemmeren_2014:
+    tags:
+      assay: perturbation
+      organism: yeast
+    dataset:
+      kemmeren_2014:
+        sample_id:
+          field: sample_id
+```
+
+Access merged tags via `vdb.get_tags(db_name)`, identifying datasets by
+their name as it appears in `vdb.tables()`:
+
+```python
+from tfbpapi.virtual_db import VirtualDB
+
+vdb = VirtualDB("datasets.yaml")
+
+# Returns {"assay": "chip-chip", "organism": "yeast"}
+# (dataset-level assay overrides repo-level)
+vdb.get_tags("harbison")
+
+# Returns {"assay": "perturbation", "organism": "yeast"}
+vdb.get_tags("kemmeren")
+```
+
+The underlying `MetadataConfig` (available as `vdb.config`) exposes the same
+data via `(repo_id, config_name)` pairs for programmatic or developer use:
+
+```python
+# Equivalent to vdb.get_tags("harbison") above
+vdb.config.get_tags("BrentLab/harbison_2004", "harbison_2004")
+```
+
 ## Comparative Datasets
 
 Comparative datasets differ from other dataset types in that they represent
@@ -152,9 +211,10 @@ Each row relates 2+ samples from other datasets.
 
 ### Structure
 
-Comparative datasets use `source_sample` fields instead of a single `sample_id`:
+Comparative datasets use `source_sample` fields instead of a single sample
+identifier column:
 - Multiple fields with `role: source_sample`
-- Each contains composite identifier: `"repo_id;config_name;sample_id"`
+- Each contains composite identifier: `"repo_id;config_name;sample_id_value"`
 - Example: `binding_id = "BrentLab/harbison_2004;harbison_2004;42"`
 
 ### Fields
@@ -206,10 +266,11 @@ build on each other. Using `harbison` as an example primary dataset and
 
 **1. Metadata view**
 
-One row per unique `sample_id`. Derived columns from the configuration
-(e.g., `carbon_source`, `temperature_celsius`) are resolved here using
-datacard definitions, factor aliases, and missing value labels. This is
-the primary view for querying sample-level metadata.
+One row per unique sample identifier (the column configured via
+`sample_id: {field: <column_name>}`). Derived columns from the
+configuration (e.g., `carbon_source`, `temperature_celsius`) are resolved
+here using datacard definitions, factor aliases, and missing value labels.
+This is the primary view for querying sample-level metadata.
 
 **2. Raw data view**
 
@@ -239,7 +300,7 @@ or filter by source dataset without parsing composite IDs in SQL.
 ```
 __harbison_parquet  (raw parquet, not directly exposed)
   |
-  +-> harbison_meta  (deduplicated, one row per sample_id,
+  +-> harbison_meta  (deduplicated, one row per sample identifier,
   |                   with derived columns from config)
   |
   +-> harbison  (full parquet joined to harbison_meta)

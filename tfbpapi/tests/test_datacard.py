@@ -5,8 +5,78 @@ from unittest.mock import Mock, patch
 import pytest
 
 from tfbpapi import DataCard
+from tfbpapi.datacard import DatasetSchema
 from tfbpapi.errors import DataCardError, DataCardValidationError, HfDataFetchError
 from tfbpapi.models import DatasetType
+
+
+def _external_metadata_card_data():
+    """Card data with external metadata (no embedded metadata_fields)."""
+    return {
+        "configs": [
+            {
+                "config_name": "coverage_data",
+                "description": "Coverage measurements",
+                "dataset_type": "genome_map",
+                "default": True,
+                "data_files": [{"split": "train", "path": "coverage.parquet"}],
+                "dataset_info": {
+                    "features": [
+                        {
+                            "name": "sample_id",
+                            "dtype": "integer",
+                            "description": "Sample ID",
+                        },
+                        {
+                            "name": "chr",
+                            "dtype": "string",
+                            "description": "Chromosome",
+                            "role": "genomic_coordinate",
+                        },
+                        {
+                            "name": "coverage",
+                            "dtype": "float32",
+                            "description": "Coverage value",
+                            "role": "quantitative_measure",
+                        },
+                    ]
+                },
+            },
+            {
+                "config_name": "sample_metadata",
+                "description": "Sample metadata",
+                "dataset_type": "metadata",
+                "applies_to": ["coverage_data"],
+                "data_files": [{"split": "train", "path": "metadata.parquet"}],
+                "dataset_info": {
+                    "features": [
+                        {
+                            "name": "sample_id",
+                            "dtype": "integer",
+                            "description": "Sample ID",
+                        },
+                        {
+                            "name": "batch",
+                            "dtype": "string",
+                            "description": "Batch ID",
+                        },
+                        {
+                            "name": "regulator_locus_tag",
+                            "dtype": "string",
+                            "description": "TF locus tag",
+                            "role": "regulator_identifier",
+                        },
+                        {
+                            "name": "regulator_symbol",
+                            "dtype": "string",
+                            "description": "TF symbol",
+                            "role": "regulator_identifier",
+                        },
+                    ]
+                },
+            },
+        ],
+    }
 
 
 class TestDataCard:
@@ -30,6 +100,7 @@ class TestDataCard:
         assert datacard.token == test_token
         assert datacard._dataset_card is None
         assert datacard._metadata_cache == {}
+        assert datacard._metadata_fields_map == {}
 
         # Check that fetchers were initialized
         mock_card_fetcher.assert_called_once_with(token=test_token)
@@ -447,3 +518,393 @@ class TestDataCard:
 
         # Should return empty set on error
         assert values == set()
+
+
+class TestGetMetadataFields:
+    """Tests for DataCard.get_metadata_fields()."""
+
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
+    def test_embedded_metadata_fields(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+        sample_dataset_card_data,
+    ):
+        """Embedded metadata_fields on the data config are returned."""
+        mock_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_fetcher_instance
+        mock_fetcher_instance.fetch.return_value = sample_dataset_card_data
+
+        datacard = DataCard(test_repo_id)
+        result = datacard.get_metadata_fields("binding_data")
+
+        assert result == ["regulator_symbol", "experimental_condition"]
+
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
+    def test_external_metadata_fields(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+    ):
+        """External metadata via applies_to returns feature names."""
+        mock_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_fetcher_instance
+        mock_fetcher_instance.fetch.return_value = _external_metadata_card_data()
+
+        datacard = DataCard(test_repo_id)
+        result = datacard.get_metadata_fields("coverage_data")
+
+        assert result == [
+            "sample_id",
+            "batch",
+            "regulator_locus_tag",
+            "regulator_symbol",
+        ]
+
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
+    def test_no_metadata_returns_none(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+        sample_dataset_card_data,
+    ):
+        """Config with no metadata returns None."""
+        mock_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_fetcher_instance
+        mock_fetcher_instance.fetch.return_value = sample_dataset_card_data
+
+        datacard = DataCard(test_repo_id)
+        result = datacard.get_metadata_fields("genomic_features")
+
+        assert result is None
+
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
+    def test_unknown_config_returns_none(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+        sample_dataset_card_data,
+    ):
+        """Unknown config name returns None."""
+        mock_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_fetcher_instance
+        mock_fetcher_instance.fetch.return_value = sample_dataset_card_data
+
+        datacard = DataCard(test_repo_id)
+        result = datacard.get_metadata_fields("nonexistent")
+
+        assert result is None
+
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
+    def test_extract_schema_includes_external_features(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+    ):
+        """extract_metadata_schema includes roles from external metadata."""
+        mock_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_fetcher_instance
+        mock_fetcher_instance.fetch.return_value = _external_metadata_card_data()
+
+        datacard = DataCard(test_repo_id)
+        schema = datacard.extract_metadata_schema("coverage_data")
+
+        # External metadata features with role=regulator_identifier
+        assert "regulator_locus_tag" in schema["regulator_fields"]
+        assert "regulator_symbol" in schema["regulator_fields"]
+        # metadata_fields key populated
+        assert schema["metadata_fields"] is not None
+        assert "sample_id" in schema["metadata_fields"]
+
+
+class TestGetMetadataConfigName:
+    """Tests for DataCard.get_metadata_config_name()."""
+
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
+    def test_external_metadata_returns_config_name(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+    ):
+        """Returns metadata config name when applies_to matches."""
+        mock_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_fetcher_instance
+        mock_fetcher_instance.fetch.return_value = _external_metadata_card_data()
+
+        datacard = DataCard(test_repo_id)
+        result = datacard.get_metadata_config_name("coverage_data")
+
+        assert result == "sample_metadata"
+
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
+    def test_embedded_metadata_returns_none(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+        sample_dataset_card_data,
+    ):
+        """Returns None when metadata is embedded."""
+        mock_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_fetcher_instance
+        mock_fetcher_instance.fetch.return_value = sample_dataset_card_data
+
+        datacard = DataCard(test_repo_id)
+        result = datacard.get_metadata_config_name("binding_data")
+
+        assert result is None
+
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
+    def test_unknown_config_returns_none(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+        sample_dataset_card_data,
+    ):
+        """Returns None for unknown config name."""
+        mock_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_fetcher_instance
+        mock_fetcher_instance.fetch.return_value = sample_dataset_card_data
+
+        datacard = DataCard(test_repo_id)
+        result = datacard.get_metadata_config_name("nonexistent")
+
+        assert result is None
+
+
+class TestGetDataColNames:
+    """Tests for DataCard.get_data_col_names()."""
+
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
+    def test_returns_feature_names(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+        sample_dataset_card_data,
+    ):
+        """Returns column names from the data config's features."""
+        mock_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_fetcher_instance
+        mock_fetcher_instance.fetch.return_value = sample_dataset_card_data
+
+        datacard = DataCard(test_repo_id)
+        result = datacard.get_data_col_names("binding_data")
+
+        # binding_data features: regulator_symbol, target_gene,
+        # experimental_condition, binding_score
+        assert isinstance(result, set)
+        assert result == {
+            "regulator_symbol",
+            "target_gene",
+            "experimental_condition",
+            "binding_score",
+        }
+
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
+    def test_external_metadata_config_returns_data_features(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+    ):
+        """For external metadata, returns data config features only."""
+        mock_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_fetcher_instance
+        mock_fetcher_instance.fetch.return_value = _external_metadata_card_data()
+
+        datacard = DataCard(test_repo_id)
+        result = datacard.get_data_col_names("coverage_data")
+
+        # coverage_data features: sample_id, chr, coverage
+        assert result == {"sample_id", "chr", "coverage"}
+        # Must NOT include metadata-only columns
+        assert "batch" not in result
+        assert "regulator_locus_tag" not in result
+
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
+    def test_unknown_config_returns_empty_set(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+        sample_dataset_card_data,
+    ):
+        """Returns empty set for unknown config name."""
+        mock_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_fetcher_instance
+        mock_fetcher_instance.fetch.return_value = sample_dataset_card_data
+
+        datacard = DataCard(test_repo_id)
+        result = datacard.get_data_col_names("nonexistent")
+
+        assert result == set()
+
+
+class TestGetDatasetSchema:
+    """Tests for DataCard.get_dataset_schema()."""
+
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
+    def test_embedded_metadata_returns_correct_schema(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+        sample_dataset_card_data,
+    ):
+        """Embedded metadata produces correct data/metadata column split."""
+        mock_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_fetcher_instance
+        mock_fetcher_instance.fetch.return_value = sample_dataset_card_data
+
+        datacard = DataCard(test_repo_id)
+        # binding_data has metadata_fields: [regulator_symbol,
+        # experimental_condition] and features: regulator_symbol,
+        # target_gene, experimental_condition, binding_score
+        result = datacard.get_dataset_schema("binding_data")
+
+        assert result is not None
+        assert isinstance(result, DatasetSchema)
+        assert result.metadata_source == "embedded"
+        assert result.external_metadata_config is None
+        assert result.join_columns == set()
+        assert result.metadata_columns == {
+            "regulator_symbol",
+            "experimental_condition",
+        }
+        # data_columns = all features minus metadata_columns
+        assert result.data_columns == {
+            "target_gene",
+            "binding_score",
+        }
+
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
+    def test_external_metadata_returns_correct_schema(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+    ):
+        """External metadata produces correct split and join columns."""
+        mock_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_fetcher_instance
+        mock_fetcher_instance.fetch.return_value = _external_metadata_card_data()
+
+        datacard = DataCard(test_repo_id)
+        # coverage_data features: sample_id, chr, coverage
+        # sample_metadata features: sample_id, batch, regulator_locus_tag,
+        #   regulator_symbol
+        # join_columns = intersection = {sample_id}
+        result = datacard.get_dataset_schema("coverage_data")
+
+        assert result is not None
+        assert result.metadata_source == "external"
+        assert result.external_metadata_config == "sample_metadata"
+        assert result.data_columns == {"sample_id", "chr", "coverage"}
+        assert result.metadata_columns == {
+            "sample_id",
+            "batch",
+            "regulator_locus_tag",
+            "regulator_symbol",
+        }
+        assert result.join_columns == {"sample_id"}
+
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
+    def test_no_metadata_returns_all_cols_as_data(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+        sample_dataset_card_data,
+    ):
+        """Config with no metadata relationship has all cols as data."""
+        mock_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_fetcher_instance
+        mock_fetcher_instance.fetch.return_value = sample_dataset_card_data
+
+        datacard = DataCard(test_repo_id)
+        # genomic_features has no metadata_fields and no applies_to
+        result = datacard.get_dataset_schema("genomic_features")
+
+        assert result is not None
+        assert result.metadata_source == "none"
+        assert result.external_metadata_config is None
+        assert result.metadata_columns == set()
+        assert result.join_columns == set()
+        assert result.data_columns == {
+            "gene_id",
+            "gene_symbol",
+            "chromosome",
+            "start",
+            "end",
+        }
+
+    @patch("tfbpapi.datacard.HfDataCardFetcher")
+    @patch("tfbpapi.datacard.HfRepoStructureFetcher")
+    @patch("tfbpapi.datacard.HfSizeInfoFetcher")
+    def test_unknown_config_returns_none(
+        self,
+        mock_size_fetcher,
+        mock_structure_fetcher,
+        mock_card_fetcher,
+        test_repo_id,
+        sample_dataset_card_data,
+    ):
+        """Returns None for an unknown config name."""
+        mock_fetcher_instance = Mock()
+        mock_card_fetcher.return_value = mock_fetcher_instance
+        mock_fetcher_instance.fetch.return_value = sample_dataset_card_data
+
+        datacard = DataCard(test_repo_id)
+        result = datacard.get_dataset_schema("nonexistent")
+
+        assert result is None

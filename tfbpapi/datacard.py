@@ -17,6 +17,7 @@ data loading strategies.
 """
 
 import logging
+from dataclasses import dataclass
 from typing import Any
 
 from pydantic import ValidationError
@@ -34,6 +35,34 @@ from tfbpapi.models import (
     FeatureInfo,
     MetadataRelationship,
 )
+
+
+@dataclass
+class DatasetSchema:
+    """
+    Complete schema summary for a data configuration.
+
+    Derived entirely from the DataCard YAML -- no DuckDB introspection needed. Used by
+    VirtualDB to determine column partitioning between data and metadata parquets.
+
+    :ivar data_columns: Column names present in the data parquet.
+    :ivar metadata_columns: Column names that are metadata.
+    :ivar join_columns: Columns common to both data and metadata parquets (used as JOIN
+        keys for external metadata). Empty for embedded metadata (same parquet, no JOIN
+        needed).
+    :ivar metadata_source: One of ``"embedded"``, ``"external"``, or ``"none"``.
+    :ivar external_metadata_config: Config name of the external metadata config, or
+        ``None`` if metadata is embedded or absent.
+    :ivar is_partitioned: Whether the data parquet is partitioned.
+
+    """
+
+    data_columns: set[str]
+    metadata_columns: set[str]
+    join_columns: set[str]
+    metadata_source: str
+    external_metadata_config: str | None
+    is_partitioned: bool
 
 
 class DataCard:
@@ -91,6 +120,7 @@ class DataCard:
         # Cache for parsed card
         self._dataset_card: DatasetCard | None = None
         self._metadata_cache: dict[str, list[ExtractedMetadata]] = {}
+        self._metadata_fields_map: dict[str, list[str]] = {}
 
     @property
     def dataset_card(self) -> DatasetCard:
@@ -115,6 +145,7 @@ class DataCard:
 
             # Validate using Pydantic model
             self._dataset_card = DatasetCard(**card_data)
+            self._build_metadata_fields_map()
             self.logger.debug(f"Successfully validated dataset card for {self.repo_id}")
 
         except ValidationError as e:
@@ -241,6 +272,186 @@ class DataCard:
 
         return relationships
 
+    def _build_metadata_fields_map(self) -> None:
+        """
+        Build a mapping from data config names to their metadata fields.
+
+        Called during card loading. For each data config, resolves metadata
+        fields from two sources:
+
+        1. Embedded: the data config has ``metadata_fields`` listing which
+           of its own columns are metadata.
+        2. External: a separate metadata-type config has ``applies_to``
+           including this config name. The metadata fields are the feature
+           names from that metadata config.
+
+        Embedded takes priority. For external, the first matching metadata
+        config wins.
+
+        """
+        assert self._dataset_card is not None
+        self._metadata_fields_map = {}
+        meta_configs = self._dataset_card.get_metadata_configs()
+
+        for data_cfg in self._dataset_card.get_data_configs():
+            name = data_cfg.config_name
+            # Embedded case
+            if data_cfg.metadata_fields:
+                self._metadata_fields_map[name] = list(data_cfg.metadata_fields)
+                continue
+            # External case: find metadata config with applies_to
+            for meta_cfg in meta_configs:
+                if meta_cfg.applies_to and name in meta_cfg.applies_to:
+                    self._metadata_fields_map[name] = [
+                        f.name for f in meta_cfg.dataset_info.features
+                    ]
+                    break
+            else:
+                self.logger.warning(
+                    "No metadata fields found for data config '%s' "
+                    "in repo '%s' -- no embedded metadata_fields and "
+                    "no metadata config with applies_to",
+                    name,
+                    self.repo_id,
+                )
+
+    def get_metadata_fields(self, config_name: str) -> list[str] | None:
+        """
+        Get metadata field names for a data configuration.
+
+        Returns pre-computed metadata fields resolved during card loading.
+        Handles both embedded metadata (``metadata_fields`` on the data
+        config) and external metadata (separate metadata config with
+        ``applies_to``).
+
+        :param config_name: Name of the data configuration
+        :return: List of metadata field names, or None if no metadata
+
+        """
+        # Ensure card is loaded (triggers _build_metadata_fields_map)
+        _ = self.dataset_card
+        return self._metadata_fields_map.get(config_name)
+
+    def get_data_col_names(self, config_name: str) -> set[str]:
+        """
+        Return the column names from the data config's feature list.
+
+        These are the columns present in the data parquet file, derived directly from
+        the DataCard feature definitions without any DuckDB introspection.
+
+        :param config_name: Name of the data configuration
+        :return: Set of column names, empty if config not found
+
+        """
+        _ = self.dataset_card  # ensure loaded
+        config = self.get_config(config_name)
+        if not config:
+            return set()
+        return {f.name for f in config.dataset_info.features}
+
+    def get_metadata_config_name(self, config_name: str) -> str | None:
+        """
+        Return the config_name of the external metadata config, if any.
+
+        If the data config has embedded ``metadata_fields``, or if no
+        metadata config with ``applies_to`` references this config,
+        returns None.
+
+        :param config_name: Name of the data configuration
+        :return: The metadata config name, or None
+
+        """
+        _ = self.dataset_card  # ensure loaded
+        data_cfg = self.get_config(config_name)
+        if not data_cfg:
+            return None
+        # Embedded metadata -- no external config needed
+        if data_cfg.metadata_fields:
+            return None
+        # Find external metadata config with applies_to
+        for meta_cfg in self.dataset_card.get_metadata_configs():
+            if meta_cfg.applies_to and config_name in meta_cfg.applies_to:
+                return meta_cfg.config_name
+        return None
+
+    def get_dataset_schema(self, config_name: str) -> DatasetSchema | None:
+        """
+        Return schema summary for a data configuration.
+
+        Determines whether metadata is embedded or external, which
+        columns belong to data vs metadata parquets, and which columns
+        are shared between them (join keys for external metadata).
+        All information is derived from the DataCard YAML -- no DuckDB
+        introspection is needed.
+
+        :param config_name: Name of the data configuration
+        :return: DatasetSchema instance, or None if config not found
+
+        Example -- embedded metadata::
+
+            schema = card.get_dataset_schema("harbison_2004")
+            # schema.metadata_source == "embedded"
+            # schema.join_columns == set()  (same parquet, no JOIN)
+
+        Example -- external metadata::
+
+            schema = card.get_dataset_schema("annotated_features")
+            # schema.metadata_source == "external"
+            # schema.external_metadata_config == "annotated_features_meta"
+            # schema.join_columns == {"id"}  (common to both parquets)
+
+        """
+        _ = self.dataset_card  # ensure loaded
+        config = self.get_config(config_name)
+        if not config:
+            return None
+
+        is_partitioned = bool(
+            config.dataset_info.partitioning
+            and config.dataset_info.partitioning.enabled
+        )
+
+        # Embedded: metadata_fields lists which of the config's own
+        # columns are metadata; all live in the same parquet
+        if config.metadata_fields:
+            all_cols = {f.name for f in config.dataset_info.features}
+            meta_cols = set(config.metadata_fields)
+            data_cols = all_cols - meta_cols
+            return DatasetSchema(
+                data_columns=data_cols,
+                metadata_columns=meta_cols,
+                join_columns=set(),
+                metadata_source="embedded",
+                external_metadata_config=None,
+                is_partitioned=is_partitioned,
+            )
+
+        # External: find metadata config with applies_to
+        for meta_cfg in self.dataset_card.get_metadata_configs():
+            if meta_cfg.applies_to and config_name in meta_cfg.applies_to:
+                data_cols = {f.name for f in config.dataset_info.features}
+                meta_cols = {f.name for f in meta_cfg.dataset_info.features}
+                join_cols = data_cols & meta_cols
+                return DatasetSchema(
+                    data_columns=data_cols,
+                    metadata_columns=meta_cols,
+                    join_columns=join_cols,
+                    metadata_source="external",
+                    external_metadata_config=meta_cfg.config_name,
+                    is_partitioned=is_partitioned,
+                )
+
+        # No metadata relationship -- treat all columns as data
+        all_cols = {f.name for f in config.dataset_info.features}
+        return DatasetSchema(
+            data_columns=all_cols,
+            metadata_columns=set(),
+            join_columns=set(),
+            metadata_source="none",
+            external_metadata_config=None,
+            is_partitioned=is_partitioned,
+        )
+
     def get_repository_info(self) -> dict[str, Any]:
         """Get general repository information."""
         card = self.dataset_card
@@ -315,12 +526,13 @@ class DataCard:
             raise DataCardError(f"Configuration '{config_name}' not found")
 
         schema: dict[str, Any] = {
-            "regulator_fields": [],  # Fields with role=regulator_identifier
-            "target_fields": [],  # Fields with role=target_identifier
-            "condition_fields": [],  # Fields with role=experimental_condition
-            "condition_definitions": {},  # Field-level condition details
-            "top_level_conditions": None,  # Repo-level conditions
-            "config_level_conditions": None,  # Config-level conditions
+            "regulator_fields": [],
+            "target_fields": [],
+            "condition_fields": [],
+            "condition_definitions": {},
+            "metadata_fields": None,
+            "top_level_conditions": None,
+            "config_level_conditions": None,
         }
 
         for feature in config.dataset_info.features:
@@ -333,15 +545,32 @@ class DataCard:
                 if feature.definitions:
                     schema["condition_definitions"][feature.name] = feature.definitions
 
+        # Include features from external metadata config
+        meta_fields = self.get_metadata_fields(config_name)
+        schema["metadata_fields"] = meta_fields
+        if meta_fields is not None and not config.metadata_fields:
+            for meta_cfg in self.dataset_card.get_metadata_configs():
+                if meta_cfg.applies_to and config_name in meta_cfg.applies_to:
+                    for feature in meta_cfg.dataset_info.features:
+                        if feature.role == "regulator_identifier":
+                            schema["regulator_fields"].append(feature.name)
+                        elif feature.role == "target_identifier":
+                            schema["target_fields"].append(feature.name)
+                        elif feature.role == "experimental_condition":
+                            schema["condition_fields"].append(feature.name)
+                            if feature.definitions:
+                                schema["condition_definitions"][
+                                    feature.name
+                                ] = feature.definitions
+                    break
+
         # Add top-level conditions (applies to all configs/samples)
-        # Stored in model_extra as dict
         if self.dataset_card.model_extra:
             top_level = self.dataset_card.model_extra.get("experimental_conditions")
             if top_level:
                 schema["top_level_conditions"] = top_level
 
         # Add config-level conditions (applies to this config's samples)
-        # Stored in model_extra as dict
         if config.model_extra:
             config_level = config.model_extra.get("experimental_conditions")
             if config_level:
