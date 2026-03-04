@@ -471,6 +471,201 @@ class TestVirtualDBConfig:
 
 
 # ------------------------------------------------------------------
+# Tests: Tags
+# ------------------------------------------------------------------
+
+
+class TestTags:
+    """Tests for get_tags() hierarchical merging."""
+
+    def _make_config(self, yaml_str: str) -> MetadataConfig:
+        import yaml as _yaml
+
+        return MetadataConfig.model_validate(_yaml.safe_load(yaml_str))
+
+    def test_repo_level_tags_only(self):
+        """Repo-level tags propagate when dataset has none."""
+        config = self._make_config(
+            """
+            repositories:
+              BrentLab/harbison:
+                tags:
+                  assay: binding
+                  organism: yeast
+                dataset:
+                  harbison_2004:
+                    sample_id:
+                      field: sample_id
+            """
+        )
+        tags = config.get_tags("BrentLab/harbison", "harbison_2004")
+        assert tags == {"assay": "binding", "organism": "yeast"}
+
+    def test_dataset_level_tags_only(self):
+        """Dataset-level tags are returned when repo has none."""
+        config = self._make_config(
+            """
+            repositories:
+              BrentLab/harbison:
+                dataset:
+                  harbison_2004:
+                    sample_id:
+                      field: sample_id
+                    tags:
+                      assay: chip-chip
+            """
+        )
+        tags = config.get_tags("BrentLab/harbison", "harbison_2004")
+        assert tags == {"assay": "chip-chip"}
+
+    def test_dataset_overrides_repo_tags(self):
+        """Dataset-level tags override repo-level for the same key."""
+        config = self._make_config(
+            """
+            repositories:
+              BrentLab/harbison:
+                tags:
+                  assay: binding
+                  organism: yeast
+                dataset:
+                  harbison_2004:
+                    sample_id:
+                      field: sample_id
+                    tags:
+                      assay: chip-chip
+            """
+        )
+        tags = config.get_tags("BrentLab/harbison", "harbison_2004")
+        assert tags["assay"] == "chip-chip"
+        assert tags["organism"] == "yeast"
+
+    def test_no_tags(self):
+        """Returns empty dict when neither level has tags."""
+        config = self._make_config(
+            """
+            repositories:
+              BrentLab/harbison:
+                dataset:
+                  harbison_2004:
+                    sample_id:
+                      field: sample_id
+            """
+        )
+        tags = config.get_tags("BrentLab/harbison", "harbison_2004")
+        assert tags == {}
+
+    def test_unknown_repo_returns_empty(self):
+        """Unknown repo_id returns empty dict."""
+        config = self._make_config(
+            """
+            repositories:
+              BrentLab/harbison:
+                dataset:
+                  harbison_2004:
+                    sample_id:
+                      field: sample_id
+            """
+        )
+        assert config.get_tags("BrentLab/nonexistent", "harbison_2004") == {}
+
+    def test_yaml_round_trip(self):
+        """Tags parsed from YAML produce correct merged result."""
+        config = self._make_config(
+            """
+            repositories:
+              BrentLab/repo_a:
+                tags:
+                  type: primary
+                  organism: yeast
+                dataset:
+                  dataset_a:
+                    sample_id:
+                      field: sample_id
+                    tags:
+                      type: binding
+                      version: "2024"
+              BrentLab/repo_b:
+                tags:
+                  type: perturbation
+                dataset:
+                  dataset_b:
+                    sample_id:
+                      field: sample_id
+            """
+        )
+        tags_a = config.get_tags("BrentLab/repo_a", "dataset_a")
+        assert tags_a == {"type": "binding", "organism": "yeast", "version": "2024"}
+
+        tags_b = config.get_tags("BrentLab/repo_b", "dataset_b")
+        assert tags_b == {"type": "perturbation"}
+
+    def _make_vdb(self, yaml_str: str, tmp_path) -> VirtualDB:
+
+        p = tmp_path / "config.yaml"
+        p.write_text(yaml_str)
+        return VirtualDB(str(p))
+
+    def test_vdb_get_tags_returns_merged(self, tmp_path):
+        """VirtualDB.get_tags() returns merged repo+dataset tags by db_name."""
+        vdb = self._make_vdb(
+            """
+            repositories:
+              BrentLab/harbison:
+                tags:
+                  assay: binding
+                  organism: yeast
+                dataset:
+                  harbison_2004:
+                    db_name: harbison
+                    sample_id:
+                      field: sample_id
+                    tags:
+                      assay: chip-chip
+            """,
+            tmp_path,
+        )
+        tags = vdb.get_tags("harbison")
+        assert tags == {"assay": "chip-chip", "organism": "yeast"}
+
+    def test_vdb_get_tags_unknown_name_returns_empty(self, tmp_path):
+        """VirtualDB.get_tags() returns empty dict for unknown db_name."""
+        vdb = self._make_vdb(
+            """
+            repositories:
+              BrentLab/harbison:
+                dataset:
+                  harbison_2004:
+                    db_name: harbison
+                    sample_id:
+                      field: sample_id
+            """,
+            tmp_path,
+        )
+        assert vdb.get_tags("nonexistent") == {}
+
+    def test_vdb_get_tags_no_views_needed(self, tmp_path):
+        """VirtualDB.get_tags() works before any views are registered."""
+        vdb = self._make_vdb(
+            """
+            repositories:
+              BrentLab/harbison:
+                tags:
+                  assay: binding
+                dataset:
+                  harbison_2004:
+                    db_name: harbison
+                    sample_id:
+                      field: sample_id
+            """,
+            tmp_path,
+        )
+        assert not vdb._views_registered
+        tags = vdb.get_tags("harbison")
+        assert tags == {"assay": "binding"}
+        assert not vdb._views_registered
+
+
+# ------------------------------------------------------------------
 # Tests: View registration
 # ------------------------------------------------------------------
 

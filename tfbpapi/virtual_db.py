@@ -390,6 +390,27 @@ class VirtualDB:
         common = set.intersection(*sets)
         return sorted(common)
 
+    def get_tags(self, db_name: str) -> dict[str, str]:
+        """
+        Return the merged tags for a dataset.
+
+        Tags are defined in the configuration at the repository and/or
+        dataset level. Dataset-level tags override repository-level tags
+        with the same key. See the ``tags`` section of the configuration
+        guide for details.
+
+        :param db_name: Dataset name as it appears in :meth:`tables` (the
+            resolved ``db_name`` from the configuration, or the
+            ``config_name`` if ``db_name`` was not explicitly set).
+        :return: Dict of merged tags, or empty dict if the dataset has no
+            tags or the name is not found.
+
+        """
+        if db_name not in self._db_name_map:
+            return {}
+        repo_id, config_name = self._db_name_map[db_name]
+        return self.config.get_tags(repo_id, config_name)
+
     # ------------------------------------------------------------------
     # Lazy initialisation
     # ------------------------------------------------------------------

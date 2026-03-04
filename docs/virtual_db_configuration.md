@@ -147,6 +147,62 @@ during metadata extraction and query filtering.
 2. **Type consistency**: When source data might be extracted with incorrect type
 3. **Performance**: Helps with query optimization and prevents type mismatches
 
+## Tags
+
+Tags are arbitrary string key/value pairs for annotating datasets. They follow
+the same hierarchy as property mappings: repo-level tags apply to all datasets
+in the repository, dataset-level tags apply only to that dataset, and
+dataset-level tags override repo-level tags with the same key.
+
+```yaml
+repositories:
+  BrentLab/harbison_2004:
+    # Repo-level tags apply to all datasets in this repository
+    tags:
+      assay: binding
+      organism: yeast
+    dataset:
+      harbison_2004:
+        sample_id:
+          field: sample_id
+        # Dataset-level tags override repo-level tags with the same key
+        tags:
+          assay: chip-chip
+
+  BrentLab/kemmeren_2014:
+    tags:
+      assay: perturbation
+      organism: yeast
+    dataset:
+      kemmeren_2014:
+        sample_id:
+          field: sample_id
+```
+
+Access merged tags via `vdb.get_tags(db_name)`, identifying datasets by
+their name as it appears in `vdb.tables()`:
+
+```python
+from tfbpapi.virtual_db import VirtualDB
+
+vdb = VirtualDB("datasets.yaml")
+
+# Returns {"assay": "chip-chip", "organism": "yeast"}
+# (dataset-level assay overrides repo-level)
+vdb.get_tags("harbison")
+
+# Returns {"assay": "perturbation", "organism": "yeast"}
+vdb.get_tags("kemmeren")
+```
+
+The underlying `MetadataConfig` (available as `vdb.config`) exposes the same
+data via `(repo_id, config_name)` pairs for programmatic or developer use:
+
+```python
+# Equivalent to vdb.get_tags("harbison") above
+vdb.config.get_tags("BrentLab/harbison_2004", "harbison_2004")
+```
+
 ## Comparative Datasets
 
 Comparative datasets differ from other dataset types in that they represent

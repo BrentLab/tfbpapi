@@ -458,6 +458,10 @@ class DatasetVirtualDBConfig(BaseModel):
         description="For comparative datasets: map link_field -> "
         "[repo_id, config_name] pairs",
     )
+    tags: dict[str, str] = Field(
+        default_factory=dict,
+        description="Arbitrary key/value annotations for this dataset",
+    )
 
     model_config = ConfigDict(extra="allow")
 
@@ -526,7 +530,7 @@ class DatasetVirtualDBConfig(BaseModel):
         result = {}
         for key, value in data.items():
             # Known typed fields - let Pydantic handle them
-            if key in ("sample_id", "links", "db_name"):
+            if key in ("sample_id", "links", "db_name", "tags"):
                 result[key] = value
             # Dict values should be PropertyMappings
             elif isinstance(value, dict):
@@ -591,6 +595,10 @@ class RepositoryConfig(BaseModel):
     dataset: dict[str, DatasetVirtualDBConfig] | None = Field(
         None, description="Dataset-specific configurations"
     )
+    tags: dict[str, str] = Field(
+        default_factory=dict,
+        description="Arbitrary key/value annotations for all datasets in this repo",
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -628,10 +636,10 @@ class RepositoryConfig(BaseModel):
                         f"Invalid configuration for dataset '{dataset_name}': {e}"
                     ) from e
 
-        # Parse repo-wide properties (all keys except 'dataset')
+        # Parse repo-wide properties (all keys except 'dataset' and 'tags')
         parsed_properties = {}
         for key, value in data.items():
-            if key == "dataset":
+            if key in ("dataset", "tags"):
                 continue
 
             try:
@@ -639,7 +647,11 @@ class RepositoryConfig(BaseModel):
             except Exception as e:
                 raise ValueError(f"Invalid repo-wide property '{key}': {e}") from e
 
-        return {"properties": parsed_properties, "dataset": parsed_datasets}
+        return {
+            "properties": parsed_properties,
+            "dataset": parsed_datasets,
+            "tags": data.get("tags") or {},
+        }
 
 
 class MetadataConfig(BaseModel):
@@ -876,6 +888,29 @@ class MetadataConfig(BaseModel):
             mappings.update(dataset_config.property_mappings)
 
         return mappings
+
+    def get_tags(self, repo_id: str, config_name: str) -> dict[str, str]:
+        """
+        Get merged tags for a repo/dataset combination.
+
+        Merges repo-level and dataset-level tags, with dataset-level tags taking
+        precedence for the same key.
+
+        :param repo_id: Repository ID
+        :param config_name: Dataset/config name
+        :return: Dict of merged tags
+
+        """
+        repo_config = self.get_repository_config(repo_id)
+        if not repo_config:
+            return {}
+
+        merged: dict[str, str] = dict(repo_config.tags)
+
+        if repo_config.dataset and config_name in repo_config.dataset:
+            merged.update(repo_config.dataset[config_name].tags)
+
+        return merged
 
     def get_sample_id_field(self, repo_id: str, config_name: str) -> str:
         """
