@@ -390,6 +390,24 @@ class VirtualDB:
         common = set.intersection(*sets)
         return sorted(common)
 
+    def get_datasets(self) -> list[str]:
+        """
+        Return the sorted list of dataset names known to this VirtualDB.
+
+        Dataset names are the resolved ``db_name`` values from the
+        configuration (falling back to the config_name when ``db_name``
+        is not explicitly set). These are the names accepted by
+        :meth:`get_tags` and queryable via :meth:`query`.
+
+        Unlike :meth:`tables`, this method reads directly from the
+        configuration and does not require views to be registered, so
+        no data is downloaded.
+
+        :return: Sorted list of dataset names
+
+        """
+        return sorted(self._db_name_map)
+
     def get_tags(self, db_name: str) -> dict[str, str]:
         """
         Return the merged tags for a dataset.

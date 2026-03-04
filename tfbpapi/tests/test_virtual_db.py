@@ -664,6 +664,31 @@ class TestTags:
         assert tags == {"assay": "binding"}
         assert not vdb._views_registered
 
+    def test_vdb_get_datasets(self, tmp_path):
+        """VirtualDB.get_datasets() returns sorted db_names without registering
+        views."""
+        vdb = self._make_vdb(
+            """
+            repositories:
+              BrentLab/harbison:
+                dataset:
+                  harbison_2004:
+                    db_name: harbison
+                    sample_id:
+                      field: sample_id
+              BrentLab/kemmeren:
+                dataset:
+                  kemmeren_2014:
+                    db_name: kemmeren
+                    sample_id:
+                      field: sample_id
+            """,
+            tmp_path,
+        )
+        assert not vdb._views_registered
+        assert vdb.get_datasets() == ["harbison", "kemmeren"]
+        assert not vdb._views_registered
+
 
 # ------------------------------------------------------------------
 # Tests: View registration
