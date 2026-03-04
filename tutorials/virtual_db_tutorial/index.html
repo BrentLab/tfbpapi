@@ -754,6 +754,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#schema-discovery" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1453,6 +1464,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#tags" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tags
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#schema-discovery" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -2107,6 +2129,10 @@ datasets for use with <code>VirtualDB</code>.</p>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">config_yaml</span> <span class="o">=</span> <span class="s2">"""</span>
 <span class="s2">repositories:</span>
 <span class="s2">  BrentLab/harbison_2004:</span>
+<span class="s2">    tags:</span>
+<span class="s2">      assay: binding</span>
+<span class="s2">      method: chip-chip</span>
+<span class="s2">      organism: yeast</span>
 <span class="s2">    dataset:</span>
 <span class="s2">      harbison_2004:</span>
 <span class="s2">        db_name: harbison</span>
@@ -2125,6 +2151,10 @@ datasets for use with <code>VirtualDB</code>.</p>
 <span class="s2">          field: regulator_symbol</span>
 
 <span class="s2">  BrentLab/kemmeren_2014:</span>
+<span class="s2">    tags:</span>
+<span class="s2">      assay: perturbation</span>
+<span class="s2">      method: microarray</span>
+<span class="s2">      organism: yeast</span>
 <span class="s2">    dataset:</span>
 <span class="s2">      kemmeren_2014:</span>
 <span class="s2">        db_name: kemmeren</span>
@@ -2141,8 +2171,17 @@ datasets for use with <code>VirtualDB</code>.</p>
 <span class="s2">          field: regulator_symbol</span>
 
 <span class="s2">  BrentLab/hackett_2020:</span>
+<span class="s2">    # Repo-level tags apply to all datasets in this repository</span>
+<span class="s2">    tags:</span>
+<span class="s2">      method: test_overwrite</span>
+<span class="s2">      organism: yeast</span>
 <span class="s2">    dataset:</span>
 <span class="s2">      hackett_2020:</span>
+<span class="s2">        # Dataset-level tags: 'assay' is new,</span>
+<span class="s2">        # 'method' overrides the repo-level value</span>
+<span class="s2">        tags:</span>
+<span class="s2">          assay: perturbation</span>
+<span class="s2">          method: overexpression</span>
 <span class="s2">        db_name: hackett</span>
 <span class="s2">        sample_id:</span>
 <span class="s2">          field: sample_id</span>
@@ -2194,6 +2233,10 @@ datasets for use with <code>VirtualDB</code>.</p>
 <div class="clipboard-copy-txt" id="cell-1">config_yaml = """
 repositories:
   BrentLab/harbison_2004:
+    tags:
+      assay: binding
+      method: chip-chip
+      organism: yeast
     dataset:
       harbison_2004:
         db_name: harbison
@@ -2212,6 +2255,10 @@ repositories:
           field: regulator_symbol
 
   BrentLab/kemmeren_2014:
+    tags:
+      assay: perturbation
+      method: microarray
+      organism: yeast
     dataset:
       kemmeren_2014:
         db_name: kemmeren
@@ -2228,8 +2275,17 @@ repositories:
           field: regulator_symbol
 
   BrentLab/hackett_2020:
+    # Repo-level tags apply to all datasets in this repository
+    tags:
+      method: test_overwrite
+      organism: yeast
     dataset:
       hackett_2020:
+        # Dataset-level tags: 'assay' is new,
+        # 'method' overrides the repo-level value
+        tags:
+          assay: perturbation
+          method: overexpression
         db_name: hackett
         sample_id:
           field: sample_id
@@ -2288,7 +2344,7 @@ print(f"Config saved to: {temp_config}")</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>Config saved to: /tmp/tmpf610qghb/vdb_config.yaml
+<pre>Config saved to: /tmp/tmp_krovt13/vdb_config.yaml
 </pre>
 </div>
 </div>
@@ -2367,6 +2423,90 @@ print(repr(vdb))</div>
 </div>
 </div>
 </div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0f10c138">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="tags">Tags<a class="anchor-link" href="#tags">¶</a></h2><p>Tags are arbitrary key/value annotations defined in the configuration. They
+follow the same hierarchy as property mappings: repo-level tags apply to all
+datasets in that repository, and dataset-level tags override repo-level tags
+with the same key.</p>
+<p>Use <code>config.get_tags(repo_id, config_name)</code> to retrieve the merged tags for
+any dataset.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f7d73db0">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-3">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Tags are accessible directly from the VirtualDB instance using the db_name.</span>
+<span class="c1"># No need to import MetadataConfig or specify repo_id.</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"harbison tags:"</span><span class="p">,</span> <span class="n">vdb</span><span class="o">.</span><span class="n">get_tags</span><span class="p">(</span><span class="s2">"harbison"</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"kemmeren tags:"</span><span class="p">,</span> <span class="n">vdb</span><span class="o">.</span><span class="n">get_tags</span><span class="p">(</span><span class="s2">"kemmeren"</span><span class="p">))</span>
+
+<span class="c1"># Hackett has tags at both levels:</span>
+<span class="c1"># 'organism' comes from the repo level only,</span>
+<span class="c1"># 'assay' is added at the dataset level only,</span>
+<span class="c1"># 'method' is defined at both levels -- the dataset value wins.</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"hackett tags:"</span><span class="p">,</span> <span class="n">vdb</span><span class="o">.</span><span class="n">get_tags</span><span class="p">(</span><span class="s2">"hackett"</span><span class="p">))</span>
+
+<span class="c1"># Dataset with no tags returns empty dict</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"dto tags:"</span><span class="p">,</span> <span class="n">vdb</span><span class="o">.</span><span class="n">get_tags</span><span class="p">(</span><span class="s2">"dto"</span><span class="p">))</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-3">
+# Tags are accessible directly from the VirtualDB instance using the db_name.
+# No need to import MetadataConfig or specify repo_id.
+print("harbison tags:", vdb.get_tags("harbison"))
+print("kemmeren tags:", vdb.get_tags("kemmeren"))
+
+# Hackett has tags at both levels:
+# 'organism' comes from the repo level only,
+# 'assay' is added at the dataset level only,
+# 'method' is defined at both levels -- the dataset value wins.
+print("hackett tags:", vdb.get_tags("hackett"))
+
+# Dataset with no tags returns empty dict
+print("dto tags:", vdb.get_tags("dto"))</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>harbison tags: {'assay': 'binding', 'method': 'chip-chip', 'organism': 'yeast'}
+kemmeren tags: {'assay': 'perturbation', 'method': 'microarray', 'organism': 'yeast'}
+hackett tags: {'method': 'overexpression', 'organism': 'yeast', 'assay': 'perturbation'}
+dto tags: {}
+</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-5">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -2390,10 +2530,10 @@ including derived columns from config property mappings (e.g., <code>carbon_sour
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-3">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-4">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -2408,7 +2548,7 @@ including derived columns from config property mappings (e.g., <code>carbon_sour
 <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">vdb</span><span class="o">.</span><span class="n">tables</span><span class="p">():</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-3"># List all registered views
+<div class="clipboard-copy-txt" id="cell-4"># List all registered views
 print("Registered views:")
 for name in vdb.tables():
     print(f"  {name}")</div>
@@ -2430,10 +2570,11 @@ for name in vdb.tables():
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="application/vnd.jupyter.stderr" tabindex="0">
-<pre>Fetching 1 files: 100%|██████████| 1/1 [00:00&lt;00:00, 6374.32it/s]
-Fetching 1 files: 100%|██████████| 1/1 [00:00&lt;00:00, 12264.05it/s]
-Fetching 1 files: 100%|██████████| 1/1 [00:00&lt;00:00, 9731.56it/s]
-Fetching 6 files: 100%|██████████| 6/6 [00:00&lt;00:00, 21883.33it/s]
+<pre>Fetching 1 files: 100%|██████████| 1/1 [00:00&lt;00:00, 10407.70it/s]
+Fetching 1 files: 100%|██████████| 1/1 [00:00&lt;00:00, 1770.50it/s]
+Fetching 1 files: 100%|██████████| 1/1 [00:20&lt;00:00, 20.31s/it]
+No metadata fields found for data config 'dto' in repo 'BrentLab/yeast_comparative_analysis' -- no embedded metadata_fields and no metadata config with applies_to
+Fetching 30 files: 100%|██████████| 30/30 [00:00&lt;00:00, 55091.56it/s]
 Key 'carbon_source' not found at path 'media.carbon_source' (current keys: ['name'])
 Key 'carbon_source' not found at path 'media.carbon_source' (current keys: ['name'])
 Key 'carbon_source' not found at path 'media.carbon_source' (current keys: ['name'])
@@ -2463,10 +2604,10 @@ Key 'temperature_celsius' not found at path 'temperature_celsius' (current keys:
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-4">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-5">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -2480,7 +2621,7 @@ Key 'temperature_celsius' not found at path 'temperature_celsius' (current keys:
 <span class="c1"># (carbon_source, temperature_celsius resolved from condition definitions)</span>
 <span class="n">vdb</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">"harbison_meta"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-4"># The _meta view has sample-level metadata plus derived columns
+<div class="clipboard-copy-txt" id="cell-5"># The _meta view has sample-level metadata plus derived columns
 # (carbon_source, temperature_celsius resolved from condition definitions)
 vdb.describe("harbison_meta")</div>
 </div>
@@ -2492,7 +2633,7 @@ vdb.describe("harbison_meta")</div>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[4]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[5]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -2535,7 +2676,7 @@ vdb.describe("harbison_meta")</div>
 <tr>
 <th>1</th>
 <td>harbison_meta</td>
-<td>regulator_locus_tag</td>
+<td>condition</td>
 <td>VARCHAR</td>
 <td>YES</td>
 <td>None</td>
@@ -2545,7 +2686,7 @@ vdb.describe("harbison_meta")</div>
 <tr>
 <th>2</th>
 <td>harbison_meta</td>
-<td>regulator_symbol</td>
+<td>regulator_locus_tag</td>
 <td>VARCHAR</td>
 <td>YES</td>
 <td>None</td>
@@ -2555,7 +2696,7 @@ vdb.describe("harbison_meta")</div>
 <tr>
 <th>3</th>
 <td>harbison_meta</td>
-<td>condition</td>
+<td>regulator_symbol</td>
 <td>VARCHAR</td>
 <td>YES</td>
 <td>None</td>
@@ -2596,10 +2737,10 @@ vdb.describe("harbison_meta")</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-5">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-6">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -2612,7 +2753,7 @@ vdb.describe("harbison_meta")</div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># The full view has measurement-level data (one row per sample-target pair)</span>
 <span class="n">vdb</span><span class="o">.</span><span class="n">describe</span><span class="p">(</span><span class="s2">"harbison"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-5"># The full view has measurement-level data (one row per sample-target pair)
+<div class="clipboard-copy-txt" id="cell-6"># The full view has measurement-level data (one row per sample-target pair)
 vdb.describe("harbison")</div>
 </div>
 </div>
@@ -2623,7 +2764,7 @@ vdb.describe("harbison")</div>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[5]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[6]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -2777,10 +2918,10 @@ vdb.describe("harbison")</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-6">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-7">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -2793,7 +2934,7 @@ vdb.describe("harbison")</div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Columns common to ALL primary dataset views</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">"Common fields:"</span><span class="p">,</span> <span class="n">vdb</span><span class="o">.</span><span class="n">get_common_fields</span><span class="p">())</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-6"># Columns common to ALL primary dataset views
+<div class="clipboard-copy-txt" id="cell-7"># Columns common to ALL primary dataset views
 print("Common fields:", vdb.get_common_fields())</div>
 </div>
 </div>
@@ -2834,10 +2975,10 @@ arguments.</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-7">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-8">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -2853,7 +2994,7 @@ arguments.</p>
 <span class="n">df_meta</span> <span class="o">=</span> <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"SELECT * FROM harbison_meta LIMIT 5"</span><span class="p">)</span>
 <span class="n">df_meta</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-7"># Query the _meta view for sample-level metadata (one row per sample)
+<div class="clipboard-copy-txt" id="cell-8"># Query the _meta view for sample-level metadata (one row per sample)
 # Note: carbon_source is derived from the condition column's DataCard definitions
 # with factor aliases already applied (D-glucose -&gt; glucose)
 df_meta = vdb.query("SELECT * FROM harbison_meta LIMIT 5")
@@ -2867,7 +3008,7 @@ df_meta</div>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[7]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[8]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -2888,9 +3029,9 @@ df_meta</div>
 <tr style="text-align: right;">
 <th></th>
 <th>sample_id</th>
+<th>condition</th>
 <th>regulator_locus_tag</th>
 <th>regulator_symbol</th>
-<th>condition</th>
 <th>carbon_source</th>
 <th>temperature_celsius</th>
 </tr>
@@ -2898,46 +3039,46 @@ df_meta</div>
 <tbody>
 <tr>
 <th>0</th>
-<td>166</td>
-<td>YIL131C</td>
-<td>FKH1</td>
+<td>300</td>
 <td>YPD</td>
+<td>YOL116W</td>
+<td>MSN1</td>
 <td>glucose</td>
 <td>30.0</td>
 </tr>
 <tr>
 <th>1</th>
-<td>3</td>
-<td>YBL005W</td>
-<td>PDR3</td>
+<td>113</td>
 <td>YPD</td>
+<td>YGL035C</td>
+<td>MIG1</td>
 <td>glucose</td>
 <td>30.0</td>
 </tr>
 <tr>
 <th>2</th>
-<td>173</td>
-<td>YIR023W</td>
-<td>DAL81</td>
-<td>YPD</td>
+<td>81</td>
+<td>RAPA</td>
+<td>YEL009C</td>
+<td>GCN4</td>
 <td>glucose</td>
 <td>30.0</td>
 </tr>
 <tr>
 <th>3</th>
-<td>220</td>
-<td>YLR014C</td>
-<td>PPR1</td>
+<td>279</td>
 <td>YPD</td>
+<td>YNL139C</td>
+<td>THO2</td>
 <td>glucose</td>
 <td>30.0</td>
 </tr>
 <tr>
 <th>4</th>
-<td>83</td>
-<td>YEL009C</td>
-<td>GCN4</td>
-<td>YPD</td>
+<td>73</td>
+<td>H2O2Hi</td>
+<td>YDR423C</td>
+<td>CAD1</td>
 <td>glucose</td>
 <td>30.0</td>
 </tr>
@@ -2967,10 +3108,10 @@ DuckDB's <code>$name</code> syntax.</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-8">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-9">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -2989,7 +3130,7 @@ DuckDB's <code>$name</code> syntax.</p>
 
 <span class="c1"># A parameterized query can be saved for future use with the `.prepare()` method</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-8"># A parameterized query has the following form, where `$reg` is a placeholder
+<div class="clipboard-copy-txt" id="cell-9"># A parameterized query has the following form, where `$reg` is a placeholder
 # that gets replaced with the value provided in the `reg` argument.
 vdb.query(
     "SELECT * FROM harbison WHERE regulator_symbol = $reg LIMIT 5",
@@ -3006,7 +3147,7 @@ vdb.query(
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[8]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[9]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -3042,71 +3183,71 @@ vdb.query(
 <tbody>
 <tr>
 <th>0</th>
-<td>14</td>
-<td>13.0</td>
+<td>15</td>
+<td>14.0</td>
 <td>YBR049C</td>
 <td>REB1</td>
-<td>H2O2Lo</td>
+<td>YPD</td>
 <td>YPR204W</td>
 <td>YPR204W</td>
-<td>0.784496</td>
-<td>0.535665</td>
+<td>0.852889</td>
+<td>0.769430</td>
 <td>glucose</td>
 <td>30.0</td>
 </tr>
 <tr>
 <th>1</th>
-<td>14</td>
-<td>13.0</td>
+<td>15</td>
+<td>14.0</td>
 <td>YBR049C</td>
 <td>REB1</td>
-<td>H2O2Lo</td>
+<td>YPD</td>
 <td>YPR203W</td>
 <td>YPR203W</td>
-<td>1.450915</td>
-<td>0.959556</td>
+<td>1.249003</td>
+<td>0.112376</td>
 <td>glucose</td>
 <td>30.0</td>
 </tr>
 <tr>
 <th>2</th>
-<td>14</td>
-<td>13.0</td>
+<td>15</td>
+<td>14.0</td>
 <td>YBR049C</td>
 <td>REB1</td>
-<td>H2O2Lo</td>
+<td>YPD</td>
 <td>YPR202W</td>
 <td>YPR202W</td>
-<td>1.450915</td>
-<td>0.959556</td>
+<td>1.249003</td>
+<td>0.112376</td>
 <td>glucose</td>
 <td>30.0</td>
 </tr>
 <tr>
 <th>3</th>
-<td>14</td>
-<td>13.0</td>
+<td>15</td>
+<td>14.0</td>
 <td>YBR049C</td>
 <td>REB1</td>
-<td>H2O2Lo</td>
+<td>YPD</td>
 <td>YPR201W</td>
 <td>ARR3</td>
-<td>0.925863</td>
-<td>0.453672</td>
+<td>1.513707</td>
+<td>0.168133</td>
 <td>glucose</td>
 <td>30.0</td>
 </tr>
 <tr>
 <th>4</th>
-<td>14</td>
-<td>13.0</td>
+<td>15</td>
+<td>14.0</td>
 <td>YBR049C</td>
 <td>REB1</td>
-<td>H2O2Lo</td>
+<td>YPD</td>
 <td>YPR200C</td>
 <td>ARR2</td>
-<td>0.925863</td>
-<td>0.453672</td>
+<td>1.513707</td>
+<td>0.168133</td>
 <td>glucose</td>
 <td>30.0</td>
 </tr>
@@ -3136,10 +3277,10 @@ Then call it by name via <code>query()</code>.</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-9">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-10">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -3163,7 +3304,7 @@ Then call it by name via <code>query()</code>.</p>
 <span class="c1"># and provide the appropriate parameters</span>
 <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"glucose_regs"</span><span class="p">,</span> <span class="n">cs</span><span class="o">=</span><span class="s2">"glucose"</span><span class="p">,</span> <span class="n">min_n</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-9"># Register a prepared query
+<div class="clipboard-copy-txt" id="cell-10"># Register a prepared query
 vdb.prepare("glucose_regs", """
     SELECT regulator_symbol, COUNT(*) AS n
     FROM harbison_meta
@@ -3185,7 +3326,7 @@ vdb.query("glucose_regs", cs="glucose", min_n=2)</div>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[9]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[10]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -3222,17 +3363,17 @@ vdb.query("glucose_regs", cs="glucose", min_n=2)</div>
 </tr>
 <tr>
 <th>2</th>
-<td>HSF1</td>
-<td>4</td>
-</tr>
-<tr>
-<th>3</th>
 <td>STE12</td>
 <td>4</td>
 </tr>
 <tr>
-<th>4</th>
+<th>3</th>
 <td>RTG3</td>
+<td>4</td>
+</tr>
+<tr>
+<th>4</th>
+<td>DIG1</td>
 <td>4</td>
 </tr>
 <tr>
@@ -3242,27 +3383,27 @@ vdb.query("glucose_regs", cs="glucose", min_n=2)</div>
 </tr>
 <tr>
 <th>58</th>
-<td>DAL82</td>
+<td>IME1</td>
 <td>2</td>
 </tr>
 <tr>
 <th>59</th>
-<td>DAL80</td>
+<td>RDS1</td>
 <td>2</td>
 </tr>
 <tr>
 <th>60</th>
-<td>HAP4</td>
+<td>MSS11</td>
 <td>2</td>
 </tr>
 <tr>
 <th>61</th>
-<td>PDR1</td>
+<td>HAP2</td>
 <td>2</td>
 </tr>
 <tr>
 <th>62</th>
-<td>RLM1</td>
+<td>ARR1</td>
 <td>2</td>
 </tr>
 </tbody>
@@ -3299,135 +3440,6 @@ parsing composite IDs.</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-10">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># The expanded view has parsed _source and _id columns for each link field</span>
-<span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"SELECT * FROM dto_expanded LIMIT 3"</span><span class="p">)</span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-10"># The expanded view has parsed _source and _id columns for each link field
-vdb.query("SELECT * FROM dto_expanded LIMIT 3")</div>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell-outputWrapper">
-<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
-</div>
-<div class="jp-OutputArea jp-Cell-outputArea">
-<div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[10]:</div>
-<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
-<div>
-<style scoped="">
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-<table border="1" class="dataframe">
-<thead>
-<tr style="text-align: right;">
-<th></th>
-<th>binding_id</th>
-<th>perturbation_id</th>
-<th>binding_rank_threshold</th>
-<th>perturbation_rank_threshold</th>
-<th>binding_set_size</th>
-<th>perturbation_set_size</th>
-<th>dto_fdr</th>
-<th>dto_empirical_pvalue</th>
-<th>binding_repo_dataset</th>
-<th>perturbation_repo_dataset</th>
-<th>binding_id_id</th>
-<th>binding_id_source</th>
-<th>perturbation_id_id</th>
-<th>perturbation_id_source</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<th>0</th>
-<td>BrentLab/harbison_2004;harbison_2004;3</td>
-<td>BrentLab/Hackett_2020;hackett_2020;85</td>
-<td>2.0</td>
-<td>2.0</td>
-<td>3.0</td>
-<td>2.0</td>
-<td>0.000225</td>
-<td>0.004</td>
-<td>harbison_2004-harbison_2004</td>
-<td>Hackett_2020-hackett_2020</td>
-<td>3</td>
-<td>harbison</td>
-<td>85</td>
-<td>BrentLab/Hackett_2020;hackett_2020</td>
-</tr>
-<tr>
-<th>1</th>
-<td>BrentLab/harbison_2004;harbison_2004;3</td>
-<td>BrentLab/Hackett_2020;hackett_2020;83</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>harbison_2004-harbison_2004</td>
-<td>Hackett_2020-hackett_2020</td>
-<td>3</td>
-<td>harbison</td>
-<td>83</td>
-<td>BrentLab/Hackett_2020;hackett_2020</td>
-</tr>
-<tr>
-<th>2</th>
-<td>BrentLab/harbison_2004;harbison_2004;3</td>
-<td>BrentLab/Hackett_2020;hackett_2020;84</td>
-<td>2.0</td>
-<td>1.0</td>
-<td>3.0</td>
-<td>1.0</td>
-<td>0.000000</td>
-<td>0.011</td>
-<td>harbison_2004-harbison_2004</td>
-<td>Hackett_2020-hackett_2020</td>
-<td>3</td>
-<td>harbison</td>
-<td>84</td>
-<td>BrentLab/Hackett_2020;hackett_2020</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cell-22">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
 <div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
@@ -3441,29 +3453,11 @@ vdb.query("SELECT * FROM dto_expanded LIMIT 3")</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Join harbison metadata to dto via the expanded view's parsed columns</span>
-<span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"""</span>
-<span class="s2">    SELECT h.*, d.dto_empirical_pvalue, d.dto_fdr</span>
-<span class="s2">    FROM harbison_meta h</span>
-<span class="s2">    JOIN dto_expanded d</span>
-<span class="s2">        ON CAST(h.sample_id AS VARCHAR) = d.binding_id_id</span>
-<span class="s2">        AND d.binding_id_source = 'harbison'</span>
-<span class="s2">    WHERE d.dto_empirical_pvalue &lt;= 0.01</span>
-<span class="s2">    ORDER BY d.dto_empirical_pvalue</span>
-<span class="s2">    LIMIT 10</span>
-<span class="s2">"""</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># The expanded view has parsed _source and _id columns for each link field</span>
+<span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"SELECT * FROM dto_expanded LIMIT 3"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-11"># Join harbison metadata to dto via the expanded view's parsed columns
-vdb.query("""
-    SELECT h.*, d.dto_empirical_pvalue, d.dto_fdr
-    FROM harbison_meta h
-    JOIN dto_expanded d
-        ON CAST(h.sample_id AS VARCHAR) = d.binding_id_id
-        AND d.binding_id_source = 'harbison'
-    WHERE d.dto_empirical_pvalue &lt;= 0.01
-    ORDER BY d.dto_empirical_pvalue
-    LIMIT 10
-""")</div>
+<div class="clipboard-copy-txt" id="cell-11"># The expanded view has parsed _source and _id columns for each link field
+vdb.query("SELECT * FROM dto_expanded LIMIT 3")</div>
 </div>
 </div>
 </div>
@@ -3493,126 +3487,77 @@ vdb.query("""
 <thead>
 <tr style="text-align: right;">
 <th></th>
-<th>sample_id</th>
-<th>regulator_locus_tag</th>
-<th>regulator_symbol</th>
-<th>condition</th>
-<th>carbon_source</th>
-<th>temperature_celsius</th>
-<th>dto_empirical_pvalue</th>
+<th>binding_id</th>
+<th>perturbation_id</th>
+<th>binding_rank_threshold</th>
+<th>perturbation_rank_threshold</th>
+<th>binding_set_size</th>
+<th>perturbation_set_size</th>
 <th>dto_fdr</th>
+<th>dto_empirical_pvalue</th>
+<th>pr_ranking_column</th>
+<th>binding_repo_dataset</th>
+<th>perturbation_repo_dataset</th>
+<th>binding_id_id</th>
+<th>binding_id_source</th>
+<th>perturbation_id_id</th>
+<th>perturbation_id_source</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <th>0</th>
-<td>50</td>
-<td>YDR043C</td>
-<td>NRG1</td>
-<td>H2O2Lo</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>0.0</td>
-<td>0.081863</td>
+<td>BrentLab/harbison_2004;harbison_2004;105</td>
+<td>BrentLab/hughes_2006;overexpression;10</td>
+<td>11.0</td>
+<td>206.0</td>
+<td>12.0</td>
+<td>206.0</td>
+<td>0.041293</td>
+<td>0.017</td>
+<td>log2fc</td>
+<td>harbison_2004-harbison_2004</td>
+<td>hughes_2006-overexpression</td>
+<td>105</td>
+<td>harbison</td>
+<td>10</td>
+<td>BrentLab/hughes_2006;overexpression</td>
 </tr>
 <tr>
 <th>1</th>
-<td>213</td>
-<td>YKL222C</td>
-<td>YKL222C</td>
-<td>YPD</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>0.0</td>
-<td>0.000000</td>
+<td>BrentLab/harbison_2004;harbison_2004;108</td>
+<td>BrentLab/hughes_2006;overexpression;11</td>
+<td>60.0</td>
+<td>67.0</td>
+<td>60.0</td>
+<td>67.0</td>
+<td>0.054284</td>
+<td>0.000</td>
+<td>log2fc</td>
+<td>harbison_2004-harbison_2004</td>
+<td>hughes_2006-overexpression</td>
+<td>108</td>
+<td>harbison</td>
+<td>11</td>
+<td>BrentLab/hughes_2006;overexpression</td>
 </tr>
 <tr>
 <th>2</th>
-<td>18</td>
-<td>YBR083W</td>
-<td>TEC1</td>
-<td>YPD</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>0.0</td>
-<td>0.062067</td>
-</tr>
-<tr>
-<th>3</th>
-<td>7</td>
-<td>YBL103C</td>
-<td>RTG3</td>
-<td>H2O2Hi</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>0.0</td>
-<td>0.157723</td>
-</tr>
-<tr>
-<th>4</th>
-<td>277</td>
-<td>YNL103W</td>
-<td>MET4</td>
-<td>YPD</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>0.0</td>
-<td>0.016282</td>
-</tr>
-<tr>
-<th>5</th>
-<td>281</td>
-<td>YNL199C</td>
-<td>GCR2</td>
-<td>SM</td>
-<td>unspecified</td>
-<td>30.0</td>
-<td>0.0</td>
-<td>0.029635</td>
-</tr>
-<tr>
-<th>6</th>
-<td>86</td>
-<td>YER040W</td>
-<td>GLN3</td>
-<td>SM</td>
-<td>unspecified</td>
-<td>30.0</td>
-<td>0.0</td>
-<td>0.229889</td>
-</tr>
-<tr>
-<th>7</th>
-<td>225</td>
-<td>YLR176C</td>
-<td>RFX1</td>
-<td>YPD</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>0.0</td>
-<td>0.014456</td>
-</tr>
-<tr>
-<th>8</th>
-<td>86</td>
-<td>YER040W</td>
-<td>GLN3</td>
-<td>SM</td>
-<td>unspecified</td>
-<td>30.0</td>
-<td>0.0</td>
-<td>0.096117</td>
-</tr>
-<tr>
-<th>9</th>
-<td>225</td>
-<td>YLR176C</td>
-<td>RFX1</td>
-<td>YPD</td>
-<td>glucose</td>
-<td>30.0</td>
-<td>0.0</td>
-<td>0.033526</td>
+<td>BrentLab/harbison_2004;harbison_2004;109</td>
+<td>BrentLab/hughes_2006;overexpression;11</td>
+<td>27.0</td>
+<td>1265.0</td>
+<td>27.0</td>
+<td>1265.0</td>
+<td>0.123214</td>
+<td>0.057</td>
+<td>log2fc</td>
+<td>harbison_2004-harbison_2004</td>
+<td>hughes_2006-overexpression</td>
+<td>109</td>
+<td>harbison</td>
+<td>11</td>
+<td>BrentLab/hughes_2006;overexpression</td>
 </tr>
 </tbody>
 </table>
@@ -3623,7 +3568,7 @@ vdb.query("""
 </div>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cell-23">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cell-22">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3641,14 +3586,9 @@ vdb.query("""
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Cross-dataset join: harbison binding with hackett perturbation data</span>
-<span class="c1"># via the DTO comparative dataset</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Join harbison metadata to dto via the expanded view's parsed columns</span>
 <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"""</span>
-<span class="s2">    SELECT</span>
-<span class="s2">        h.sample_id        AS harbison_sample_id,</span>
-<span class="s2">        h.regulator_symbol,</span>
-<span class="s2">        d.dto_empirical_pvalue,</span>
-<span class="s2">        d.perturbation_id_id AS hackett_sample_id</span>
+<span class="s2">    SELECT h.*, d.dto_empirical_pvalue, d.dto_fdr</span>
 <span class="s2">    FROM harbison_meta h</span>
 <span class="s2">    JOIN dto_expanded d</span>
 <span class="s2">        ON CAST(h.sample_id AS VARCHAR) = d.binding_id_id</span>
@@ -3658,14 +3598,9 @@ vdb.query("""
 <span class="s2">    LIMIT 10</span>
 <span class="s2">"""</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-12"># Cross-dataset join: harbison binding with hackett perturbation data
-# via the DTO comparative dataset
+<div class="clipboard-copy-txt" id="cell-12"># Join harbison metadata to dto via the expanded view's parsed columns
 vdb.query("""
-    SELECT
-        h.sample_id        AS harbison_sample_id,
-        h.regulator_symbol,
-        d.dto_empirical_pvalue,
-        d.perturbation_id_id AS hackett_sample_id
+    SELECT h.*, d.dto_empirical_pvalue, d.dto_fdr
     FROM harbison_meta h
     JOIN dto_expanded d
         ON CAST(h.sample_id AS VARCHAR) = d.binding_id_id
@@ -3703,82 +3638,126 @@ vdb.query("""
 <thead>
 <tr style="text-align: right;">
 <th></th>
-<th>harbison_sample_id</th>
+<th>sample_id</th>
+<th>condition</th>
+<th>regulator_locus_tag</th>
 <th>regulator_symbol</th>
+<th>carbon_source</th>
+<th>temperature_celsius</th>
 <th>dto_empirical_pvalue</th>
-<th>hackett_sample_id</th>
+<th>dto_fdr</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <th>0</th>
-<td>289</td>
-<td>DAL82</td>
+<td>18</td>
+<td>YPD</td>
+<td>YBR083W</td>
+<td>TEC1</td>
+<td>glucose</td>
+<td>30.0</td>
 <td>0.0</td>
-<td>1208</td>
+<td>0.081882</td>
 </tr>
 <tr>
 <th>1</th>
-<td>251</td>
-<td>MAC1</td>
+<td>157</td>
+<td>H2O2Hi</td>
+<td>YHR206W</td>
+<td>SKN7</td>
+<td>glucose</td>
+<td>30.0</td>
 <td>0.0</td>
-<td>1103</td>
+<td>0.139320</td>
 </tr>
 <tr>
 <th>2</th>
-<td>321</td>
-<td>DIG1</td>
+<td>93</td>
+<td>YPD</td>
+<td>YER111C</td>
+<td>SWI4</td>
+<td>glucose</td>
+<td>30.0</td>
 <td>0.0</td>
-<td>1372</td>
+<td>0.170051</td>
 </tr>
 <tr>
 <th>3</th>
-<td>238</td>
-<td>YAP1</td>
+<td>72</td>
+<td>YPD</td>
+<td>YDR421W</td>
+<td>ARO80</td>
+<td>glucose</td>
+<td>30.0</td>
 <td>0.0</td>
-<td>996</td>
+<td>0.000114</td>
 </tr>
 <tr>
 <th>4</th>
-<td>303</td>
-<td>CIN5</td>
+<td>71</td>
+<td>SM</td>
+<td>YDR421W</td>
+<td>ARO80</td>
+<td>unspecified</td>
+<td>30.0</td>
 <td>0.0</td>
-<td>1365</td>
+<td>0.000114</td>
 </tr>
 <tr>
 <th>5</th>
-<td>245</td>
-<td>ARG81</td>
+<td>346</td>
+<td>RAPA</td>
+<td>YPR104C</td>
+<td>FHL1</td>
+<td>glucose</td>
+<td>30.0</td>
 <td>0.0</td>
-<td>1023</td>
+<td>0.019746</td>
 </tr>
 <tr>
 <th>6</th>
-<td>184</td>
-<td>CBF1</td>
+<td>226</td>
+<td>YPD</td>
+<td>YLR182W</td>
+<td>SWI6</td>
+<td>glucose</td>
+<td>30.0</td>
 <td>0.0</td>
-<td>754</td>
+<td>0.073690</td>
 </tr>
 <tr>
 <th>7</th>
-<td>252</td>
-<td>MAC1</td>
+<td>286</td>
+<td>YPD</td>
+<td>YNL309W</td>
+<td>STB1</td>
+<td>glucose</td>
+<td>30.0</td>
 <td>0.0</td>
-<td>1103</td>
+<td>0.182147</td>
 </tr>
 <tr>
 <th>8</th>
-<td>200</td>
-<td>PHD1</td>
+<td>172</td>
+<td>SM</td>
+<td>YIR023W</td>
+<td>DAL81</td>
+<td>unspecified</td>
+<td>30.0</td>
 <td>0.0</td>
-<td>890</td>
+<td>0.216562</td>
 </tr>
 <tr>
 <th>9</th>
-<td>251</td>
-<td>MAC1</td>
+<td>320</td>
+<td>YPD</td>
+<td>YPL038W</td>
+<td>MET31</td>
+<td>glucose</td>
+<td>30.0</td>
 <td>0.0</td>
-<td>1110</td>
+<td>0.066122</td>
 </tr>
 </tbody>
 </table>
@@ -3788,21 +3767,8 @@ vdb.query("""
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-24">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="a-realistic-example">A realistic example<a class="anchor-link" href="#a-realistic-example">¶</a></h2><p>Hackett has multiple experimental conditions that are unique to that dataset. There are
-some regulators which have replicates within those conditions. We need to find those
-regulators and design a query which returns only 1 sample per condition set.</p>
-</div>
-</div>
-</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f03e942a">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=cell-23">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -3820,24 +3786,38 @@ regulators and design a query which returns only 1 sample per condition set.</p>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Query hackett to find regulators with multiple samples in the same (time, mechanism)</span>
-<span class="c1"># condition</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Cross-dataset join: harbison binding with hackett perturbation data</span>
+<span class="c1"># via the DTO comparative dataset</span>
 <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"""</span>
-<span class="s2">    SELECT regulator_symbol, time, mechanism, restriction, COUNT(*) AS n</span>
-<span class="s2">    FROM hackett_meta</span>
-<span class="s2">    GROUP BY regulator_symbol, time, mechanism, restriction</span>
-<span class="s2">    HAVING n &gt; 1</span>
-<span class="s2">    ORDER BY n DESC</span>
+<span class="s2">    SELECT</span>
+<span class="s2">        h.sample_id        AS harbison_sample_id,</span>
+<span class="s2">        h.regulator_symbol,</span>
+<span class="s2">        d.dto_empirical_pvalue,</span>
+<span class="s2">        d.perturbation_id_id AS hackett_sample_id</span>
+<span class="s2">    FROM harbison_meta h</span>
+<span class="s2">    JOIN dto_expanded d</span>
+<span class="s2">        ON CAST(h.sample_id AS VARCHAR) = d.binding_id_id</span>
+<span class="s2">        AND d.binding_id_source = 'harbison'</span>
+<span class="s2">    WHERE d.dto_empirical_pvalue &lt;= 0.01</span>
+<span class="s2">    ORDER BY d.dto_empirical_pvalue</span>
+<span class="s2">    LIMIT 10</span>
 <span class="s2">"""</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-13"># Query hackett to find regulators with multiple samples in the same (time, mechanism)
-# condition
+<div class="clipboard-copy-txt" id="cell-13"># Cross-dataset join: harbison binding with hackett perturbation data
+# via the DTO comparative dataset
 vdb.query("""
-    SELECT regulator_symbol, time, mechanism, restriction, COUNT(*) AS n
-    FROM hackett_meta
-    GROUP BY regulator_symbol, time, mechanism, restriction
-    HAVING n &gt; 1
-    ORDER BY n DESC
+    SELECT
+        h.sample_id        AS harbison_sample_id,
+        h.regulator_symbol,
+        d.dto_empirical_pvalue,
+        d.perturbation_id_id AS hackett_sample_id
+    FROM harbison_meta h
+    JOIN dto_expanded d
+        ON CAST(h.sample_id AS VARCHAR) = d.binding_id_id
+        AND d.binding_id_source = 'harbison'
+    WHERE d.dto_empirical_pvalue &lt;= 0.01
+    ORDER BY d.dto_empirical_pvalue
+    LIMIT 10
 """)</div>
 </div>
 </div>
@@ -3868,293 +3848,82 @@ vdb.query("""
 <thead>
 <tr style="text-align: right;">
 <th></th>
+<th>harbison_sample_id</th>
 <th>regulator_symbol</th>
-<th>time</th>
-<th>mechanism</th>
-<th>restriction</th>
-<th>n</th>
+<th>dto_empirical_pvalue</th>
+<th>hackett_sample_id</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <th>0</th>
-<td>SWI1</td>
-<td>15.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>3</td>
+<td>15</td>
+<td>REB1</td>
+<td>0.0</td>
+<td>100_242</td>
 </tr>
 <tr>
 <th>1</th>
-<td>SWI1</td>
-<td>30.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>3</td>
+<td>303</td>
+<td>CIN5</td>
+<td>0.0</td>
+<td>1280</td>
 </tr>
 <tr>
 <th>2</th>
-<td>SWI1</td>
-<td>45.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>3</td>
+<td>330</td>
+<td>CUP9</td>
+<td>0.0</td>
+<td>256</td>
 </tr>
 <tr>
 <th>3</th>
-<td>SWI1</td>
-<td>5.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>3</td>
+<td>114</td>
+<td>AFT1</td>
+<td>0.0</td>
+<td>87</td>
 </tr>
 <tr>
 <th>4</th>
-<td>SWI1</td>
+<td>9</td>
+<td>RTG3</td>
 <td>0.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>3</td>
+<td>57</td>
 </tr>
 <tr>
 <th>5</th>
-<td>SWI1</td>
-<td>90.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>3</td>
+<td>118</td>
+<td>HSF1</td>
+<td>0.0</td>
+<td>88</td>
 </tr>
 <tr>
 <th>6</th>
-<td>SWI1</td>
-<td>10.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>3</td>
+<td>15</td>
+<td>REB1</td>
+<td>0.0</td>
+<td>100_242</td>
 </tr>
 <tr>
 <th>7</th>
-<td>SWI1</td>
-<td>20.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>3</td>
+<td>162</td>
+<td>XBP1</td>
+<td>0.0</td>
+<td>24</td>
 </tr>
 <tr>
 <th>8</th>
-<td>GCN4</td>
+<td>240</td>
+<td>YAP1</td>
 <td>0.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
+<td>182</td>
 </tr>
 <tr>
 <th>9</th>
-<td>GCN4</td>
-<td>30.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>10</th>
-<td>MAC1</td>
+<td>150</td>
+<td>STP2</td>
 <td>0.0</td>
-<td>GEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>11</th>
-<td>RDS2</td>
-<td>5.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>12</th>
-<td>RDS2</td>
-<td>45.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>13</th>
-<td>Z3EV</td>
-<td>30.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>14</th>
-<td>GCN4</td>
-<td>90.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>15</th>
-<td>Z3EV</td>
-<td>15.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>16</th>
-<td>GCN4</td>
-<td>45.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>17</th>
-<td>MAC1</td>
-<td>5.0</td>
-<td>GEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>18</th>
-<td>MAC1</td>
-<td>90.0</td>
-<td>GEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>19</th>
-<td>Z3EV</td>
-<td>45.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>20</th>
-<td>RDS2</td>
-<td>10.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>21</th>
-<td>GCN4</td>
-<td>15.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>22</th>
-<td>RDS2</td>
-<td>90.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>23</th>
-<td>RDS2</td>
-<td>0.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>24</th>
-<td>Z3EV</td>
-<td>5.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>25</th>
-<td>Z3EV</td>
-<td>90.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>26</th>
-<td>Z3EV</td>
-<td>20.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>27</th>
-<td>RDS2</td>
-<td>30.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>28</th>
-<td>Z3EV</td>
-<td>0.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>29</th>
-<td>RDS2</td>
-<td>15.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>30</th>
-<td>Z3EV</td>
-<td>10.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>31</th>
-<td>RDS2</td>
-<td>20.0</td>
-<td>ZEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>32</th>
-<td>MAC1</td>
-<td>45.0</td>
-<td>GEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>33</th>
-<td>MAC1</td>
-<td>15.0</td>
-<td>GEV</td>
-<td>P</td>
-<td>2</td>
-</tr>
-<tr>
-<th>34</th>
-<td>MAC1</td>
-<td>30.0</td>
-<td>GEV</td>
-<td>P</td>
-<td>2</td>
+<td>604</td>
 </tr>
 </tbody>
 </table>
@@ -4164,8 +3933,21 @@ vdb.query("""
 </div>
 </div>
 </div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-24">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="a-realistic-example">A realistic example<a class="anchor-link" href="#a-realistic-example">¶</a></h2><p>Hackett has multiple experimental conditions that are unique to that dataset. There are
+some regulators which have replicates within those conditions. We need to find those
+regulators and design a query which returns only 1 sample per condition set.</p>
+</div>
+</div>
+</div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4d869036">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=f03e942a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -4183,22 +3965,24 @@ vdb.query("""
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># SWI1 has 3 samples at time=20, mechanism=ZEV. Let's look at just those samples</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Query hackett to find regulators with multiple samples in the same (time, mechanism)</span>
+<span class="c1"># condition</span>
 <span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"""</span>
-<span class="s2">    SELECT *</span>
+<span class="s2">    SELECT regulator_symbol, time, mechanism, restriction, COUNT(*) AS n</span>
 <span class="s2">    FROM hackett_meta</span>
-<span class="s2">    WHERE regulator_symbol = 'SWI1'</span>
-<span class="s2">      AND time = 20</span>
-<span class="s2">      AND mechanism = 'ZEV'</span>
+<span class="s2">    GROUP BY regulator_symbol, time, mechanism, restriction</span>
+<span class="s2">    HAVING n &gt; 1</span>
+<span class="s2">    ORDER BY n DESC</span>
 <span class="s2">"""</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-14"># SWI1 has 3 samples at time=20, mechanism=ZEV. Let's look at just those samples
+<div class="clipboard-copy-txt" id="cell-14"># Query hackett to find regulators with multiple samples in the same (time, mechanism)
+# condition
 vdb.query("""
-    SELECT *
+    SELECT regulator_symbol, time, mechanism, restriction, COUNT(*) AS n
     FROM hackett_meta
-    WHERE regulator_symbol = 'SWI1'
-      AND time = 20
-      AND mechanism = 'ZEV'
+    GROUP BY regulator_symbol, time, mechanism, restriction
+    HAVING n &gt; 1
+    ORDER BY n DESC
 """)</div>
 </div>
 </div>
@@ -4229,14 +4013,311 @@ vdb.query("""
 <thead>
 <tr style="text-align: right;">
 <th></th>
-<th>sample_id</th>
-<th>regulator_locus_tag</th>
 <th>regulator_symbol</th>
 <th>time</th>
 <th>mechanism</th>
 <th>restriction</th>
+<th>n</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>SWI1</td>
+<td>5.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>3</td>
+</tr>
+<tr>
+<th>1</th>
+<td>SWI1</td>
+<td>30.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>3</td>
+</tr>
+<tr>
+<th>2</th>
+<td>SWI1</td>
+<td>20.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>3</td>
+</tr>
+<tr>
+<th>3</th>
+<td>SWI1</td>
+<td>10.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>3</td>
+</tr>
+<tr>
+<th>4</th>
+<td>SWI1</td>
+<td>90.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>3</td>
+</tr>
+<tr>
+<th>5</th>
+<td>SWI1</td>
+<td>0.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>3</td>
+</tr>
+<tr>
+<th>6</th>
+<td>SWI1</td>
+<td>15.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>3</td>
+</tr>
+<tr>
+<th>7</th>
+<td>SWI1</td>
+<td>45.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>3</td>
+</tr>
+<tr>
+<th>8</th>
+<td>RDS2</td>
+<td>10.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>9</th>
+<td>MAC1</td>
+<td>90.0</td>
+<td>GEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>10</th>
+<td>MAC1</td>
+<td>15.0</td>
+<td>GEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>11</th>
+<td>RDS2</td>
+<td>20.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>12</th>
+<td>MAC1</td>
+<td>45.0</td>
+<td>GEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>13</th>
+<td>RDS2</td>
+<td>30.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>14</th>
+<td>GCN4</td>
+<td>15.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>15</th>
+<td>MAC1</td>
+<td>30.0</td>
+<td>GEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>16</th>
+<td>MAC1</td>
+<td>5.0</td>
+<td>GEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>17</th>
+<td>GCN4</td>
+<td>45.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>18</th>
+<td>GCN4</td>
+<td>90.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>19</th>
+<td>RDS2</td>
+<td>45.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>20</th>
+<td>RDS2</td>
+<td>0.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>21</th>
+<td>RDS2</td>
+<td>90.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>22</th>
+<td>GCN4</td>
+<td>30.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>23</th>
+<td>MAC1</td>
+<td>0.0</td>
+<td>GEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>24</th>
+<td>RDS2</td>
+<td>5.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>25</th>
+<td>GCN4</td>
+<td>0.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+<tr>
+<th>26</th>
+<td>RDS2</td>
+<td>15.0</td>
+<td>ZEV</td>
+<td>P</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell">
+<div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=4d869036">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="CodeMirror cm-s-jupyter">
+<div class="zeroclipboard-container">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-15">
+<div>
+<span class="notice" hidden="">Copied!</span>
+<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
+<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+</clipboard-copy>
+</div>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># SWI1 has 3 samples at time=20, mechanism=ZEV. Let's look at just those samples</span>
+<span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"""</span>
+<span class="s2">    SELECT *</span>
+<span class="s2">    FROM hackett_meta</span>
+<span class="s2">    WHERE regulator_symbol = 'SWI1'</span>
+<span class="s2">      AND time = 20</span>
+<span class="s2">      AND mechanism = 'ZEV'</span>
+<span class="s2">"""</span><span class="p">)</span>
+</pre></div>
+<div class="clipboard-copy-txt" id="cell-15"># SWI1 has 3 samples at time=20, mechanism=ZEV. Let's look at just those samples
+vdb.query("""
+    SELECT *
+    FROM hackett_meta
+    WHERE regulator_symbol = 'SWI1'
+      AND time = 20
+      AND mechanism = 'ZEV'
+""")</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child jp-OutputArea-executeResult">
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[15]:</div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>sample_id</th>
 <th>date</th>
+<th>mechanism</th>
+<th>regulator_locus_tag</th>
+<th>regulator_symbol</th>
+<th>restriction</th>
 <th>strain</th>
+<th>time</th>
 <th>carbon_source</th>
 <th>temperature_celsius</th>
 </tr>
@@ -4244,40 +4325,40 @@ vdb.query("""
 <tbody>
 <tr>
 <th>0</th>
-<td>1620</td>
+<td>1636</td>
+<td>20161117</td>
+<td>ZEV</td>
 <td>YPL016W</td>
 <td>SWI1</td>
-<td>20.0</td>
-<td>ZEV</td>
 <td>P</td>
-<td>20161117</td>
-<td>SMY2266a</td>
+<td>SMY2266c</td>
+<td>20.0</td>
 <td>glucose</td>
 <td>30.0</td>
 </tr>
 <tr>
 <th>1</th>
 <td>1628</td>
+<td>20161117</td>
+<td>ZEV</td>
 <td>YPL016W</td>
 <td>SWI1</td>
-<td>20.0</td>
-<td>ZEV</td>
 <td>P</td>
-<td>20161117</td>
 <td>SMY2266b</td>
+<td>20.0</td>
 <td>glucose</td>
 <td>30.0</td>
 </tr>
 <tr>
 <th>2</th>
-<td>1636</td>
+<td>1620</td>
+<td>20161117</td>
+<td>ZEV</td>
 <td>YPL016W</td>
 <td>SWI1</td>
-<td>20.0</td>
-<td>ZEV</td>
 <td>P</td>
-<td>20161117</td>
-<td>SMY2266c</td>
+<td>SMY2266a</td>
+<td>20.0</td>
 <td>glucose</td>
 <td>30.0</td>
 </tr>
@@ -4295,10 +4376,10 @@ vdb.query("""
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-15">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-16">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4320,7 +4401,7 @@ vdb.query("""
 <span class="s2">"""</span><span class="p">)</span><span class="o">.</span><span class="n">regulator_symbol</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">replicated_hackett_regulators</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-15"># In this case, there are three strains with otherwise the same experimental conditions.
+<div class="clipboard-copy-txt" id="cell-16"># In this case, there are three strains with otherwise the same experimental conditions.
 # Rather than trying to choose among these right now, we might just want to get a
 # unique list of the regulators with replicates in order to exclude them from an
 # analysis that doesn't expect replicates.
@@ -4342,7 +4423,7 @@ print(replicated_hackett_regulators)</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>['GCN4', 'MAC1', 'SWI1', 'Z3EV', 'RDS2']
+<pre>['MAC1', 'SWI1', 'GCN4', 'RDS2']
 </pre>
 </div>
 </div>
@@ -4355,10 +4436,10 @@ print(replicated_hackett_regulators)</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-16">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-17">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4372,7 +4453,7 @@ print(replicated_hackett_regulators)</div>
 <span class="n">replicated_hackett_regulators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"GEV"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">replicated_hackett_regulators</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-16"># GEV is another "regulator" we want to exclude
+<div class="clipboard-copy-txt" id="cell-17"># GEV is another "regulator" we want to exclude
 replicated_hackett_regulators.append("GEV")
 print(replicated_hackett_regulators)</div>
 </div>
@@ -4386,7 +4467,7 @@ print(replicated_hackett_regulators)</div>
 <div class="jp-OutputArea-child">
 <div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
 <div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
-<pre>['GCN4', 'MAC1', 'SWI1', 'Z3EV', 'RDS2', 'GEV']
+<pre>['MAC1', 'SWI1', 'GCN4', 'RDS2', 'GEV']
 </pre>
 </div>
 </div>
@@ -4399,10 +4480,10 @@ print(replicated_hackett_regulators)</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-17">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-18">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4414,7 +4495,7 @@ print(replicated_hackett_regulators)</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">vdb</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">"SELECT * FROM dto_expanded"</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-17">vdb.query("SELECT * FROM dto_expanded")</div>
+<div class="clipboard-copy-txt" id="cell-18">vdb.query("SELECT * FROM dto_expanded")</div>
 </div>
 </div>
 </div>
@@ -4424,7 +4505,7 @@ print(replicated_hackett_regulators)</div>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[19]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[18]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -4452,6 +4533,7 @@ print(replicated_hackett_regulators)</div>
 <th>perturbation_set_size</th>
 <th>dto_fdr</th>
 <th>dto_empirical_pvalue</th>
+<th>pr_ranking_column</th>
 <th>binding_repo_dataset</th>
 <th>perturbation_repo_dataset</th>
 <th>binding_id_id</th>
@@ -4463,88 +4545,93 @@ print(replicated_hackett_regulators)</div>
 <tbody>
 <tr>
 <th>0</th>
-<td>BrentLab/harbison_2004;harbison_2004;3</td>
-<td>BrentLab/Hackett_2020;hackett_2020;85</td>
-<td>2.0</td>
-<td>2.0</td>
-<td>3.0</td>
-<td>2.0</td>
-<td>0.000225</td>
-<td>0.004</td>
+<td>BrentLab/harbison_2004;harbison_2004;105</td>
+<td>BrentLab/hughes_2006;overexpression;10</td>
+<td>11.0</td>
+<td>206.0</td>
+<td>12.0</td>
+<td>206.0</td>
+<td>0.041293</td>
+<td>0.017</td>
+<td>log2fc</td>
 <td>harbison_2004-harbison_2004</td>
-<td>Hackett_2020-hackett_2020</td>
-<td>3</td>
+<td>hughes_2006-overexpression</td>
+<td>105</td>
 <td>harbison</td>
-<td>85</td>
-<td>BrentLab/Hackett_2020;hackett_2020</td>
+<td>10</td>
+<td>BrentLab/hughes_2006;overexpression</td>
 </tr>
 <tr>
 <th>1</th>
-<td>BrentLab/harbison_2004;harbison_2004;3</td>
-<td>BrentLab/Hackett_2020;hackett_2020;83</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
+<td>BrentLab/harbison_2004;harbison_2004;108</td>
+<td>BrentLab/hughes_2006;overexpression;11</td>
+<td>60.0</td>
+<td>67.0</td>
+<td>60.0</td>
+<td>67.0</td>
+<td>0.054284</td>
+<td>0.000</td>
+<td>log2fc</td>
 <td>harbison_2004-harbison_2004</td>
-<td>Hackett_2020-hackett_2020</td>
-<td>3</td>
+<td>hughes_2006-overexpression</td>
+<td>108</td>
 <td>harbison</td>
-<td>83</td>
-<td>BrentLab/Hackett_2020;hackett_2020</td>
+<td>11</td>
+<td>BrentLab/hughes_2006;overexpression</td>
 </tr>
 <tr>
 <th>2</th>
-<td>BrentLab/harbison_2004;harbison_2004;3</td>
-<td>BrentLab/Hackett_2020;hackett_2020;84</td>
-<td>2.0</td>
-<td>1.0</td>
-<td>3.0</td>
-<td>1.0</td>
-<td>0.000000</td>
-<td>0.011</td>
+<td>BrentLab/harbison_2004;harbison_2004;109</td>
+<td>BrentLab/hughes_2006;overexpression;11</td>
+<td>27.0</td>
+<td>1265.0</td>
+<td>27.0</td>
+<td>1265.0</td>
+<td>0.123214</td>
+<td>0.057</td>
+<td>log2fc</td>
 <td>harbison_2004-harbison_2004</td>
-<td>Hackett_2020-hackett_2020</td>
-<td>3</td>
+<td>hughes_2006-overexpression</td>
+<td>109</td>
 <td>harbison</td>
-<td>84</td>
-<td>BrentLab/Hackett_2020;hackett_2020</td>
+<td>11</td>
+<td>BrentLab/hughes_2006;overexpression</td>
 </tr>
 <tr>
 <th>3</th>
-<td>BrentLab/harbison_2004;harbison_2004;4</td>
-<td>BrentLab/Hackett_2020;hackett_2020;78</td>
-<td>487.0</td>
-<td>96.0</td>
-<td>479.0</td>
-<td>92.0</td>
-<td>0.412192</td>
-<td>0.576</td>
+<td>BrentLab/harbison_2004;harbison_2004;112</td>
+<td>BrentLab/hughes_2006;overexpression;12</td>
+<td>532.0</td>
+<td>1093.0</td>
+<td>532.0</td>
+<td>1093.0</td>
+<td>0.436305</td>
+<td>0.092</td>
+<td>log2fc</td>
 <td>harbison_2004-harbison_2004</td>
-<td>Hackett_2020-hackett_2020</td>
-<td>4</td>
+<td>hughes_2006-overexpression</td>
+<td>112</td>
 <td>harbison</td>
-<td>78</td>
-<td>BrentLab/Hackett_2020;hackett_2020</td>
+<td>12</td>
+<td>BrentLab/hughes_2006;overexpression</td>
 </tr>
 <tr>
 <th>4</th>
-<td>BrentLab/harbison_2004;harbison_2004;3</td>
-<td>BrentLab/Hackett_2020;hackett_2020;81</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
-<td>NaN</td>
+<td>BrentLab/harbison_2004;harbison_2004;113</td>
+<td>BrentLab/hughes_2006;overexpression;12</td>
+<td>10.0</td>
+<td>556.0</td>
+<td>10.0</td>
+<td>556.0</td>
+<td>0.017567</td>
+<td>0.002</td>
+<td>log2fc</td>
 <td>harbison_2004-harbison_2004</td>
-<td>Hackett_2020-hackett_2020</td>
-<td>3</td>
+<td>hughes_2006-overexpression</td>
+<td>113</td>
 <td>harbison</td>
-<td>81</td>
-<td>BrentLab/Hackett_2020;hackett_2020</td>
+<td>12</td>
+<td>BrentLab/hughes_2006;overexpression</td>
 </tr>
 <tr>
 <th>...</th>
@@ -4562,95 +4649,101 @@ print(replicated_hackett_regulators)</div>
 <td>...</td>
 <td>...</td>
 <td>...</td>
+<td>...</td>
 </tr>
 <tr>
-<th>9599</th>
-<td>BrentLab/callingcards;annotated_features;804</td>
-<td>BrentLab/kemmeren_2014;kemmeren_2014;901</td>
-<td>14.0</td>
-<td>39.0</td>
-<td>13.0</td>
-<td>39.0</td>
-<td>0.000879</td>
+<th>29799</th>
+<td>BrentLab/callingcards;annotated_features_combi...</td>
+<td>BrentLab/kemmeren_2014;kemmeren_2014;784</td>
+<td>154.0</td>
+<td>905.0</td>
+<td>154.0</td>
+<td>905.0</td>
+<td>0.090665</td>
 <td>0.000</td>
-<td>callingcards-annotated_features</td>
+<td>pvalue</td>
+<td>callingcards-annotated_features_combined</td>
 <td>kemmeren_2014-kemmeren_2014</td>
-<td>804</td>
-<td>BrentLab/callingcards;annotated_features</td>
-<td>901</td>
+<td>724-692-688</td>
+<td>BrentLab/callingcards;annotated_features_combined</td>
+<td>784</td>
 <td>kemmeren</td>
 </tr>
 <tr>
-<th>9600</th>
-<td>BrentLab/callingcards;annotated_features;805</td>
-<td>BrentLab/kemmeren_2014;kemmeren_2014;1053</td>
-<td>18.0</td>
-<td>278.0</td>
-<td>17.0</td>
-<td>171.0</td>
-<td>0.001455</td>
-<td>0.000</td>
-<td>callingcards-annotated_features</td>
+<th>29800</th>
+<td>BrentLab/callingcards;annotated_features_combi...</td>
+<td>BrentLab/kemmeren_2014;kemmeren_2014;666</td>
+<td>215.0</td>
+<td>108.0</td>
+<td>215.0</td>
+<td>108.0</td>
+<td>0.075036</td>
+<td>0.005</td>
+<td>pvalue</td>
+<td>callingcards-annotated_features_combined</td>
 <td>kemmeren_2014-kemmeren_2014</td>
-<td>805</td>
-<td>BrentLab/callingcards;annotated_features</td>
-<td>1053</td>
+<td>725-435-395</td>
+<td>BrentLab/callingcards;annotated_features_combined</td>
+<td>666</td>
 <td>kemmeren</td>
 </tr>
 <tr>
-<th>9601</th>
-<td>BrentLab/callingcards;annotated_features;808</td>
-<td>BrentLab/kemmeren_2014;kemmeren_2014;218</td>
-<td>20.0</td>
-<td>57.0</td>
-<td>19.0</td>
-<td>27.0</td>
-<td>0.003116</td>
-<td>0.000</td>
-<td>callingcards-annotated_features</td>
-<td>kemmeren_2014-kemmeren_2014</td>
-<td>808</td>
-<td>BrentLab/callingcards;annotated_features</td>
-<td>218</td>
-<td>kemmeren</td>
-</tr>
-<tr>
-<th>9602</th>
-<td>BrentLab/callingcards;annotated_features;806</td>
-<td>BrentLab/kemmeren_2014;kemmeren_2014;1023</td>
-<td>10.0</td>
-<td>9.0</td>
-<td>11.0</td>
-<td>9.0</td>
-<td>0.000000</td>
-<td>0.000</td>
-<td>callingcards-annotated_features</td>
-<td>kemmeren_2014-kemmeren_2014</td>
-<td>806</td>
-<td>BrentLab/callingcards;annotated_features</td>
-<td>1023</td>
-<td>kemmeren</td>
-</tr>
-<tr>
-<th>9603</th>
-<td>BrentLab/callingcards;annotated_features;809</td>
-<td>BrentLab/kemmeren_2014;kemmeren_2014;913</td>
-<td>150.0</td>
+<th>29801</th>
+<td>BrentLab/callingcards;annotated_features_combi...</td>
+<td>BrentLab/kemmeren_2014;kemmeren_2014;271</td>
 <td>221.0</td>
-<td>140.0</td>
-<td>206.0</td>
-<td>0.116890</td>
-<td>0.000</td>
-<td>callingcards-annotated_features</td>
+<td>925.0</td>
+<td>221.0</td>
+<td>925.0</td>
+<td>0.403484</td>
+<td>0.126</td>
+<td>pvalue</td>
+<td>callingcards-annotated_features_combined</td>
 <td>kemmeren_2014-kemmeren_2014</td>
-<td>809</td>
-<td>BrentLab/callingcards;annotated_features</td>
-<td>913</td>
+<td>726-445-424</td>
+<td>BrentLab/callingcards;annotated_features_combined</td>
+<td>271</td>
+<td>kemmeren</td>
+</tr>
+<tr>
+<th>29802</th>
+<td>BrentLab/callingcards;annotated_features_combi...</td>
+<td>BrentLab/kemmeren_2014;kemmeren_2014;1077</td>
+<td>281.0</td>
+<td>73.0</td>
+<td>283.0</td>
+<td>77.0</td>
+<td>0.095948</td>
+<td>0.174</td>
+<td>pvalue</td>
+<td>callingcards-annotated_features_combined</td>
+<td>kemmeren_2014-kemmeren_2014</td>
+<td>79-33</td>
+<td>BrentLab/callingcards;annotated_features_combined</td>
+<td>1077</td>
+<td>kemmeren</td>
+</tr>
+<tr>
+<th>29803</th>
+<td>BrentLab/callingcards;annotated_features_combi...</td>
+<td>BrentLab/kemmeren_2014;kemmeren_2014;963</td>
+<td>526.0</td>
+<td>227.0</td>
+<td>527.0</td>
+<td>227.0</td>
+<td>0.064919</td>
+<td>0.000</td>
+<td>pvalue</td>
+<td>callingcards-annotated_features_combined</td>
+<td>kemmeren_2014-kemmeren_2014</td>
+<td>96-49</td>
+<td>BrentLab/callingcards;annotated_features_combined</td>
+<td>963</td>
 <td>kemmeren</td>
 </tr>
 </tbody>
 </table>
-<p>9604 rows × 14 columns</p>
+<p>29804 rows × 15 columns</p>
 </div>
 </div>
 </div>
@@ -4663,10 +4756,10 @@ print(replicated_hackett_regulators)</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-18">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-19">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4696,7 +4789,7 @@ print(replicated_hackett_regulators)</div>
 <span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">hackett_harbison_dto</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-18"># We can remove those regulators from our query using a parameterized query
+<div class="clipboard-copy-txt" id="cell-19"># We can remove those regulators from our query using a parameterized query
 hackett_harbison_dto = vdb.query("""
 SELECT h.sample_id, h.regulator_symbol, h.time, h.mechanism,
        dto.*
@@ -4734,53 +4827,53 @@ print(hackett_harbison_dto.head())</div>
 4        448             ACA1  15.0       ZEV   
 
                                      binding_id  \
-0  BrentLab/callingcards;annotated_features;803   
+0  BrentLab/callingcards;annotated_features;146   
 1  BrentLab/callingcards;annotated_features;156   
-2  BrentLab/callingcards;annotated_features;126   
-3  BrentLab/callingcards;annotated_features;189   
-4  BrentLab/callingcards;annotated_features;146   
+2       BrentLab/harbison_2004;harbison_2004;88   
+3  BrentLab/callingcards;annotated_features;146   
+4  BrentLab/callingcards;annotated_features;803   
 
                           perturbation_id  binding_rank_threshold  \
-0  BrentLab/Hackett_2020;hackett_2020;448                   112.0   
-1  BrentLab/Hackett_2020;hackett_2020;448                    31.0   
-2  BrentLab/Hackett_2020;hackett_2020;448                    21.0   
-3  BrentLab/Hackett_2020;hackett_2020;448                   164.0   
-4  BrentLab/Hackett_2020;hackett_2020;448                    23.0   
+0  BrentLab/hackett_2020;hackett_2020;448                   452.0   
+1  BrentLab/hackett_2020;hackett_2020;448                   296.0   
+2  BrentLab/hackett_2020;hackett_2020;448                   122.0   
+3  BrentLab/hackett_2020;hackett_2020;448                    35.0   
+4  BrentLab/hackett_2020;hackett_2020;448                   544.0   
 
    perturbation_rank_threshold  binding_set_size  perturbation_set_size  \
-0                         98.0             108.0                   90.0   
-1                         98.0              26.0                   90.0   
-2                         98.0              17.0                   90.0   
-3                        154.0             150.0                  144.0   
-4                         98.0              18.0                   90.0   
+0                          1.0             454.0                 5591.0   
+1                        346.0             297.0                  346.0   
+2                        218.0             122.0                  218.0   
+3                        407.0              35.0                  407.0   
+4                          1.0             544.0                 5591.0   
 
-    dto_fdr  dto_empirical_pvalue             binding_repo_dataset  \
-0  0.187319                 0.074  callingcards-annotated_features   
-1  0.072561                 0.047  callingcards-annotated_features   
-2  0.061941                 0.071  callingcards-annotated_features   
-3  0.213716                 0.011  callingcards-annotated_features   
-4  0.066616                 0.171  callingcards-annotated_features   
+    dto_fdr  dto_empirical_pvalue pr_ranking_column  \
+0  0.000000                 1.000            pvalue   
+1  0.277211                 0.000            log2fc   
+2  0.612736                 0.917            log2fc   
+3  0.116834                 0.000            log2fc   
+4  0.000000                 1.000            pvalue   
 
-   perturbation_repo_dataset binding_id_id  \
-0  Hackett_2020-hackett_2020           803   
-1  Hackett_2020-hackett_2020           156   
-2  Hackett_2020-hackett_2020           126   
-3  Hackett_2020-hackett_2020           189   
-4  Hackett_2020-hackett_2020           146   
+              binding_repo_dataset  perturbation_repo_dataset binding_id_id  \
+0  callingcards-annotated_features  hackett_2020-hackett_2020           146   
+1  callingcards-annotated_features  hackett_2020-hackett_2020           156   
+2      harbison_2004-harbison_2004  hackett_2020-hackett_2020            88   
+3  callingcards-annotated_features  hackett_2020-hackett_2020           146   
+4  callingcards-annotated_features  hackett_2020-hackett_2020           803   
 
                           binding_id_source perturbation_id_id  \
 0  BrentLab/callingcards;annotated_features                448   
 1  BrentLab/callingcards;annotated_features                448   
-2  BrentLab/callingcards;annotated_features                448   
+2                                  harbison                448   
 3  BrentLab/callingcards;annotated_features                448   
 4  BrentLab/callingcards;annotated_features                448   
 
-               perturbation_id_source  
-0  BrentLab/Hackett_2020;hackett_2020  
-1  BrentLab/Hackett_2020;hackett_2020  
-2  BrentLab/Hackett_2020;hackett_2020  
-3  BrentLab/Hackett_2020;hackett_2020  
-4  BrentLab/Hackett_2020;hackett_2020  
+  perturbation_id_source  
+0                hackett  
+1                hackett  
+2                hackett  
+3                hackett  
+4                hackett  
 </pre>
 </div>
 </div>
@@ -4793,10 +4886,10 @@ print(hackett_harbison_dto.head())</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [20]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-19">
+<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-20">
 <div>
 <span class="notice" hidden="">Copied!</span>
 <svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
@@ -4809,7 +4902,7 @@ print(hackett_harbison_dto.head())</div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="c1"># Clean up temp file</span>
 <span class="n">temp_config</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">missing_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-19"># Clean up temp file
+<div class="clipboard-copy-txt" id="cell-20"># Clean up temp file
 temp_config.unlink(missing_ok=True)</div>
 </div>
 </div>

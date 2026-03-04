@@ -2,54 +2,54 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://brentlab.github.io/tfbpapi/</loc>
-         <lastmod>2026-02-06</lastmod>
+         <lastmod>2026-03-04</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/brentlab_yeastresources_collection/</loc>
-         <lastmod>2026-02-06</lastmod>
+         <lastmod>2026-03-04</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/datacard/</loc>
-         <lastmod>2026-02-06</lastmod>
+         <lastmod>2026-03-04</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/errors/</loc>
-         <lastmod>2026-02-06</lastmod>
+         <lastmod>2026-03-04</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/fetchers/</loc>
-         <lastmod>2026-02-06</lastmod>
+         <lastmod>2026-03-04</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/hf_cache_manager/</loc>
-         <lastmod>2026-02-06</lastmod>
+         <lastmod>2026-03-04</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/huggingface_datacard/</loc>
-         <lastmod>2026-02-06</lastmod>
+         <lastmod>2026-03-04</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/models/</loc>
-         <lastmod>2026-02-06</lastmod>
+         <lastmod>2026-03-04</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/virtual_db/</loc>
-         <lastmod>2026-02-06</lastmod>
+         <lastmod>2026-03-04</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/virtual_db_configuration/</loc>
-         <lastmod>2026-02-06</lastmod>
+         <lastmod>2026-03-04</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/tutorials/cache_manager_tutorial/</loc>
-         <lastmod>2026-02-06</lastmod>
+         <lastmod>2026-03-04</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/tutorials/datacard_tutorial/</loc>
-         <lastmod>2026-02-06</lastmod>
+         <lastmod>2026-03-04</lastmod>
     </url>
     <url>
          <loc>https://brentlab.github.io/tfbpapi/tutorials/virtual_db_tutorial/</loc>
-         <lastmod>2026-02-06</lastmod>
+         <lastmod>2026-03-04</lastmod>
     </url>
 </urlset>
