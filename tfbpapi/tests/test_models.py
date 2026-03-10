@@ -16,6 +16,7 @@ from tfbpapi.models import (
     DatasetType,
     ExtractedMetadata,
     FeatureInfo,
+    MetadataConfig,
     MetadataRelationship,
     PartitioningInfo,
 )
@@ -575,3 +576,95 @@ class TestMetadataRelationship:
         assert relationship.data_config == "binding_data"
         assert relationship.metadata_config == "experiment_metadata"
         assert relationship.relationship_type == "explicit"
+
+
+# ------------------------------------------------------------------
+# Minimal valid YAML snippets reused across MetadataConfig tests
+# ------------------------------------------------------------------
+
+_MINIMAL_CONFIG = {
+    "repositories": {
+        "BrentLab/harbison": {
+            "dataset": {
+                "harbison_2004": {
+                    "sample_id": {"field": "sample_id"},
+                }
+            }
+        }
+    }
+}
+
+
+class TestMetadataConfig:
+    """Tests for MetadataConfig Pydantic model validation."""
+
+    def test_valid_minimal_config(self):
+        """Minimal config with one repo and one dataset parses successfully."""
+        config = MetadataConfig.model_validate(_MINIMAL_CONFIG)
+        assert "BrentLab/harbison" in config.repositories
+
+    def test_missing_repositories_key_raises(self):
+        """Config missing 'repositories' raises ValueError."""
+        with pytest.raises((ValidationError, ValueError)):
+            MetadataConfig.model_validate({})
+
+    def test_empty_repositories_raises(self):
+        """Config with empty 'repositories' dict raises ValueError."""
+        with pytest.raises((ValidationError, ValueError)):
+            MetadataConfig.model_validate({"repositories": {}})
+
+    def test_repository_with_no_dataset_raises(self):
+        """Repository with no 'dataset' key raises ValueError."""
+        with pytest.raises((ValidationError, ValueError)):
+            MetadataConfig.model_validate({"repositories": {"BrentLab/harbison": {}}})
+
+    def test_optional_sections_absent_succeeds(self):
+        """Parsing succeeds when optional sections are absent."""
+        config = MetadataConfig.model_validate(_MINIMAL_CONFIG)
+        assert config.factor_aliases == {}
+        assert config.missing_value_labels == {}
+
+    def test_optional_sections_present(self):
+        """Optional sections are parsed correctly when present."""
+        data = {
+            "repositories": {
+                "BrentLab/harbison": {
+                    "dataset": {
+                        "harbison_2004": {
+                            "sample_id": {"field": "sample_id"},
+                        }
+                    }
+                }
+            },
+            "factor_aliases": {"carbon_source": {"glucose": ["glu", "dextrose"]}},
+            "missing_value_labels": {"carbon_source": "unspecified"},
+        }
+        config = MetadataConfig.model_validate(data)
+        assert "carbon_source" in config.factor_aliases
+        assert config.missing_value_labels != {}
+
+    def test_duplicate_db_name_raises(self):
+        """Duplicate db_name across datasets raises ValueError."""
+        with pytest.raises((ValidationError, ValueError)):
+            MetadataConfig.model_validate(
+                {
+                    "repositories": {
+                        "BrentLab/harbison": {
+                            "dataset": {
+                                "harbison_2004": {
+                                    "db_name": "shared_name",
+                                    "sample_id": {"field": "sample_id"},
+                                }
+                            }
+                        },
+                        "BrentLab/kemmeren": {
+                            "dataset": {
+                                "kemmeren_2014": {
+                                    "db_name": "shared_name",
+                                    "sample_id": {"field": "sample_id"},
+                                }
+                            }
+                        },
+                    }
+                }
+            )

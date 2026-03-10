@@ -255,8 +255,7 @@ for more detailed explanation of comparative datasets and composite IDs.
 ## Internal Structure
 
 VirtualDB uses an in-memory DuckDB database to construct a layered hierarchy
-of SQL views over locally cached Parquet files. Views are created lazily on
-first query and are not persisted to disk.
+of SQL views over locally cached Parquet files. Views are created on initialization and are not persisted to disk.
 
 ### View Hierarchy
 

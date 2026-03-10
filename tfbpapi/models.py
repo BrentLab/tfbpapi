@@ -9,6 +9,7 @@ Also includes models for VirtualDB metadata normalization configuration.
 
 """
 
+import logging
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
@@ -27,6 +28,9 @@ from pydantic import (
 
 # Type aliases for improved readability
 FactorAliases: TypeAlias = dict[str, dict[str, list[str | int | float | bool]]]
+
+
+logger = logging.getLogger(__name__)
 
 
 class DatasetType(str, Enum):
@@ -762,6 +766,23 @@ class MetadataConfig(BaseModel):
         return v
 
     @model_validator(mode="after")
+    def validate_repositories_have_datasets(self) -> "MetadataConfig":
+        """
+        Validate that every repository defines at least one dataset.
+
+        :return: The validated MetadataConfig instance
+        :raises ValueError: If any repository has no datasets defined
+
+        """
+        for repo_id, repo_config in self.repositories.items():
+            if not repo_config.dataset:
+                raise ValueError(
+                    f"Repository '{repo_id}' must define at least one "
+                    "dataset under the 'dataset' key."
+                )
+        return self
+
+    @model_validator(mode="after")
     def validate_unique_db_names(self) -> "MetadataConfig":
         """
         Validate that all resolved db_names are unique across datasets.
@@ -791,13 +812,19 @@ class MetadataConfig(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def parse_repositories(cls, data: Any) -> dict[str, Any]:
+    def parse_config(cls, data: Any) -> dict[str, Any]:
         """
-        Parse repository configurations from 'repositories' key.
+        Parse and validate all top-level sections of the VirtualDB configuration.
+
+        Handles the four top-level sections: ``repositories`` (required),
+        ``factor_aliases``, ``missing_value_labels``, and ``description``
+        (all optional). Logs an INFO message for each optional section that
+        is absent from the configuration.
 
         :param data: Raw configuration data
-        :return: Processed configuration with parsed repositories
-        :raises ValueError: If repositories are invalid or missing
+        :return: Processed configuration dict ready for Pydantic field validation
+        :raises ValueError: If ``repositories`` is missing or empty, or if
+            any repository config is invalid
 
         """
         if not isinstance(data, dict):
@@ -810,6 +837,13 @@ class MetadataConfig(BaseModel):
                 "Configuration must have a 'repositories' key "
                 "with at least one repository"
             )
+
+        for optional_key in ("factor_aliases", "missing_value_labels", "description"):
+            if not data.get(optional_key):
+                logger.info(
+                    "No '%s' section found in VirtualDB configuration.",
+                    optional_key,
+                )
 
         # Parse each repository config
         repositories = {}
