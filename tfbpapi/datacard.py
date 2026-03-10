@@ -307,7 +307,7 @@ class DataCard:
                     ]
                     break
             else:
-                self.logger.warning(
+                self.logger.info(
                     "No metadata fields found for data config '%s' "
                     "in repo '%s' -- no embedded metadata_fields and "
                     "no metadata config with applies_to",

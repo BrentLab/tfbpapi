@@ -15,7 +15,7 @@ import pytest
 import yaml  # type: ignore
 
 from tfbpapi.datacard import DatasetSchema
-from tfbpapi.models import MetadataConfig
+from tfbpapi.models import DatasetType, MetadataConfig
 from tfbpapi.virtual_db import VirtualDB
 
 # ------------------------------------------------------------------
@@ -389,6 +389,7 @@ def _make_mock_datacard(repo_id):
     else:
         config_mock = MagicMock()
         config_mock.metadata_fields = None
+        config_mock.dataset_type = DatasetType.COMPARATIVE
         card.get_config.return_value = config_mock
         card.get_field_definitions.return_value = {}
         card.get_experimental_conditions.return_value = {}
@@ -406,8 +407,6 @@ def vdb(config_path, parquet_dir, monkeypatch):
     for local testing."""
     import tfbpapi.virtual_db as vdb_module
 
-    v = VirtualDB(config_path)
-
     def _fake_resolve(self, repo_id, config_name):
         return parquet_dir.get((repo_id, config_name), [])
 
@@ -417,7 +416,7 @@ def vdb(config_path, parquet_dir, monkeypatch):
         "_cached_datacard",
         lambda repo_id, token=None: _make_mock_datacard(repo_id),
     )
-    return v
+    return VirtualDB(config_path)
 
 
 # ------------------------------------------------------------------
@@ -430,12 +429,20 @@ class TestVirtualDBConfig:
 
     def test_init_loads_config(self, config_path, monkeypatch):
         """Test that config loads without error."""
+        monkeypatch.setattr(VirtualDB, "_load_datacards", lambda self: None)
+        monkeypatch.setattr(VirtualDB, "_validate_datacards", lambda self: None)
+        monkeypatch.setattr(VirtualDB, "_update_cache", lambda self: None)
+        monkeypatch.setattr(VirtualDB, "_register_all_views", lambda self: None)
         v = VirtualDB(config_path)
         assert v.config is not None
         assert v.token is None
 
     def test_init_with_token(self, config_path, monkeypatch):
         """Test token is stored."""
+        monkeypatch.setattr(VirtualDB, "_load_datacards", lambda self: None)
+        monkeypatch.setattr(VirtualDB, "_validate_datacards", lambda self: None)
+        monkeypatch.setattr(VirtualDB, "_update_cache", lambda self: None)
+        monkeypatch.setattr(VirtualDB, "_register_all_views", lambda self: None)
         v = VirtualDB(config_path, token="tok123")
         assert v.token == "tok123"
 
@@ -444,22 +451,18 @@ class TestVirtualDBConfig:
         with pytest.raises(FileNotFoundError):
             VirtualDB("/nonexistent/path.yaml")
 
-    def test_repr_before_views(self, config_path):
-        """Test repr before views are registered."""
-        v = VirtualDB(config_path)
-        r = repr(v)
-        assert "VirtualDB" in r
-        assert "views not yet registered" in r
-
-    def test_repr_after_views(self, vdb):
-        """Test repr after views are registered."""
-        vdb.tables()  # triggers view registration
+    def test_repr(self, vdb):
+        """Test repr shows repo, dataset, and view counts."""
         r = repr(vdb)
         assert "VirtualDB" in r
         assert "views)" in r
 
-    def test_db_name_map(self, config_path):
+    def test_db_name_map(self, config_path, monkeypatch):
         """Test that _db_name_map resolves db_name correctly."""
+        monkeypatch.setattr(VirtualDB, "_load_datacards", lambda self: None)
+        monkeypatch.setattr(VirtualDB, "_validate_datacards", lambda self: None)
+        monkeypatch.setattr(VirtualDB, "_update_cache", lambda self: None)
+        monkeypatch.setattr(VirtualDB, "_register_all_views", lambda self: None)
         v = VirtualDB(config_path)
         assert "harbison" in v._db_name_map
         assert "kemmeren" in v._db_name_map
@@ -599,13 +602,16 @@ class TestTags:
         tags_b = config.get_tags("BrentLab/repo_b", "dataset_b")
         assert tags_b == {"type": "perturbation"}
 
-    def _make_vdb(self, yaml_str: str, tmp_path) -> VirtualDB:
-
+    def _make_vdb(self, yaml_str: str, tmp_path, monkeypatch) -> VirtualDB:
+        monkeypatch.setattr(VirtualDB, "_load_datacards", lambda self: None)
+        monkeypatch.setattr(VirtualDB, "_validate_datacards", lambda self: None)
+        monkeypatch.setattr(VirtualDB, "_update_cache", lambda self: None)
+        monkeypatch.setattr(VirtualDB, "_register_all_views", lambda self: None)
         p = tmp_path / "config.yaml"
         p.write_text(yaml_str)
         return VirtualDB(str(p))
 
-    def test_vdb_get_tags_returns_merged(self, tmp_path):
+    def test_vdb_get_tags_returns_merged(self, tmp_path, monkeypatch):
         """VirtualDB.get_tags() returns merged repo+dataset tags by db_name."""
         vdb = self._make_vdb(
             """
@@ -623,11 +629,12 @@ class TestTags:
                       assay: chip-chip
             """,
             tmp_path,
+            monkeypatch,
         )
         tags = vdb.get_tags("harbison")
         assert tags == {"assay": "chip-chip", "organism": "yeast"}
 
-    def test_vdb_get_tags_unknown_name_returns_empty(self, tmp_path):
+    def test_vdb_get_tags_unknown_name_returns_empty(self, tmp_path, monkeypatch):
         """VirtualDB.get_tags() returns empty dict for unknown db_name."""
         vdb = self._make_vdb(
             """
@@ -640,11 +647,12 @@ class TestTags:
                       field: sample_id
             """,
             tmp_path,
+            monkeypatch,
         )
         assert vdb.get_tags("nonexistent") == {}
 
-    def test_vdb_get_tags_no_views_needed(self, tmp_path):
-        """VirtualDB.get_tags() works before any views are registered."""
+    def test_vdb_get_tags_no_views_needed(self, tmp_path, monkeypatch):
+        """VirtualDB.get_tags() returns correct tags from config."""
         vdb = self._make_vdb(
             """
             repositories:
@@ -658,15 +666,13 @@ class TestTags:
                       field: sample_id
             """,
             tmp_path,
+            monkeypatch,
         )
-        assert not vdb._views_registered
         tags = vdb.get_tags("harbison")
         assert tags == {"assay": "binding"}
-        assert not vdb._views_registered
 
-    def test_vdb_get_datasets(self, tmp_path):
-        """VirtualDB.get_datasets() returns sorted db_names without registering
-        views."""
+    def test_vdb_get_datasets(self, tmp_path, monkeypatch):
+        """VirtualDB.get_datasets() returns sorted db_names from config."""
         vdb = self._make_vdb(
             """
             repositories:
@@ -684,10 +690,9 @@ class TestTags:
                       field: sample_id
             """,
             tmp_path,
+            monkeypatch,
         )
-        assert not vdb._views_registered
         assert vdb.get_datasets() == ["harbison", "kemmeren"]
-        assert not vdb._views_registered
 
 
 # ------------------------------------------------------------------
@@ -696,7 +701,7 @@ class TestTags:
 
 
 class TestViewRegistration:
-    """Tests for lazy view creation."""
+    """Tests for view creation."""
 
     def test_raw_views_created(self, vdb):
         """Test that raw per-dataset views exist."""
@@ -1031,6 +1036,8 @@ class TestEdgeCases:
 
     def test_no_parquet_files(self, tmp_path, monkeypatch):
         """Test graceful handling when no parquet files are found."""
+        import tfbpapi.virtual_db as vdb_module
+
         config = {
             "repositories": {
                 "BrentLab/empty": {
@@ -1046,22 +1053,60 @@ class TestEdgeCases:
         with open(p, "w") as f:
             yaml.dump(config, f)
 
-        v = VirtualDB(p)
-
         def _fake_resolve(self, repo_id, config_name):
             return []
 
         monkeypatch.setattr(VirtualDB, "_resolve_parquet_files", _fake_resolve)
+        monkeypatch.setattr(
+            vdb_module,
+            "_cached_datacard",
+            lambda repo_id, token=None: _make_mock_datacard(repo_id),
+        )
 
         # Should not raise; just have no views
+        v = VirtualDB(p)
         views = v.tables()
         assert "empty_data" not in views
 
-    def test_lazy_init(self, config_path):
-        """Test that DuckDB connection is not created until needed."""
-        v = VirtualDB(config_path)
-        assert v._conn is None
-        assert not v._views_registered
+    def test_links_with_non_comparative_dataset_type_raises(
+        self, tmp_path, monkeypatch
+    ):
+        """Dataset with 'links' but datacard dataset_type != comparative raises
+        ValueError."""
+        import tfbpapi.virtual_db as vdb_module
+
+        config = {
+            "repositories": {
+                "BrentLab/harbison": {
+                    "dataset": {
+                        "harbison_2004": {
+                            "sample_id": {"field": "sample_id"},
+                            "links": {
+                                "sample_id": [["BrentLab/primary", "primary_data"]]
+                            },
+                        }
+                    }
+                }
+            }
+        }
+        p = tmp_path / "config.yaml"
+        with open(p, "w") as f:
+            yaml.dump(config, f)
+
+        non_comparative_card = _make_mock_datacard("BrentLab/harbison")
+        cfg_mock = MagicMock()
+        cfg_mock.dataset_type = DatasetType.ANNOTATED_FEATURES
+        non_comparative_card.get_config.return_value = cfg_mock
+
+        monkeypatch.setattr(VirtualDB, "_resolve_parquet_files", lambda *a: [])
+        monkeypatch.setattr(
+            vdb_module,
+            "_cached_datacard",
+            lambda repo_id, token=None: non_comparative_card,
+        )
+
+        with pytest.raises(ValueError, match="comparative"):
+            VirtualDB(p)
 
 
 # ------------------------------------------------------------------
@@ -1128,7 +1173,83 @@ class TestDynamicSampleId:
             is_partitioned=False,
         )
 
+        monkeypatch.setattr(
+            VirtualDB,
+            "_resolve_parquet_files",
+            lambda self, repo_id, cn: files.get((repo_id, cn), []),
+        )
+        monkeypatch.setattr(
+            vdb_module,
+            "_cached_datacard",
+            lambda repo_id, token=None: mock_card,
+        )
+
         v = VirtualDB(config_path)
+
+        # Meta view should rename experiment_id -> sample_id
+        meta_df = v.query("SELECT * FROM custom_meta")
+        assert "sample_id" in meta_df.columns
+        assert "experiment_id" not in meta_df.columns
+        assert list(meta_df["sample_id"]) == [100, 200] or set(
+            meta_df["sample_id"]
+        ) == {100, 200}
+        assert len(meta_df) == 2  # 2 distinct samples
+
+        # Enriched raw view should also expose sample_id
+        raw_df = v.query("SELECT * FROM custom")
+        assert "sample_id" in raw_df.columns
+        assert "experiment_id" not in raw_df.columns
+        assert len(raw_df) == 4  # all rows
+
+    def test_non_default_sample_id_with_collision(self, tmp_path, monkeypatch):
+        """When parquet has both gm_id (sample) and sample_id (other col), gm_id is
+        renamed to sample_id and sample_id is preserved as sample_id_orig."""
+        import tfbpapi.virtual_db as vdb_module
+
+        config = {
+            "repositories": {
+                "TestOrg/collision": {
+                    "dataset": {
+                        "collision_data": {
+                            "db_name": "collision",
+                            "sample_id": {"field": "gm_id"},
+                            "regulator": {"field": "regulator"},
+                        }
+                    }
+                }
+            }
+        }
+        config_path = tmp_path / "config.yaml"
+        with open(config_path, "w") as f:
+            yaml.dump(config, f)
+
+        # Parquet has gm_id (the real sample id) AND a literal sample_id col
+        df = pd.DataFrame(
+            {
+                "gm_id": [1, 1, 2, 2],
+                "sample_id": [101, 101, 102, 102],  # some other field
+                "regulator": ["TF1", "TF1", "TF2", "TF2"],
+                "target": ["G1", "G2", "G1", "G2"],
+                "score": [1.0, 2.0, 3.0, 4.0],
+            }
+        )
+        parquet_path = tmp_path / "collision.parquet"
+        files = {
+            ("TestOrg/collision", "collision_data"): [_write_parquet(parquet_path, df)],
+        }
+
+        mock_card = MagicMock()
+        mock_card.get_metadata_fields.return_value = ["regulator"]
+        mock_card.get_field_definitions.return_value = {}
+        mock_card.get_experimental_conditions.return_value = {}
+        mock_card.get_dataset_schema.return_value = DatasetSchema(
+            data_columns={"gm_id", "sample_id", "target", "score"},
+            metadata_columns={"regulator"},
+            join_columns=set(),
+            metadata_source="embedded",
+            external_metadata_config=None,
+            is_partitioned=False,
+        )
 
         monkeypatch.setattr(
             VirtualDB,
@@ -1141,15 +1262,22 @@ class TestDynamicSampleId:
             lambda repo_id, token=None: mock_card,
         )
 
-        # Meta view should have experiment_id + regulator
-        meta_df = v.query("SELECT * FROM custom_meta")
-        assert "experiment_id" in meta_df.columns
-        assert len(meta_df) == 2  # 2 distinct samples
+        v = VirtualDB(config_path)
 
-        # Enriched raw view should JOIN on experiment_id
-        raw_df = v.query("SELECT * FROM custom")
-        assert "experiment_id" in raw_df.columns
-        assert len(raw_df) == 4  # all rows
+        # Meta view: gm_id -> sample_id, original sample_id -> sample_id_orig
+        meta_df = v.query("SELECT * FROM collision_meta")
+        assert "sample_id" in meta_df.columns
+        assert "sample_id_orig" in meta_df.columns
+        assert "gm_id" not in meta_df.columns
+        assert set(meta_df["sample_id"]) == {1, 2}
+        assert set(meta_df["sample_id_orig"]) == {101, 102}
+
+        # Raw view same behavior
+        raw_df = v.query("SELECT * FROM collision")
+        assert "sample_id" in raw_df.columns
+        assert "sample_id_orig" in raw_df.columns
+        assert "gm_id" not in raw_df.columns
+        assert len(raw_df) == 4
 
     def test_get_sample_id_field_dataset_level(self):
         """Dataset-level sample_id takes precedence."""
@@ -1307,7 +1435,6 @@ class TestExternalMetadata:
             is_partitioned=False,
         )
 
-        v = VirtualDB(config_file)
         monkeypatch.setattr(
             VirtualDB,
             "_resolve_parquet_files",
@@ -1319,7 +1446,7 @@ class TestExternalMetadata:
             lambda repo_id, token=None: card,
         )
 
-        # Trigger view registration
+        v = VirtualDB(config_file)
         tables = v.tables()
         assert "chip" in tables
         assert "chip_meta" in tables
