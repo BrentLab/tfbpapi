@@ -675,8 +675,7 @@ class VirtualDB:
         parquet_only: bool = False,
     ) -> None:
         """
-        Register a raw DuckDB view over pre-resolved Parquet files. Register a raw
-        DuckDB view over pre-resolved Parquet files.
+        Register a raw DuckDB view over pre-resolved Parquet files.
 
         Creates an internal ``__<db_name>_parquet`` view that reads
         directly from the Parquet files. For primary datasets, also
@@ -883,12 +882,6 @@ class VirtualDB:
                 select_parts.append(qualify(col))
 
         add_col(sample_col)
-        # When renaming, check if the parquet source also has a literal
-        # "sample_id" column; if so, preserve it as "sample_id_orig".
-        if rename_sample:
-            source_cols = set(self._get_view_columns(parquet_view))
-            if "sample_id" in source_cols:
-                add_col("sample_id")
         # When renaming, check if the parquet source also has a literal
         # "sample_id" column; if so, preserve it as "sample_id_orig".
         if rename_sample:
