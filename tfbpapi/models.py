@@ -364,7 +364,13 @@ class PropertyMapping(BaseModel):
         None, description="SQL expression for derived fields"
     )
     dtype: str | None = Field(
-        None, description="Data type for conversion: 'string', 'numeric', or 'bool'"
+        None,
+        description=(
+            "Data type for conversion: 'string', 'numeric', 'bool', or 'factor'. "
+            "When 'factor', the field must reference a DataCard field with a "
+            "class_label dtype specifying the allowed levels. VirtualDB will "
+            "register a DuckDB ENUM type and cast the column to it."
+        ),
     )
 
     @field_validator("path", "field", "expression", mode="before")
@@ -390,6 +396,8 @@ class PropertyMapping(BaseModel):
         """
         Ensure at least one field type is specified and mutually exclusive.
 
+        Also validates dtype='factor' requires a field (not expression or path-only).
+
         :return: The validated PropertyMapping instance
         :raises ValueError: If validation constraints are violated
 
@@ -404,6 +412,12 @@ class PropertyMapping(BaseModel):
             raise ValueError(
                 "At least one of 'field', 'path', or 'expression' must be specified"
             )
+        if self.dtype == "factor":
+            if self.expression is not None or self.field is None:
+                raise ValueError(
+                    "dtype='factor' requires 'field' to be specified and "
+                    "cannot be used with 'expression' or as a path-only mapping"
+                )
         return self
 
 

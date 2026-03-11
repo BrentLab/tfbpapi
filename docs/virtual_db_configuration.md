@@ -139,13 +139,77 @@ during metadata extraction and query filtering.
 - `string` - Text data (default if not specified)
 - `numeric` - Numeric values (integers or floating-point numbers)
 - `bool` - Boolean values (true/false)
+- `factor` - Categorical data backed by a DuckDB ENUM type (see below)
 
 **When to use dtype**:
 
 1. **Numeric filtering**: Required for fields used with comparison operators
    (`<`, `>`, `<=`, `>=`, `between`)
 2. **Type consistency**: When source data might be extracted with incorrect type
-3. **Performance**: Helps with query optimization and prevents type mismatches
+3. **Categorical columns**: Use `factor` when a field has a fixed, known set of
+   levels and you want DuckDB to enforce membership and enable efficient storage
+
+### factor dtype (DuckDB ENUM)
+
+When `dtype: factor` is set on a field-only mapping, VirtualDB registers a DuckDB
+ENUM type from the field's `class_label` definition in the DataCard and casts the
+column to that type in the `_meta` view.
+
+**Requirements**:
+
+- `dtype: factor` may only be used with field-only mappings (`field:` specified,
+  no `path:` or `expression:`).
+- The DataCard must declare the field with `dtype: {class_label: {names: [...]}}`.
+  If the field is missing, has a non-`class_label` dtype, or the `names` list is
+  absent or empty, VirtualDB raises a `ValueError` at view-registration time.
+
+**Column naming when the output name matches the source field**:
+
+When the mapping key equals the source field name (the common case, e.g.
+`time: {field: time, dtype: factor}`), the raw column is preserved in the view
+under a `_orig` alias so that the original values remain accessible:
+
+- `time` -- ENUM-typed column with levels from the DataCard
+- `time_orig` -- original raw column (e.g., DOUBLE or VARCHAR)
+
+If `time_orig` already exists in the parquet, VirtualDB finds the next available
+name: `time_orig_1`, `time_orig_2`, etc.
+
+**Example DataCard feature definition** (in the HuggingFace dataset card YAML):
+
+```yaml
+- name: time
+  dtype:
+    class_label:
+      names:
+        - 0
+        - 5
+        - 10
+        - 15
+        - 20
+        - 45
+        - 90
+  description: Time point in minutes after induction
+```
+
+**Example VirtualDB config**:
+
+```yaml
+repositories:
+  BrentLab/hackett_2020:
+    dataset:
+      hackett_2020:
+        db_name: hackett
+        sample_id:
+          field: sample_id
+        time:
+          field: time
+          dtype: factor
+```
+
+After view registration, `hackett_meta` will contain:
+- `time` -- ENUM column, queryable as `WHERE time = '45'`
+- `time_orig` -- original numeric column
 
 ## Tags
 

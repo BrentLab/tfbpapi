@@ -15,7 +15,7 @@ import pytest
 import yaml  # type: ignore
 
 from tfbpapi.datacard import DatasetSchema
-from tfbpapi.models import DatasetType, MetadataConfig
+from tfbpapi.models import DatasetType, FeatureInfo, MetadataConfig
 from tfbpapi.virtual_db import VirtualDB
 
 # ------------------------------------------------------------------
@@ -1469,3 +1469,258 @@ class TestExternalMetadata:
         raw_result = v.query("SELECT * FROM chip ORDER BY sample_id")
         assert "db_id" in raw_result.columns
         assert len(raw_result) == 4  # 4 data rows
+
+
+# ------------------------------------------------------------------
+# Tests: dtype='factor' (DuckDB ENUM)
+# ------------------------------------------------------------------
+
+
+class TestFactorDtype:
+    """Tests for PropertyMapping dtype='factor' and DuckDB ENUM columns."""
+
+    def _make_vdb_with_factor(self, tmp_path, monkeypatch, feature_dtype):
+        """
+        Helper: build a VirtualDB with one dataset whose 'category' field
+        has a PropertyMapping with dtype='factor'. ``feature_dtype`` is
+        passed as the FeatureInfo.dtype for the 'category' field in the
+        mock DataCard.
+        """
+        import tfbpapi.virtual_db as vdb_module
+
+        df = pd.DataFrame(
+            {
+                "sample_id": [1, 1, 2, 2],
+                "category": ["A", "B", "A", "C"],
+                "value": [1.0, 2.0, 3.0, 4.0],
+            }
+        )
+        parquet_path = tmp_path / "data.parquet"
+        files = {("TestOrg/ds", "cfg"): [_write_parquet(parquet_path, df)]}
+
+        config = {
+            "repositories": {
+                "TestOrg/ds": {
+                    "dataset": {
+                        "cfg": {
+                            "db_name": "ds",
+                            "sample_id": {"field": "sample_id"},
+                            "category": {
+                                "field": "category",
+                                "dtype": "factor",
+                            },
+                        }
+                    }
+                }
+            }
+        }
+        config_file = tmp_path / "config.yaml"
+        with open(config_file, "w") as f:
+            yaml.dump(config, f)
+
+        card = MagicMock()
+        card.get_metadata_fields.return_value = ["sample_id", "category"]
+        card.get_field_definitions.return_value = {}
+        card.get_experimental_conditions.return_value = {}
+        card.get_metadata_config_name.return_value = None
+        card.get_dataset_schema.return_value = DatasetSchema(
+            data_columns={"sample_id", "category", "value"},
+            metadata_columns={"sample_id", "category"},
+            join_columns=set(),
+            metadata_source="embedded",
+            external_metadata_config=None,
+            is_partitioned=False,
+        )
+        feature_list = [
+            FeatureInfo(
+                name="category",
+                dtype=feature_dtype,
+                description="A categorical field",
+            ),
+            FeatureInfo(
+                name="sample_id",
+                dtype="int64",
+                description="Sample identifier",
+            ),
+        ]
+        card.get_features.return_value = feature_list
+
+        monkeypatch.setattr(
+            VirtualDB,
+            "_resolve_parquet_files",
+            lambda self, repo_id, cn: files.get((repo_id, cn), []),
+        )
+        monkeypatch.setattr(
+            vdb_module,
+            "_cached_datacard",
+            lambda repo_id, token=None: card,
+        )
+        return VirtualDB(config_file)
+
+    def test_factor_dtype_creates_enum_column(self, tmp_path, monkeypatch):
+        """Dtype='factor' casts the column to a DuckDB ENUM in the _meta view."""
+        v = self._make_vdb_with_factor(
+            tmp_path,
+            monkeypatch,
+            feature_dtype={"class_label": {"names": ["A", "B", "C"]}},
+        )
+        df = v.query("SELECT * FROM ds_meta ORDER BY sample_id")
+        assert "category" in df.columns
+        # Values should be preserved
+        assert set(df["category"].dropna()) == {"A", "B", "C"}
+
+    def test_factor_dtype_enum_type_registered(self, tmp_path, monkeypatch):
+        """The DuckDB ENUM type is registered and can be queried."""
+        v = self._make_vdb_with_factor(
+            tmp_path,
+            monkeypatch,
+            feature_dtype={"class_label": {"names": ["A", "B", "C"]}},
+        )
+        # Trigger view registration
+        v.tables()
+        # The ENUM type should be registered in DuckDB
+        types_df = v._conn.execute(
+            "SELECT type_name FROM duckdb_types() WHERE logical_type = 'ENUM'"
+        ).fetchdf()
+        assert "_enum_category" in types_df["type_name"].tolist()
+
+    def test_factor_dtype_missing_class_label_raises(self, tmp_path, monkeypatch):
+        """ValueError is raised when the DataCard field has no class_label dtype."""
+        with pytest.raises(ValueError, match="class_label"):
+            v = self._make_vdb_with_factor(
+                tmp_path,
+                monkeypatch,
+                feature_dtype="string",  # not a class_label dict
+            )
+            v.tables()  # triggers view registration
+
+    def test_factor_dtype_no_names_raises(self, tmp_path, monkeypatch):
+        """ValueError is raised when class_label has no 'names' key."""
+        with pytest.raises(ValueError, match="names"):
+            v = self._make_vdb_with_factor(
+                tmp_path,
+                monkeypatch,
+                feature_dtype={"class_label": {}},  # no names
+            )
+            v.tables()
+
+    def test_factor_dtype_model_validator_requires_field(self):
+        """PropertyMapping with dtype='factor' and no field raises ValidationError."""
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError, match="factor"):
+            from tfbpapi.models import PropertyMapping
+
+            PropertyMapping.model_validate({"path": "some.path", "dtype": "factor"})
+
+    def test_factor_dtype_model_validator_rejects_expression(self):
+        """PropertyMapping with dtype='factor' and expression raises ValidationError."""
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError):
+            from tfbpapi.models import PropertyMapping
+
+            PropertyMapping.model_validate({"expression": "col > 0", "dtype": "factor"})
+
+    def test_factor_dtype_inplace_renames_raw_to_orig(self, tmp_path, monkeypatch):
+        """
+        When dtype='factor' maps a field to the same output name (e.g.
+        category: {field: category, dtype: factor}), the raw column is
+        renamed to <col>_orig in the _meta view, and the ENUM-cast column
+        keeps the original name.
+        """
+        v = self._make_vdb_with_factor(
+            tmp_path,
+            monkeypatch,
+            feature_dtype={"class_label": {"names": ["A", "B", "C"]}},
+        )
+        df = v.query("SELECT * FROM ds_meta ORDER BY sample_id")
+        # ENUM-cast column keeps the original name
+        assert "category" in df.columns
+        # Raw numeric/string original is preserved under _orig alias
+        assert "category_orig" in df.columns
+        # The _orig column should hold the raw values
+        assert set(df["category_orig"].dropna()) == {"A", "B", "C"}
+
+    def test_factor_dtype_orig_suffix_avoids_collision(self, tmp_path, monkeypatch):
+        """When <col>_orig already exists in the parquet, the rename uses <col>_orig_1
+        instead."""
+        import tfbpapi.virtual_db as vdb_module
+
+        df = pd.DataFrame(
+            {
+                "sample_id": [1, 2],
+                "category": ["A", "B"],
+                "category_orig": ["x", "y"],  # pre-existing _orig column
+                "value": [1.0, 2.0],
+            }
+        )
+        parquet_path = tmp_path / "data2.parquet"
+        files = {("TestOrg/ds2", "cfg2"): [_write_parquet(parquet_path, df)]}
+
+        config = {
+            "repositories": {
+                "TestOrg/ds2": {
+                    "dataset": {
+                        "cfg2": {
+                            "db_name": "ds2",
+                            "sample_id": {"field": "sample_id"},
+                            "category": {
+                                "field": "category",
+                                "dtype": "factor",
+                            },
+                        }
+                    }
+                }
+            }
+        }
+        config_file = tmp_path / "config2.yaml"
+        with open(config_file, "w") as f:
+            yaml.dump(config, f)
+
+        card = MagicMock()
+        card.get_metadata_fields.return_value = [
+            "sample_id",
+            "category",
+            "category_orig",
+        ]
+        card.get_field_definitions.return_value = {}
+        card.get_experimental_conditions.return_value = {}
+        card.get_metadata_config_name.return_value = None
+        card.get_dataset_schema.return_value = DatasetSchema(
+            data_columns={"sample_id", "category", "category_orig", "value"},
+            metadata_columns={"sample_id", "category", "category_orig"},
+            join_columns=set(),
+            metadata_source="embedded",
+            external_metadata_config=None,
+            is_partitioned=False,
+        )
+        card.get_features.return_value = [
+            FeatureInfo(
+                name="category",
+                dtype={"class_label": {"names": ["A", "B"]}},
+                description="categorical",
+            ),
+            FeatureInfo(
+                name="sample_id",
+                dtype="int64",
+                description="id",
+            ),
+        ]
+
+        monkeypatch.setattr(
+            VirtualDB,
+            "_resolve_parquet_files",
+            lambda self, repo_id, cn: files.get((repo_id, cn), []),
+        )
+        monkeypatch.setattr(
+            vdb_module,
+            "_cached_datacard",
+            lambda repo_id, token=None: card,
+        )
+        v = VirtualDB(config_file)
+
+        result = v.query("SELECT * FROM ds2_meta ORDER BY sample_id")
+        # Should use _orig_1 because _orig is taken
+        assert "category_orig_1" in result.columns
+        assert "category" in result.columns
