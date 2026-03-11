@@ -848,8 +848,16 @@ class VirtualDB:
         prop_result = self._resolve_property_columns(repo_id, config_name)
         if prop_result is not None:
             derived_exprs, prop_raw_cols = prop_result
-            # Ensure source columns needed by expressions are selected
-            for col in prop_raw_cols:
+            # Ensure source columns needed by expressions are selected.
+            # For external metadata datasets, restrict to columns that are
+            # physically present in the metadata parquet -- data columns
+            # (e.g. target_locus_tag) must not bleed into the meta view.
+            allowed_raw_cols = (
+                [c for c in prop_raw_cols if c in actual_meta_cols]
+                if is_external
+                else prop_raw_cols
+            )
+            for col in allowed_raw_cols:
                 add_col(col)
             # Qualify source column references inside CASE WHEN expressions
             if is_join:
