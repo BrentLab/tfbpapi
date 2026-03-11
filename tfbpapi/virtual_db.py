@@ -8,8 +8,6 @@ a virtualDB configuration file that describes which huggingface repos and datase
 use, a set of common fields, datasets that contain comparative analytics, and more.
 VirtualDB, this code, then uses DuckDB to construct views over Parquet files cached
 locally on initialization. For primary datasets, VirtualDB creates metadata
-VirtualDB, this code, then uses DuckDB to construct views over Parquet files cached
-locally on initialization. For primary datasets, VirtualDB creates metadata
 views (one row per sample with derived columns) and full data views (measurement-level
 data joined to metadata). For comparative analysis datasets, VirtualDB creates expanded
 views that parse composite ID fields into ``_source`` (aliased to the configured
@@ -54,7 +52,6 @@ import pandas as pd
 from duckdb import BinderException
 
 from tfbpapi.datacard import DataCard, DatasetSchema
-from tfbpapi.models import DatasetType, MetadataConfig
 from tfbpapi.models import DatasetType, MetadataConfig
 
 logger = logging.getLogger(__name__)
@@ -178,29 +175,19 @@ class VirtualDB:
 
         Creates the DuckDB connection and registers all views immediately.
 
-        Creates the DuckDB connection and registers all views immediately.
-
         :param config_path: Path to YAML configuration file
         :param token: Optional HuggingFace token for private datasets
         :param duckdb_connection: Optional DuckDB connection. If provided, views will be
             registered on this connection instead of creating a new in-memory database.
             This provides a method of using a persistent database file. If not provided,
             an in-memory DuckDB connection is created.
-            This provides a method of using a persistent database file. If not provided,
-            an in-memory DuckDB connection is created.
         :raises FileNotFoundError: If config file does not exist
-        :raises ValueError: If configuration is invalid
         :raises ValueError: If configuration is invalid
 
         """
         self.config = MetadataConfig.from_yaml(config_path)
         self.token = token
 
-        self._conn: duckdb.DuckDBPyConnection = (
-            duckdb_connection
-            if duckdb_connection is not None
-            else duckdb.connect(":memory:")
-        )
         self._conn: duckdb.DuckDBPyConnection = (
             duckdb_connection
             if duckdb_connection is not None
@@ -213,10 +200,6 @@ class VirtualDB:
         # Prepared queries: name -> sql
         self._prepared_queries: dict[str, str] = {}
 
-        self._load_datacards()
-        self._validate_datacards()
-        self._update_cache()
-        self._register_all_views()
         self._load_datacards()
         self._validate_datacards()
         self._update_cache()
@@ -262,8 +245,6 @@ class VirtualDB:
         if params:
             return self._conn.execute(resolved, params).fetchdf()
         return self._conn.execute(resolved).fetchdf()
-            return self._conn.execute(resolved, params).fetchdf()
-        return self._conn.execute(resolved).fetchdf()
 
     def prepare(self, name: str, sql: str, overwrite: bool = False) -> None:
         """
@@ -290,7 +271,6 @@ class VirtualDB:
 
         """
 
-
         if name in self._list_views() and not overwrite:
             error_msg = (
                 f"Prepared-query name '{name}' collides with "
@@ -309,7 +289,6 @@ class VirtualDB:
 
         """
 
-
         return sorted(self._list_views())
 
     def describe(self, table: str | None = None) -> pd.DataFrame:
@@ -321,7 +300,6 @@ class VirtualDB:
                  ``column_type``
 
         """
-
 
         if table is not None:
             df = self._conn.execute(f"DESCRIBE {table}").fetchdf()
@@ -348,9 +326,7 @@ class VirtualDB:
 
         """
 
-
         if table is not None:
-            cols = self._conn.execute(
             cols = self._conn.execute(
                 f"SELECT column_name FROM information_schema.columns "
                 f"WHERE table_name = '{table}'"
@@ -359,7 +335,6 @@ class VirtualDB:
 
         all_cols: set[str] = set()
         for view in self._list_views():
-            cols = self._conn.execute(
             cols = self._conn.execute(
                 f"SELECT column_name FROM information_schema.columns "
                 f"WHERE table_name = '{view}'"
@@ -378,14 +353,12 @@ class VirtualDB:
 
         """
 
-
         meta_views = self._get_primary_meta_view_names()
         if not meta_views:
             return []
 
         sets = []
         for view in meta_views:
-            cols = self._conn.execute(
             cols = self._conn.execute(
                 f"SELECT column_name FROM information_schema.columns "
                 f"WHERE table_name = '{view}'"
@@ -436,47 +409,8 @@ class VirtualDB:
 
     # ------------------------------------------------------------------
     # Initialisation phases
-    # Initialisation phases
     # ------------------------------------------------------------------
 
-    def _load_datacards(self) -> None:
-        """
-        Fetch (or load from cache) the DataCard for every distinct repo.
-
-        Populates ``self._datacards`` keyed by ``repo_id``. Failures are
-        logged as warnings and the repo is omitted from the dict so that
-        subsequent phases can skip it gracefully.
-
-        """
-        self._datacards: dict[str, DataCard] = {}
-        seen_repos: set[str] = set()
-        for repo_id, _ in self._db_name_map.values():
-            if repo_id in seen_repos:
-                continue
-            seen_repos.add(repo_id)
-            try:
-                self._datacards[repo_id] = _cached_datacard(repo_id, token=self.token)
-            except Exception as exc:
-                logger.warning(
-                    "Could not load datacard for repo '%s': %s",
-                    repo_id,
-                    exc,
-                )
-
-    def _validate_datacards(self) -> None:
-        """
-        Cross-check the VirtualDB config against the loaded datacards.
-
-        Checks that every dataset with a ``links`` field in the VirtualDB
-        config has ``dataset_type: comparative`` in its HuggingFace datacard.
-        Also resolves ``self._dataset_schemas`` and
-        ``self._external_meta_configs`` (keyed by ``db_name``) for use by
-        ``_update_cache`` and ``_register_all_views``.
-
-        :raises ValueError: If a dataset with ``links`` does not have
-            ``dataset_type: comparative`` in its datacard.
-
-        """
     def _load_datacards(self) -> None:
         """
         Fetch (or load from cache) the DataCard for every distinct repo.
@@ -519,38 +453,7 @@ class VirtualDB:
         # db_name -> external metadata config_name (for applies_to datasets)
         self._external_meta_configs: dict[str, str] = {}
 
-        # db_name -> external metadata config_name (for applies_to datasets)
-        self._external_meta_configs: dict[str, str] = {}
-
         for db_name, (repo_id, config_name) in self._db_name_map.items():
-            repo_cfg = self.config.repositories.get(repo_id)
-            ds_cfg = (
-                repo_cfg.dataset.get(config_name)
-                if repo_cfg and repo_cfg.dataset
-                else None
-            )
-            card = self._datacards.get(repo_id)
-
-            # Validate comparative dataset_type agreement.
-            if ds_cfg and ds_cfg.links:
-                if card is not None:
-                    dc_config = card.get_config(config_name)
-                    if (
-                        dc_config is not None
-                        and dc_config.dataset_type != DatasetType.COMPARATIVE
-                    ):
-                        raise ValueError(
-                            f"Dataset '{config_name}' in repo '{repo_id}' has "
-                            f"'links' in the VirtualDB config, indicating a "
-                            f"comparative dataset, but the HuggingFace datacard "
-                            f"declares dataset_type='{dc_config.dataset_type}'. "
-                            f"Update the datacard to use dataset_type: comparative."
-                        )
-                continue  # comparative datasets need no schema resolution
-
-            # Resolve dataset schema and external metadata config for
-            # primary datasets.
-            if card is None:
             repo_cfg = self.config.repositories.get(repo_id)
             ds_cfg = (
                 repo_cfg.dataset.get(config_name)
@@ -596,58 +499,7 @@ class VirtualDB:
                 schema is not None
                 and schema.metadata_source == "external"
                 and schema.external_metadata_config
-                schema is not None
-                and schema.metadata_source == "external"
-                and schema.external_metadata_config
             ):
-                self._external_meta_configs[db_name] = schema.external_metadata_config
-
-    def _update_cache(self) -> None:
-        """
-        Download (or locate cached) Parquet files for all dataset configs.
-
-        Populates ``self._parquet_files`` keyed by ``db_name``. For datasets
-        with external metadata (identified during ``_validate_datacards``),
-        also downloads those files and stores them under the key
-        ``"__<db_name>_meta"`` so ``_register_all_views`` can read them
-        without further network calls.
-
-        """
-        self._parquet_files: dict[str, list[str]] = {}
-        for db_name, (repo_id, config_name) in self._db_name_map.items():
-            files = self._resolve_parquet_files(repo_id, config_name)
-            self._parquet_files[db_name] = files
-
-        for db_name, ext_config_name in self._external_meta_configs.items():
-            repo_id, _ = self._db_name_map[db_name]
-            files = self._resolve_parquet_files(repo_id, ext_config_name)
-            self._parquet_files[f"__{db_name}_meta"] = files
-
-    def _register_all_views(self) -> None:
-        """
-        Register all DuckDB views in dependency order.
-
-        Expects ``self._parquet_files``, ``self._dataset_schemas``, and
-        ``self._external_meta_configs`` to have been populated by the earlier
-        init phases. No network or disk access occurs here.
-
-        """
-        # 1. Raw per-dataset views (internal __<db_name>_parquet
-        # plus public <db_name> for primary datasets only)
-        for db_name, (repo_id, config_name) in self._db_name_map.items():
-            comparative = self._is_comparative(repo_id, config_name)
-            self._register_raw_view(
-                db_name,
-                parquet_only=comparative,
-            )
-
-        # 2. External metadata parquet views.
-        # When a data config's metadata lives in a separate HF config
-        # (applies_to), register its parquet as __<db_name>_metadata_parquet.
-        self._external_meta_views: dict[str, str] = {}
-        for db_name, ext_config_name in self._external_meta_configs.items():
-            meta_view = f"__{db_name}_metadata_parquet"
-            files = self._parquet_files.get(f"__{db_name}_meta", [])
                 self._external_meta_configs[db_name] = schema.external_metadata_config
 
     def _update_cache(self) -> None:
@@ -702,14 +554,10 @@ class VirtualDB:
                     "'%s' (db_name '%s') -- skipping external metadata view",
                     ext_config_name,
                     db_name,
-                    "'%s' (db_name '%s') -- skipping external metadata view",
-                    ext_config_name,
-                    db_name,
                 )
                 continue
             files_sql = ", ".join(f"'{f}'" for f in files)
             try:
-                self._conn.execute(
                 self._conn.execute(
                     f"CREATE OR REPLACE VIEW {meta_view} AS "
                     f"SELECT * FROM read_parquet([{files_sql}])"
@@ -831,8 +679,8 @@ class VirtualDB:
         parquet_only: bool = False,
     ) -> None:
         """
-        Register a raw DuckDB view over pre-resolved Parquet files.
-        Register a raw DuckDB view over pre-resolved Parquet files.
+        Register a raw DuckDB view over pre-resolved Parquet files. Register a raw
+        DuckDB view over pre-resolved Parquet files.
 
         Creates an internal ``__<db_name>_parquet`` view that reads
         directly from the Parquet files. For primary datasets, also
@@ -854,10 +702,8 @@ class VirtualDB:
 
         """
         files = self._parquet_files.get(db_name, [])
-        files = self._parquet_files.get(db_name, [])
         if not files:
             logger.warning(
-                "No parquet files for db_name '%s' -- skipping view",
                 "No parquet files for db_name '%s' -- skipping view",
                 db_name,
             )
@@ -866,26 +712,9 @@ class VirtualDB:
         files_sql = ", ".join(f"'{f}'" for f in files)
         parquet_sql = f"SELECT * FROM read_parquet([{files_sql}])"
         self._conn.execute(
-        self._conn.execute(
             f"CREATE OR REPLACE VIEW __{db_name}_parquet AS " f"{parquet_sql}"
         )
         if not parquet_only:
-            sample_col = self._get_sample_id_col(db_name)
-            if sample_col == "sample_id":
-                public_select = f"SELECT * FROM __{db_name}_parquet"
-            else:
-                raw_cols = self._get_view_columns(f"__{db_name}_parquet")
-                parts: list[str] = []
-                for col in raw_cols:
-                    if col == sample_col:
-                        parts.append(f"{col} AS sample_id")
-                    elif col == "sample_id":
-                        parts.append(f"{col} AS sample_id_orig")
-                    else:
-                        parts.append(col)
-                cols_sql = ", ".join(parts)
-                public_select = f"SELECT {cols_sql} FROM __{db_name}_parquet"
-            self._conn.execute(f"CREATE OR REPLACE VIEW {db_name} AS {public_select}")
             sample_col = self._get_sample_id_col(db_name)
             if sample_col == "sample_id":
                 public_select = f"SELECT * FROM __{db_name}_parquet"
@@ -935,8 +764,6 @@ class VirtualDB:
 
         # Pull ext_meta_view early -- needed for both meta_cols and
         # FROM clause construction.
-        schema: DatasetSchema | None = self._dataset_schemas.get(db_name)
-        ext_meta_view: str | None = self._external_meta_views.get(db_name)
         schema: DatasetSchema | None = self._dataset_schemas.get(db_name)
         ext_meta_view: str | None = self._external_meta_views.get(db_name)
 
@@ -1217,37 +1044,9 @@ class VirtualDB:
             join_clause = f"JOIN {meta_name} m USING ({sample_col})"
 
         self._conn.execute(
-        if rename_sample:
-            # Build explicit SELECT to rename the sample column
-            raw_parts: list[str] = []
-            for col in raw_cols_list:
-                if col == sample_col:
-                    raw_parts.append(f"r.{col} AS sample_id")
-                elif col == "sample_id":
-                    raw_parts.append(f"r.{col} AS sample_id_orig")
-                else:
-                    raw_parts.append(f"r.{col}")
-            raw_select = ", ".join(raw_parts)
-        else:
-            raw_select = "r.*"
-
-        if extra_cols:
-            extra_select = ", ".join(f"m.{c}" for c in sorted(extra_cols))
-            full_select = f"{raw_select}, {extra_select}"
-        else:
-            full_select = raw_select
-
-        if rename_sample:
-            join_clause = f"JOIN {meta_name} m ON r.{sample_col} = m.sample_id"
-        else:
-            join_clause = f"JOIN {meta_name} m USING ({sample_col})"
-
-        self._conn.execute(
             f"CREATE OR REPLACE VIEW {db_name} AS "
             f"SELECT {full_select} "
-            f"SELECT {full_select} "
             f"FROM {parquet_name} r "
-            f"{join_clause}"
             f"{join_clause}"
         )
 
@@ -1728,7 +1527,6 @@ class VirtualDB:
 
         cols_sql = ", ".join(extra_cols)
         self._conn.execute(
-        self._conn.execute(
             f"CREATE OR REPLACE VIEW {db_name}_expanded AS "
             f"SELECT *, {cols_sql} FROM {parquet_view}"
         )
@@ -1748,7 +1546,6 @@ class VirtualDB:
     def _list_views(self) -> list[str]:
         """Return list of public views (excludes internal __ prefixed)."""
         df = self._conn.execute(
-        df = self._conn.execute(
             "SELECT table_name FROM information_schema.tables "
             "WHERE table_schema = 'main' AND table_type = 'VIEW'"
         ).fetchdf()
@@ -1756,7 +1553,6 @@ class VirtualDB:
 
     def _view_exists(self, name: str) -> bool:
         """Check whether a view is registered (including internal)."""
-        df = self._conn.execute(
         df = self._conn.execute(
             "SELECT table_name FROM information_schema.tables "
             "WHERE table_schema = 'main' AND table_type = 'VIEW' "
@@ -1797,11 +1593,6 @@ class VirtualDB:
         """String representation."""
         n_repos = len(self.config.repositories)
         n_datasets = len(self._db_name_map)
-        n_views = len(self._list_views())
-        return (
-            f"VirtualDB({n_repos} repos, "
-            f"{n_datasets} datasets, "
-            f"{n_views} views)"
         n_views = len(self._list_views())
         return (
             f"VirtualDB({n_repos} repos, "
