@@ -303,13 +303,11 @@ class VirtualDB:
 
         if table is not None:
             df = self._conn.execute(f"DESCRIBE {table}").fetchdf()
-            df = self._conn.execute(f"DESCRIBE {table}").fetchdf()
             df.insert(0, "table", table)
             return df
 
         frames = []
         for view in sorted(self._list_views()):
-            df = self._conn.execute(f"DESCRIBE {view}").fetchdf()
             df = self._conn.execute(f"DESCRIBE {view}").fetchdf()
             df.insert(0, "table", view)
             frames.append(df)
@@ -572,12 +570,10 @@ class VirtualDB:
             self._external_meta_views[db_name] = meta_view
 
         # 3. Metadata views for primary datasets (<db_name>_meta)
-        # 3. Metadata views for primary datasets (<db_name>_meta)
         for db_name, (repo_id, config_name) in self._db_name_map.items():
             if not self._is_comparative(repo_id, config_name):
                 self._register_meta_view(db_name, repo_id, config_name)
 
-        # 4. Replace primary raw views with join to _meta so
         # 4. Replace primary raw views with join to _meta so
         # derived columns (e.g. carbon_source) are available
         for db_name, (repo_id, config_name) in self._db_name_map.items():
@@ -689,9 +685,6 @@ class VirtualDB:
 
         For comparative datasets, only the internal parquet view is
         created; the public view is the ``_expanded`` view instead.
-
-        Parquet files must have been resolved by ``_update_cache``
-        before this method is called.
 
         Parquet files must have been resolved by ``_update_cache``
         before this method is called.
@@ -874,7 +867,6 @@ class VirtualDB:
         seen: set[str] = set()
         select_parts: list[str] = []
         rename_sample = sample_col != "sample_id"
-        rename_sample = sample_col != "sample_id"
 
         def add_col(col: str) -> None:
             if col in seen:
@@ -944,7 +936,6 @@ class VirtualDB:
         )
         try:
             self._conn.execute(sql)
-            self._conn.execute(sql)
         except BinderException as exc:
             raise BinderException(
                 f"Failed to create meta view '{db_name}_meta'.\n"
@@ -1013,9 +1004,6 @@ class VirtualDB:
             # No derived columns to add -- the view created in
             # _register_raw_view (which already handles the rename)
             # is sufficient.
-            # No derived columns to add -- the view created in
-            # _register_raw_view (which already handles the rename)
-            # is sufficient.
             return
 
         if rename_sample:
@@ -1060,7 +1048,6 @@ class VirtualDB:
 
         """
         df = self._conn.execute(f"DESCRIBE {view}").fetchdf()
-        df = self._conn.execute(f"DESCRIBE {view}").fetchdf()
         return df["column_name"].tolist()
 
     def _get_sample_id_col(self, db_name: str) -> str:
@@ -1090,9 +1077,6 @@ class VirtualDB:
 
         """
         try:
-            card = self._datacards.get(repo_id) or _cached_datacard(
-                repo_id, token=self.token
-            )
             card = self._datacards.get(repo_id) or _cached_datacard(
                 repo_id, token=self.token
             )
@@ -1224,9 +1208,6 @@ class VirtualDB:
         raw_cols: set[str] = set()
 
         try:
-            card = self._datacards.get(repo_id) or _cached_datacard(
-                repo_id, token=self.token
-            )
             card = self._datacards.get(repo_id) or _cached_datacard(
                 repo_id, token=self.token
             )
