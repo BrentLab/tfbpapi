@@ -1210,25 +1210,30 @@ class VirtualDB:
 
         """
         mappings = self.config.get_property_mappings(repo_id, config_name)
-        if not mappings:
+        if not mappings and not self.config.missing_value_labels:
             return None
 
         expressions: list[str] = []
         raw_cols: set[str] = set()
 
-        try:
-            card = self._datacards.get(repo_id) or _cached_datacard(
-                repo_id, token=self.token
-            )
-        except Exception as exc:
-            logger.warning(
-                "Could not load DataCard for %s: %s",
-                repo_id,
-                exc,
-            )
-            return None
+        card = None
+        if mappings:
+            try:
+                card = self._datacards.get(repo_id) or _cached_datacard(
+                    repo_id, token=self.token
+                )
+            except Exception as exc:
+                logger.warning(
+                    "Could not load DataCard for %s: %s",
+                    repo_id,
+                    exc,
+                )
 
         for key, mapping in mappings.items():
+            if card is None:
+                # Cannot resolve field/path mappings without a DataCard;
+                # skip this mapping and fall through to missing_value_labels.
+                continue
             if mapping.expression is not None:
                 # Type D: expression
                 expressions.append(f"({mapping.expression}) AS {key}")
@@ -1299,6 +1304,14 @@ class VirtualDB:
                 if expr is not None:
                     expressions.append(expr)
                 continue
+
+        # For any key in missing_value_labels that was not covered by an
+        # explicit mapping for this dataset, emit a constant literal so that
+        # every _meta view exposes the column (with the fallback value).
+        for key, label in self.config.missing_value_labels.items():
+            if key not in mappings:
+                escaped = label.replace("'", "''")
+                expressions.append(f"'{escaped}' AS {key}")
 
         if not expressions and not raw_cols:
             return None
