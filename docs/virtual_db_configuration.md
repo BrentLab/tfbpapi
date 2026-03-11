@@ -267,6 +267,33 @@ data via `(repo_id, config_name)` pairs for programmatic or developer use:
 vdb.config.get_tags("BrentLab/harbison_2004", "harbison_2004")
 ```
 
+## Missing Value Labels
+
+`missing_value_labels` is a top-level mapping from property name to a default
+string value. When a property is listed here, every dataset's `_meta` view will
+include that column -- even datasets that have no explicit mapping for it. For
+those datasets, the column is emitted as the constant fallback value.
+
+Datasets that *do* have an explicit mapping for the property are unaffected; they
+resolve the value normally (from field definitions, a path, or an expression).
+
+```yaml
+missing_value_labels:
+  carbon_source: "unspecified"
+  temperature_celsius: "unspecified"
+```
+
+**Behavior by dataset**:
+
+| Dataset | `carbon_source` mapping | `carbon_source` in `_meta` |
+|---------|------------------------|---------------------------|
+| harbison | `field: condition, path: media.carbon_source.compound` | resolved from DataCard definitions |
+| degron | (none) | `'unspecified'` (fallback) |
+
+Without `missing_value_labels`, datasets that lack the mapping simply do not
+include the column in their `_meta` view, making cross-dataset queries on that
+column error or require `COALESCE`.
+
 ## Comparative Datasets
 
 Comparative datasets differ from other dataset types in that they represent
