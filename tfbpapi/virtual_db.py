@@ -581,6 +581,7 @@ class VirtualDB:
                 self._enrich_raw_view(db_name)
 
         # 5. Comparative expanded views (pre-parsed composite IDs)
+        # 5. Comparative expanded views (pre-parsed composite IDs)
         for db_name, (repo_id, config_name) in self._db_name_map.items():
             repo_cfg = self.config.repositories.get(repo_id)
             if not repo_cfg or not repo_cfg.dataset:
@@ -815,7 +816,49 @@ class VirtualDB:
                 return f"m.{col}"
             return f"d.{col}"
 
+        # Resolve derived property expressions first.
+        # When a factor mapping has the same output name as its source
+        # field (e.g. time -> time), the raw column must be renamed to
+        # avoid a duplicate column name in the SELECT.  The rename uses
+        # "<col>_orig", or "<col>_orig_1", etc., to avoid collisions with
+        # other columns that already exist in the parquet.
+        prop_result = self._resolve_property_columns(repo_id, config_name)
+
+        # Collect all column names that exist in the parquet so we can
+        # find a unique _orig suffix when needed.
+        all_parquet_cols: set[str] = set(self._get_view_columns(parquet_view))
+
+        # Map: raw_col -> alias_in_select for factor-overridden cols
+        factor_col_renames: dict[str, str] = {}
+        if prop_result is not None:
+            _derived_exprs, _prop_raw_cols = prop_result
+            for expr in _derived_exprs:
+                # Detect CAST(<field> AS _enum_<key>) AS <key> patterns
+                # where <field> == <key> (in-place factor override)
+                if not expr.startswith("CAST("):
+                    continue
+                parts = expr.rsplit(" AS ", 1)
+                if len(parts) != 2:
+                    continue
+                out_col = parts[1].strip()
+                # Check whether the source field has the same name as
+                # the output column (in-place override case)
+                cast_inner = parts[0][len("CAST(") :]
+                src_field = cast_inner.split(" AS ")[0].strip()
+                if src_field == out_col and out_col in all_parquet_cols:
+                    # Find a unique _orig name
+                    candidate = f"{out_col}_orig"
+                    n = 1
+                    while candidate in all_parquet_cols or candidate in (
+                        v for v in factor_col_renames.values()
+                    ):
+                        candidate = f"{out_col}_orig_{n}"
+                        n += 1
+                    factor_col_renames[src_field] = candidate
+
         # Build SELECT: sample_id + metadata cols (deduplicated).
+        # Raw columns that are factor-overridden are emitted with their
+        # _orig alias instead of their original name.
         # If the configured sample_id column differs from "sample_id",
         # rename it so all views expose a consistent "sample_id" column.
         # If the parquet also has a literal "sample_id" column, preserve
@@ -825,14 +868,18 @@ class VirtualDB:
         rename_sample = sample_col != "sample_id"
 
         def add_col(col: str) -> None:
-            if col not in seen:
-                seen.add(col)
-                if rename_sample and col == sample_col:
-                    select_parts.append(f"{qualify(col)} AS sample_id")
-                elif rename_sample and col == "sample_id":
-                    select_parts.append(f"{qualify(col)} AS sample_id_orig")
-                else:
-                    select_parts.append(qualify(col))
+            if col in seen:
+                return
+            seen.add(col)
+            alias = factor_col_renames.get(col)
+            if alias:
+                select_parts.append(f"{qualify(col)} AS {alias}")
+            elif rename_sample and col == sample_col:
+                select_parts.append(f"{qualify(col)} AS sample_id")
+            elif rename_sample and col == "sample_id":
+                select_parts.append(f"{qualify(col)} AS sample_id_orig")
+            else:
+                select_parts.append(qualify(col))
 
         add_col(sample_col)
         # When renaming, check if the parquet source also has a literal
@@ -845,12 +892,21 @@ class VirtualDB:
             add_col(col)
 
         # Add derived property expressions from the VirtualDB config
-        prop_result = self._resolve_property_columns(repo_id, config_name)
         if prop_result is not None:
             derived_exprs, prop_raw_cols = prop_result
             # Ensure source columns needed by expressions are selected
             for col in prop_raw_cols:
                 add_col(col)
+            # Rewrite CAST expressions to use the _orig alias when the
+            # source field was renamed to avoid collision.
+            if factor_col_renames:
+                rewritten = []
+                for expr in derived_exprs:
+                    for orig, alias in factor_col_renames.items():
+                        # Replace "CAST(<orig> AS" with "CAST(<alias> AS"
+                        expr = expr.replace(f"CAST({orig} AS", f"CAST({alias} AS")
+                    rewritten.append(expr)
+                derived_exprs = rewritten
             # Qualify source column references inside CASE WHEN expressions
             if is_join:
                 qualified_exprs = []
@@ -901,7 +957,25 @@ class VirtualDB:
 
         raw_cols_list = self._get_view_columns(parquet_name)
         raw_cols = set(raw_cols_list)
+        raw_cols_list = self._get_view_columns(parquet_name)
+        raw_cols = set(raw_cols_list)
         meta_cols = set(self._get_view_columns(meta_name))
+
+        sample_col = self._get_sample_id_col(db_name)
+        rename_sample = sample_col != "sample_id"
+
+        # Columns to pull from _meta that aren't already in raw parquet,
+        # accounting for the sample_id rename: when renaming, "sample_id"
+        # will appear in meta_cols (as the renamed column) but not in
+        # raw_cols (which has the original name), so we must exclude it
+        # from extra_cols since the rename in the raw SELECT already
+        # provides it.
+        if rename_sample:
+            # "sample_id" and "sample_id_orig" come from the raw SELECT
+            # rename, not from meta
+            extra_cols = meta_cols - raw_cols - {"sample_id", "sample_id_orig"}
+        else:
+            extra_cols = meta_cols - raw_cols
 
         sample_col = self._get_sample_id_col(db_name)
         rename_sample = sample_col != "sample_id"
@@ -1008,6 +1082,76 @@ class VirtualDB:
             )
         return None
 
+    def _get_class_label_names(
+        self, card: Any, config_name: str, field: str
+    ) -> list[str]:
+        """
+        Return the ENUM levels for a field with class_label dtype.
+
+        Looks up the FeatureInfo for ``field`` in the DataCard config and
+        extracts the ``names`` list from its ``class_label`` dtype dict.
+
+        :param card: DataCard instance
+        :param config_name: Configuration name
+        :param field: Field name to look up
+        :return: List of level strings
+        :raises ValueError: If the field is not found, has no class_label dtype,
+            or the class_label dict has no ``names`` key
+
+        """
+        try:
+            features = card.get_features(config_name)
+        except Exception as exc:
+            raise ValueError(
+                f"Could not retrieve features for config '{config_name}': {exc}"
+            ) from exc
+
+        feature = next((f for f in features if f.name == field), None)
+        if feature is None:
+            raise ValueError(
+                f"Field '{field}' not found in DataCard config '{config_name}'. "
+                "dtype='factor' requires the field to be declared in the DataCard."
+            )
+
+        dtype = feature.dtype
+        if not isinstance(dtype, dict) or "class_label" not in dtype:
+            raise ValueError(
+                f"dtype='factor' is set for field '{field}' in config "
+                f"'{config_name}', but the DataCard dtype is {dtype!r} rather "
+                "than a class_label dict. "
+                "The DataCard must declare dtype: {class_label: {names: [...]}}."
+            )
+
+        class_label = dtype["class_label"]
+        names = class_label.get("names") if isinstance(class_label, dict) else None
+        if not names:
+            raise ValueError(
+                f"class_label for field '{field}' in config '{config_name}' "
+                "has no 'names' key or the names list is empty. "
+                "Specify levels as: class_label: {names: [level1, level2, ...]}."
+            )
+
+        return [str(n) for n in names]
+
+    def _ensure_enum_type(self, type_name: str, levels: list[str]) -> None:
+        """
+        Create or replace a DuckDB ENUM type with the given levels.
+
+        DuckDB ENUM types must be registered before use in CAST expressions. Drops any
+        existing type with the same name first to allow re-registration on repeated view
+        builds.
+
+        :param type_name: SQL identifier for the ENUM type
+        :param levels: Ordered list of allowed string values
+
+        """
+        try:
+            self._conn.execute(f"DROP TYPE IF EXISTS {type_name}")
+        except Exception:
+            pass  # type may not exist yet
+        escaped = ", ".join(f"'{v.replace(chr(39), chr(39)*2)}'" for v in levels)
+        self._conn.execute(f"CREATE TYPE {type_name} AS ENUM ({escaped})")
+
     def _resolve_alias(self, col: str, value: str) -> str:
         """
         Apply factor alias to a value if one is configured.
@@ -1075,9 +1219,19 @@ class VirtualDB:
                 continue
 
             if mapping.field is not None and mapping.path is None:
-                # Type A: field-only (alias or no-op)
+                # Type A: field-only (alias or ENUM cast)
                 raw_cols.add(mapping.field)
-                if key == mapping.field:
+                if mapping.dtype == "factor":
+                    # Fetch class_label levels from DataCard, register ENUM,
+                    # and emit a CAST expression. Raises ValueError if the
+                    # DataCard does not declare a class_label dtype.
+                    enum_type = f"_enum_{key}"
+                    levels = self._get_class_label_names(
+                        card, config_name, mapping.field
+                    )
+                    self._ensure_enum_type(enum_type, levels)
+                    expressions.append(f"CAST({mapping.field} AS {enum_type}) AS {key}")
+                elif key == mapping.field:
                     # no-op -- column already present as raw col
                     pass
                 else:
@@ -1085,7 +1239,15 @@ class VirtualDB:
                 continue
 
             if mapping.field is not None and mapping.path is not None:
-                # Type B: field + path -- resolve from definitions
+                # Type B: field + path -- resolve from definitions.
+                # dtype='factor' is not supported here: levels come from a
+                # class_label field, not a definitions path.
+                if mapping.dtype == "factor":
+                    raise ValueError(
+                        f"dtype='factor' is not supported for field+path mappings "
+                        f"(key='{key}'). Use dtype='factor' only with field-only "
+                        "mappings that reference a class_label field in the DataCard."
+                    )
                 raw_cols.add(mapping.field)
                 expr = self._build_field_path_expr(
                     key,
