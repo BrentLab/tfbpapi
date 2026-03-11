@@ -25,27 +25,21 @@ and the [tutorial](tutorials/virtual_db_tutorial.ipynb) for usage examples.
 
 ## Advanced Usage
 
-After any public method is called (e.g. `vdb.tables()`), the underlying DuckDB
-connection is available as `vdb._db`. You can use `_db` to execute any SQL
-on the database, eg creating more views, or creating a table in memory
+The underlying DuckDB connection is available as `vdb._conn`. You can use
+`_conn` to execute any SQL on the database, eg creating more views, or
+creating a table in memory.
 
 Custom **views** created this way appear in `tables()`, `describe()`, and
 `get_fields()` automatically because those methods query DuckDB's
 `information_schema`. Custom **tables** do not appear in `tables()` (which
 only lists views), but are fully queryable via `vdb.query()`.
 
-Call at least one public method first to ensure the connection is initialized
-before accessing `_db` directly.
-
 Example -- create a materialized analysis table::
-
-    # Trigger view registration
-    vdb.tables()
 
     # Create a persistent in-memory table from a complex query.
     # This example selects one "best" Hackett-2020 sample per regulator
     # using a priority system: ZEV+P > GEV+P > GEV+M.
-    vdb._db.execute("""
+    vdb._conn.execute("""
         CREATE OR REPLACE TABLE hackett_analysis_set AS
         WITH regulator_tiers AS (
             SELECT
