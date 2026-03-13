@@ -58,6 +58,12 @@ from tfbpapi.models import DatasetType, MetadataConfig
 logger = logging.getLogger(__name__)
 
 
+class QueryError(Exception):
+    """Raised when a VirtualDB query fails at execution time."""
+
+    pass
+
+
 def get_nested_value(data: dict | list, path: str) -> Any:
     """
     Navigate nested dict/list using dot notation.
@@ -243,32 +249,40 @@ class VirtualDB:
         # in the _prepared_queries dict, we use the prepared sql. Otherwise, we
         # use the sql as passed to query().
         resolved = self._prepared_queries.get(sql, sql)
-        if params:
-            return self._conn.execute(resolved, params).fetchdf()
-        return self._conn.execute(resolved).fetchdf()
+        try:
+            if params:
+                return self._conn.execute(resolved, params).fetchdf()
+            return self._conn.execute(resolved).fetchdf()
+        except Exception as exc:
+            import pprint
+
+            params_repr = pprint.pformat(params, indent=2)
+            raise QueryError(
+                f"query failed: {exc}\n\n" f"SQL:\n{sql}\n\n" f"params:\n{params_repr}"
+            ) from exc
 
     def prepare(self, name: str, sql: str, overwrite: bool = False) -> None:
         """
         Register a named parameterized query for later use.
 
-                Parameters use DuckDB ``$name`` syntax.
+        Parameters use DuckDB ``$name`` syntax.
 
-                :param name: Query name (must not collide with a view name)
-                :param sql: SQL template with ``$name`` parameters
-                :param overwrite: If True, overwrite existing prepared query
-                    with same name
-                :raises ValueError: If *name* collides with an existing view
-        con
-                Example::
+        :param name: Query name (must not collide with a view name)
+        :param sql: SQL template with ``$name`` parameters
+        :param overwrite: If True, overwrite existing prepared query
+            with same name
+        :raises ValueError: If *name* collides with an existing view
 
-                    vdb.prepare("glucose_regs", '''
-                        SELECT regulator_symbol, COUNT(*) AS n
-                        FROM harbison_meta
-                        WHERE carbon_source = $cs
-                        GROUP BY regulator_symbol
-                        HAVING n >= $min_n
-                    ''')
-                    df = vdb.query("glucose_regs", cs="glucose", min_n=2)
+        Example::
+
+            vdb.prepare("glucose_regs", '''
+                SELECT regulator_symbol, COUNT(*) AS n
+                FROM harbison_meta
+                WHERE carbon_source = $cs
+                GROUP BY regulator_symbol
+                HAVING n >= $min_n
+            ''')
+            df = vdb.query("glucose_regs", cs="glucose", min_n=2)
 
         """
 
@@ -973,25 +987,7 @@ class VirtualDB:
 
         raw_cols_list = self._get_view_columns(parquet_name)
         raw_cols = set(raw_cols_list)
-        raw_cols_list = self._get_view_columns(parquet_name)
-        raw_cols = set(raw_cols_list)
         meta_cols = set(self._get_view_columns(meta_name))
-
-        sample_col = self._get_sample_id_col(db_name)
-        rename_sample = sample_col != "sample_id"
-
-        # Columns to pull from _meta that aren't already in raw parquet,
-        # accounting for the sample_id rename: when renaming, "sample_id"
-        # will appear in meta_cols (as the renamed column) but not in
-        # raw_cols (which has the original name), so we must exclude it
-        # from extra_cols since the rename in the raw SELECT already
-        # provides it.
-        if rename_sample:
-            # "sample_id" and "sample_id_orig" come from the raw SELECT
-            # rename, not from meta
-            extra_cols = meta_cols - raw_cols - {"sample_id", "sample_id_orig"}
-        else:
-            extra_cols = meta_cols - raw_cols
 
         sample_col = self._get_sample_id_col(db_name)
         rename_sample = sample_col != "sample_id"
